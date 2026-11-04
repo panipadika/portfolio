@@ -3,10 +3,10 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { useBackgroundAudio } from '../../hooks/useBackgroundAudio';
 
 const NAV_LINKS = [
-    { name: 'Home', href: '#Home' },
-    { name: 'About', href: '#About' },
-    { name: 'Portfolio', href: '#Portfolio' },
-    { name: 'Contact', href: '#Contact' },
+    { id: 'Home', label: 'Home', href: '#Home' },
+    { id: 'About', label: 'Tentang Saya', href: '#About' },
+    { id: 'Portfolio', label: 'Portfolio', href: '#Portfolio' },
+    { id: 'Contact', label: 'Contact', href: '#Contact' },
 ];
 
 export default function Navbar() {
@@ -15,13 +15,12 @@ export default function Navbar() {
 
     useEffect(() => {
         const handleScroll = () => {
-            const sections = NAV_LINKS.map((link) => link.name);
-            for (const section of sections.slice().reverse()) {
-                const el = document.getElementById(section);
+            for (const link of NAV_LINKS.slice().reverse()) {
+                const el = document.getElementById(link.id);
                 if (el) {
                     const rect = el.getBoundingClientRect();
                     if (rect.top <= 240) {
-                        setActiveSection(section);
+                        setActiveSection(link.id);
                         break;
                     }
                 }
@@ -32,9 +31,9 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const handleNavClick = (e, name, href) => {
+    const handleNavClick = (e, id, href) => {
         e.preventDefault();
-        setActiveSection(name);
+        setActiveSection(id);
         const targetId = href.replace('#', '');
         const targetEl = document.getElementById(targetId);
         if (targetEl) {
@@ -56,13 +55,13 @@ export default function Navbar() {
 
                 {/* Nav Links */}
                 {NAV_LINKS.map((link) => {
-                    const isActive = activeSection === link.name;
+                    const isActive = activeSection === link.id;
                     return (
                         <a
-                            key={link.name}
+                            key={link.id}
                             href={link.href}
                             onClick={(e) =>
-                                handleNavClick(e, link.name, link.href)
+                                handleNavClick(e, link.id, link.href)
                             }
                             className={`relative rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-300 sm:px-4 sm:py-2 sm:text-sm ${
                                 isActive
@@ -70,7 +69,7 @@ export default function Navbar() {
                                     : 'text-slate-300 hover:bg-white/5 hover:text-white'
                             }`}
                         >
-                            {link.name}
+                            {link.label}
                         </a>
                     );
                 })}
