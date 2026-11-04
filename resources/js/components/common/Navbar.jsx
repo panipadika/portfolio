@@ -4,7 +4,7 @@ import { useBackgroundAudio } from '../../hooks/useBackgroundAudio';
 
 const NAV_LINKS = [
     { name: 'Home', href: '#Home' },
-    { name: 'About', href: '#About' },
+    { name: 'Tentang Saya', href: '#About' },
     { name: 'Portfolio', href: '#Portfolio' },
     { name: 'Contact', href: '#Contact' },
 ];
@@ -15,13 +15,13 @@ export default function Navbar() {
 
     useEffect(() => {
         const handleScroll = () => {
-            const sections = NAV_LINKS.map((link) => link.name);
-            for (const section of sections.slice().reverse()) {
-                const el = document.getElementById(section);
+            for (const link of NAV_LINKS.slice().reverse()) {
+                const targetId = link.href.replace('#', '');
+                const el = document.getElementById(targetId);
                 if (el) {
                     const rect = el.getBoundingClientRect();
                     if (rect.top <= 240) {
-                        setActiveSection(section);
+                        setActiveSection(link.name);
                         break;
                     }
                 }
