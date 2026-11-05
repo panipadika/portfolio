@@ -9,6 +9,7 @@ import {
     Sparkles,
 } from 'lucide-react';
 import LanyardCanvas from '../../three/LanyardCanvas';
+import { SOCIAL_LINKS } from '../../config/socials';
 
 export default function HeroSection() {
     return (
@@ -77,36 +78,36 @@ export default function HeroSection() {
                                 Connect:
                             </span>
                             <a
-                                href="https://github.com"
+                                href={SOCIAL_LINKS.github.url}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                                aria-label="GitHub Profile"
+                                aria-label={SOCIAL_LINKS.github.label}
                             >
                                 <Github className="h-4 w-4" />
                             </a>
                             <a
-                                href="https://linkedin.com"
+                                href={SOCIAL_LINKS.linkedin.url}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                                aria-label="LinkedIn Profile"
+                                aria-label={SOCIAL_LINKS.linkedin.label}
                             >
                                 <Linkedin className="h-4 w-4" />
                             </a>
                             <a
-                                href="https://instagram.com"
+                                href={SOCIAL_LINKS.instagram.url}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                                aria-label="Instagram Profile"
+                                aria-label={SOCIAL_LINKS.instagram.label}
                             >
                                 <Instagram className="h-4 w-4" />
                             </a>
                         </div>
                     </motion.div>
 
-                    {/* Right Column: mobile-only Lanyard (shown below text on small screens) */}
+                    {/* Right Column: 3D Lanyard Interactive Stage */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -115,49 +116,36 @@ export default function HeroSection() {
                             delay: 0.2,
                             ease: [0.16, 1, 0.3, 1],
                         }}
-                        className="relative flex items-center justify-center lg:col-span-5 lg:hidden"
+                        className="relative flex items-center justify-center lg:col-span-5"
                     >
-                        <div className="relative w-full">
+                        <div className="relative flex h-[520px] w-full items-center justify-center sm:h-[580px] lg:h-[600px]">
                             <LanyardCanvas
                                 frontImage="/card-front.png"
                                 backImage="/card-back.png"
                                 strapImage="/band.png"
-                                cardColor="#94a3b8"
+                                imageFit="cover"
+                                cardColor="#ffffff"
+                                orientation="portrait"
                                 finish="glossy"
+                                cornerRadius={0.3}
+                                size={0.6}
                                 anchor="center"
-                                className="h-[480px] sm:h-[540px]"
+                                strapLength={0.5}
+                                strapColor="#111111"
+                                strapWidth={0.65}
+                                metal="silver"
+                                gravity={1}
+                                damping={0.5}
+                                elasticity={0.5}
+                                breeze={0.5}
+                                interactive={true}
+                                intro={true}
+                                className="h-full w-full"
                             />
                         </div>
                     </motion.div>
                 </div>
             </div>
-
-            {/* Desktop-only: full-width 3D Lanyard canvas as absolute overlay on the right */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{
-                    duration: 1,
-                    delay: 0.3,
-                    ease: [0.16, 1, 0.3, 1],
-                }}
-                className="pointer-events-none absolute inset-0 z-0 hidden lg:block"
-            >
-                <div className="pointer-events-auto h-full w-full">
-                    <LanyardCanvas
-                        frontImage="/card-front.png"
-                        backImage="/card-back.png"
-                        strapImage="/band.png"
-                        cardColor="#94a3b8"
-                        finish="glossy"
-                        anchor="right"
-                        size={0.6}
-                        strapLength={0.5}
-                        strapWidth={0.8}
-                        className="h-full w-full"
-                    />
-                </div>
-            </motion.div>
         </section>
     );
 }
