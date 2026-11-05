@@ -9,6 +9,7 @@ import {
     Sparkles,
 } from 'lucide-react';
 import LanyardCanvas from '../../three/LanyardCanvas';
+import { SOCIAL_LINKS } from '../../config/socials';
 
 export default function HeroSection() {
     return (
@@ -79,29 +80,29 @@ export default function HeroSection() {
                                 Connect:
                             </span>
                             <a
-                                href="https://github.com"
+                                href={SOCIAL_LINKS.github.url}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                                aria-label="GitHub Profile"
+                                aria-label={SOCIAL_LINKS.github.label}
                             >
                                 <Github className="h-4 w-4" />
                             </a>
                             <a
-                                href="https://linkedin.com"
+                                href={SOCIAL_LINKS.linkedin.url}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                                aria-label="LinkedIn Profile"
+                                aria-label={SOCIAL_LINKS.linkedin.label}
                             >
                                 <Linkedin className="h-4 w-4" />
                             </a>
                             <a
-                                href="https://instagram.com"
+                                href={SOCIAL_LINKS.instagram.url}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                                aria-label="Instagram Profile"
+                                aria-label={SOCIAL_LINKS.instagram.label}
                             >
                                 <Instagram className="h-4 w-4" />
                             </a>
@@ -124,12 +125,23 @@ export default function HeroSection() {
                                 frontImage="/card-front.png"
                                 backImage="/card-back.png"
                                 strapImage="/band.png"
-                                cardColor="#94a3b8"
+                                imageFit="cover"
+                                cardColor="#ffffff"
+                                orientation="portrait"
                                 finish="glossy"
-                                anchor="center"
+                                cornerRadius={0.3}
                                 size={0.62}
+                                anchor="center"
                                 strapLength={0.42}
+                                strapColor="#111111"
                                 strapWidth={0.8}
+                                metal="silver"
+                                gravity={1}
+                                damping={0.5}
+                                elasticity={0.5}
+                                breeze={0.5}
+                                interactive={true}
+                                intro={true}
                                 className="h-[480px] sm:h-[540px] lg:h-[660px] xl:h-[720px]"
                             />
                         </div>
