@@ -14,11 +14,13 @@ export default function HeroSection() {
     return (
         <section
             id="Home"
-            className="relative overflow-hidden pt-32 pb-20 md:py-36"
+            className="relative overflow-visible pt-32 pb-20 md:py-36"
         >
-            {/* Background radial gradients */}
-            <div className="pointer-events-none absolute top-1/4 left-10 -z-10 h-96 w-96 rounded-full bg-indigo-600/10 blur-[140px]" />
-            <div className="pointer-events-none absolute top-1/3 right-10 -z-10 h-80 w-80 rounded-full bg-cyan-500/10 blur-[120px]" />
+            {/* Background radial gradients (isolated clipping so blur glow blobs don't cause page scrollbars while letting 3D lanyard extend) */}
+            <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+                <div className="absolute top-1/4 left-10 h-96 w-96 rounded-full bg-indigo-600/10 blur-[140px]" />
+                <div className="absolute top-1/3 right-10 h-80 w-80 rounded-full bg-cyan-500/10 blur-[120px]" />
+            </div>
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-8">
@@ -106,7 +108,7 @@ export default function HeroSection() {
                         </div>
                     </motion.div>
 
-                    {/* Right Column: mobile-only Lanyard (shown below text on small screens) */}
+                    {/* Right Column: 5 Cols 3D Lanyard ID Card (raised and balanced alongside introduction) */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -115,7 +117,7 @@ export default function HeroSection() {
                             delay: 0.2,
                             ease: [0.16, 1, 0.3, 1],
                         }}
-                        className="relative flex items-center justify-center lg:col-span-5 lg:hidden"
+                        className="relative z-10 flex items-center justify-center lg:col-span-5 lg:-mt-24 xl:-mt-32"
                     >
                         <div className="relative w-full">
                             <LanyardCanvas
@@ -125,39 +127,15 @@ export default function HeroSection() {
                                 cardColor="#94a3b8"
                                 finish="glossy"
                                 anchor="center"
-                                className="h-[480px] sm:h-[540px]"
+                                size={0.62}
+                                strapLength={0.42}
+                                strapWidth={0.8}
+                                className="h-[480px] sm:h-[540px] lg:h-[660px] xl:h-[720px]"
                             />
                         </div>
                     </motion.div>
                 </div>
             </div>
-
-            {/* Desktop-only: full-width 3D Lanyard canvas as absolute overlay on the right */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{
-                    duration: 1,
-                    delay: 0.3,
-                    ease: [0.16, 1, 0.3, 1],
-                }}
-                className="pointer-events-none absolute inset-0 z-0 hidden lg:block"
-            >
-                <div className="pointer-events-auto h-full w-full">
-                    <LanyardCanvas
-                        frontImage="/card-front.png"
-                        backImage="/card-back.png"
-                        strapImage="/band.png"
-                        cardColor="#94a3b8"
-                        finish="glossy"
-                        anchor="right"
-                        size={0.6}
-                        strapLength={0.5}
-                        strapWidth={0.8}
-                        className="h-full w-full"
-                    />
-                </div>
-            </motion.div>
         </section>
     );
 }
