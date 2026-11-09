@@ -64,7 +64,7 @@ export default function HeroSection() {
     return (
         <section
             id="Home"
-            className="relative overflow-visible pt-28 pb-8 sm:pt-32 sm:pb-10 lg:pt-36 lg:pb-12"
+            className="relative overflow-visible pt-20 pb-8 sm:pt-28 sm:pb-10 lg:pt-36 lg:pb-12"
         >
             {/* Background radial gradients (isolated clipping so blur glow blobs don't cause page scrollbars while letting 3D lanyard extend) */}
             <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -73,13 +73,13 @@ export default function HeroSection() {
             </div>
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-8">
-                    {/* Left Column: 7 Cols Typography & CTAs (z-20 so text sits gracefully on top of the 3D card when dragged left) */}
+                <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-8">
+                    {/* Left Column: 7 Cols Typography & CTAs (order-2 on mobile so 3D Lanyard appears first) */}
                     <motion.div
                         initial={{ opacity: 0, y: 25 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                        className="pointer-events-none relative z-20 flex flex-col items-start text-left lg:col-span-7"
+                        className="pointer-events-none relative z-20 flex flex-col items-start text-left order-2 lg:order-1 lg:col-span-7"
                     >
                         {/* Main Headline (Welcome to My Portfolio) */}
                         <h1 className="font-display mb-3 text-4xl leading-[1.1] font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
@@ -111,7 +111,7 @@ export default function HeroSection() {
                         </p>
 
                         {/* Action Buttons with React Bits StarBorder */}
-                        <div className="pointer-events-auto relative z-30 mb-20 flex w-full flex-wrap items-center gap-4 sm:w-auto">
+                        <div className="pointer-events-auto relative z-30 mb-8 sm:mb-12 lg:mb-20 flex w-full flex-wrap items-center gap-4 sm:w-auto">
                             <StarBorder
                                 as="a"
                                 href="#Portfolio"
@@ -170,9 +170,9 @@ export default function HeroSection() {
                         </div>
                     </motion.div>
 
-                    {/* Right Column: desktop grid spacer + mobile-only Lanyard */}
-                    <div className="relative lg:col-span-5">
-                        {/* Mobile Lanyard (below headline on smaller screens) */}
+                    {/* Right Column: desktop grid spacer + mobile-only Lanyard (order-1 on mobile so it appears first) */}
+                    <div className="relative order-1 lg:order-2 lg:col-span-5">
+                        {/* Mobile Lanyard (appears at the top before headline on mobile) */}
                         <div className="relative z-10 flex w-full items-center justify-center lg:hidden">
                             {!isDesktop && (
                                 <LanyardCanvas
@@ -196,7 +196,7 @@ export default function HeroSection() {
                                     breeze={0.2}
                                     interactive={true}
                                     intro={true}
-                                    className="h-[460px] sm:h-[500px]"
+                                    className="h-[360px] sm:h-[440px]"
                                 />
                             )}
                         </div>

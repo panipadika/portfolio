@@ -74,31 +74,41 @@ export default function PortfolioSection({
                 {/* Tabbed Catalog Grid View */}
                 <div className="w-full">
                     {/* Top Dynamic Tab Navigation */}
-                    <div className="mb-14 flex justify-center">
-                                <div className="inline-flex max-w-full overflow-x-auto rounded-2xl border border-white/10 bg-[#0d1322]/80 p-1.5 shadow-2xl backdrop-blur-xl">
-                                    {TABS.map((tab) => {
-                                        const Icon = tab.icon;
-                                        const isActive = activeTab === tab.id;
-                                        return (
-                                            <button
-                                                key={tab.id}
-                                                type="button"
-                                                onClick={() =>
-                                                    setActiveTab(tab.id)
-                                                }
-                                                className={`relative flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-300 sm:px-6 sm:py-2.5 sm:text-sm ${
-                                                    isActive
-                                                        ? 'bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#4e63d9] text-white shadow-[0_0_20px_rgba(78,99,217,0.35)] border border-[#7185e8]/40'
-                                                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-                                                }`}
-                                            >
-                                                <Icon className="h-4 w-4 shrink-0" />
-                                                <span>{tab.label}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                    <div className="relative mb-10 sm:mb-14 w-full">
+                        {/* Horizontal scroll container with smooth touch scrolling and hidden scrollbar */}
+                        <div className="flex w-full overflow-x-auto px-4 py-2 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden justify-start sm:justify-center">
+                            <div className="inline-flex shrink-0 items-center gap-1 sm:gap-1.5 rounded-2xl border border-white/10 bg-[#0d1322]/90 p-1.5 shadow-2xl backdrop-blur-xl">
+                                {TABS.map((tab) => {
+                                    const Icon = tab.icon;
+                                    const isActive = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            onClick={() =>
+                                                setActiveTab(tab.id)
+                                            }
+                                            className={`relative flex shrink-0 cursor-pointer items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-300 sm:px-6 sm:py-2.5 sm:text-sm ${
+                                                isActive
+                                                    ? 'bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#4e63d9] text-white shadow-[0_0_20px_rgba(78,99,217,0.35)] border border-[#7185e8]/40'
+                                                    : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                                            }`}
+                                        >
+                                            <Icon className="h-4 w-4 shrink-0" />
+                                            <span>{tab.label}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
+                        </div>
+
+                        {/* Subtle swipe affordance indicator on mobile */}
+                        <div className="flex items-center justify-center gap-1.5 mt-2 text-slate-500 text-[11px] font-mono sm:hidden">
+                            <span>←</span>
+                            <span>geser tab kategori</span>
+                            <span>→</span>
+                        </div>
+                    </div>
 
                             {/* Tab Panels */}
                             <AnimatePresence mode="wait">
