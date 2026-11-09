@@ -59,7 +59,7 @@
             <!-- Tech Tags (Interactive Picker & Auto Creator) -->
             @include('admin.projects.partials.tech-picker')
 
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
                 <!-- Demo URL -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 mb-2">Live Demo URL</label>
@@ -81,6 +81,19 @@
                         value="{{ old('repo_url') }}"
                         placeholder="https://github.com/username/repo"
                         class="h-11 w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    >
+                </div>
+
+                <!-- Sort Order -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">Urutan Tampilan (Sort Order)</label>
+                    <input
+                        type="number"
+                        name="sort_order"
+                        value="{{ old('sort_order') }}"
+                        min="0"
+                        placeholder="1, 2, 3... (opsional)"
+                        class="h-11 w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 text-sm font-mono text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                     >
                 </div>
             </div>

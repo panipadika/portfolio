@@ -29,6 +29,7 @@ class StoreProjectRequest extends FormRequest
             'demo_url' => ['nullable', 'url', 'max:255'],
             'repo_url' => ['nullable', 'url', 'max:255'],
             'is_featured' => ['nullable', 'boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
         ];
     }
 }

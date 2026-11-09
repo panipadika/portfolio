@@ -22,6 +22,7 @@ class PortfolioController extends Controller
     public function index(): JsonResponse
     {
         $projects = Project::where('is_featured', true)
+            ->orderBy('sort_order', 'asc')
             ->orderBy('created_at', 'desc')
             ->get();
 

@@ -46,6 +46,7 @@ class PortfolioSeeder extends Seeder
                 'demo_url' => 'https://cybergyzn.vercel.app',
                 'repo_url' => 'https://github.com/panipadika/cyber-gyzn',
                 'is_featured' => true,
+                'sort_order' => 1,
             ],
             [
                 'title' => 'Bot Generate Artikel',
@@ -64,6 +65,7 @@ class PortfolioSeeder extends Seeder
                 'demo_url' => null,
                 'repo_url' => 'https://github.com/panipadika/bot-generate-artikel',
                 'is_featured' => true,
+                'sort_order' => 2,
             ],
             [
                 'title' => 'Database Siswa',
@@ -80,6 +82,7 @@ class PortfolioSeeder extends Seeder
                 'demo_url' => null,
                 'repo_url' => 'https://github.com/panipadika/database-siswa',
                 'is_featured' => true,
+                'sort_order' => 3,
             ],
         ];
 

@@ -25,6 +25,7 @@ class Project extends Model
         'demo_url',
         'repo_url',
         'is_featured',
+        'sort_order',
     ];
 
     /**
@@ -37,6 +38,7 @@ class Project extends Model
         return [
             'tech_tags' => 'array',
             'is_featured' => 'boolean',
+            'sort_order' => 'integer',
         ];
     }
 }

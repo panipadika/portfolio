@@ -82,3 +82,24 @@ test('GET /api/portfolio only returns featured projects in projects array', func
         ->and($projects[0]['title'])->toBe('Featured Project')
         ->and($response->json('data.stats.projects_count'))->toBe(2);
 });
+
+test('GET /api/portfolio returns featured projects ordered by sort_order ascending', function () {
+    Project::factory()->create([
+        'title' => 'Project Kedua',
+        'is_featured' => true,
+        'sort_order' => 20,
+    ]);
+
+    Project::factory()->create([
+        'title' => 'Project Pertama',
+        'is_featured' => true,
+        'sort_order' => 5,
+    ]);
+
+    $response = $this->getJson('/api/portfolio');
+    $response->assertOk();
+
+    $projects = $response->json('data.projects');
+    expect($projects[0]['title'])->toBe('Project Pertama')
+        ->and($projects[1]['title'])->toBe('Project Kedua');
+});

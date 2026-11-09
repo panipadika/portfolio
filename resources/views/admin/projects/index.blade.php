@@ -49,6 +49,7 @@
                         <th class="px-6 py-4">Teknologi</th>
                         <th class="px-6 py-4">Tautan</th>
                         <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Urutan</th>
                         <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -97,6 +98,9 @@
                                 @else
                                     <span class="inline-flex items-center rounded-full bg-slate-800 px-2.5 py-1 text-[11px] text-slate-400 border border-slate-700 whitespace-nowrap">Standard</span>
                                 @endif
+                            </td>
+                            <td class="px-6 py-4 font-mono text-slate-400 whitespace-nowrap">
+                                #{{ $project->sort_order }}
                             </td>
                             <td class="px-6 py-4 text-right whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-2">

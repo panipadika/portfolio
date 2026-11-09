@@ -125,3 +125,33 @@ test('storing project automatically provisions missing tech tags into credential
         'title' => 'ESP32',
     ]);
 });
+
+test('admin can manage sort order of projects and view it in table', function () {
+    $p2 = Project::factory()->create([
+        'title' => 'Project Kedua',
+        'sort_order' => 2,
+    ]);
+
+    $p1 = Project::factory()->create([
+        'title' => 'Project Pertama',
+        'sort_order' => 1,
+    ]);
+
+    $response = $this->get(route('admin.projects.index'));
+    $response->assertOk();
+    $response->assertSeeInOrder(['Project Pertama', 'Project Kedua']);
+    $response->assertSee('#1');
+    $response->assertSee('#2');
+
+    // Test store with explicit sort_order
+    $storeResponse = $this->post(route('admin.projects.store'), [
+        'title' => 'Project Prioritas',
+        'description' => 'Deskripsi project prioritas',
+        'sort_order' => 0,
+    ]);
+    $storeResponse->assertRedirect(route('admin.projects.index'));
+    $this->assertDatabaseHas('projects', [
+        'title' => 'Project Prioritas',
+        'sort_order' => 0,
+    ]);
+});

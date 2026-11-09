@@ -33,7 +33,10 @@ class ProjectController extends Controller
             $query->where('is_featured', $request->boolean('featured'));
         }
 
-        $projects = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $projects = $query->orderBy('sort_order', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('admin.projects.index', compact('projects'));
     }
@@ -81,6 +84,9 @@ class ProjectController extends Controller
         }
 
         $validated['is_featured'] = $request->boolean('is_featured');
+        if (! isset($validated['sort_order']) || $validated['sort_order'] === null) {
+            $validated['sort_order'] = (int) (Project::max('sort_order') ?? 0) + 1;
+        }
 
         Project::create($validated);
 
@@ -130,6 +136,9 @@ class ProjectController extends Controller
         }
 
         $validated['is_featured'] = $request->boolean('is_featured');
+        if (! isset($validated['sort_order']) || $validated['sort_order'] === null) {
+            $validated['sort_order'] = $project->sort_order ?? 0;
+        }
 
         $project->update($validated);
 

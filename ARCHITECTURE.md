@@ -55,6 +55,7 @@ Menyimpan daftar karya proyek yang pernah dibuat.
 | `demo_url`    | `VARCHAR(255)`    | `NULLABLE`           | Tautan live preview proyek                              |
 | `repo_url`    | `VARCHAR(255)`    | `NULLABLE`           | Tautan repositori GitHub                                |
 | `is_featured` | `BOOLEAN`         | `DEFAULT TRUE`       | Status tampil di halaman utama                          |
+| `sort_order`  | `INT`             | `DEFAULT 0`          | Urutan tampil di halaman                                |
 | `created_at`  | `TIMESTAMP`       | `NULLABLE`           | Waktu pembuatan data                                    |
 | `updated_at`  | `TIMESTAMP`       | `NULLABLE`           | Waktu pembaruan data                                    |
 

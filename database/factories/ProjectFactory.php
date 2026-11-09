@@ -33,6 +33,7 @@ class ProjectFactory extends Factory
             'demo_url' => fake()->url(),
             'repo_url' => fake()->url(),
             'is_featured' => true,
+            'sort_order' => fake()->numberBetween(0, 10),
         ];
     }
 }
