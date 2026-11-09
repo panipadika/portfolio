@@ -124,6 +124,7 @@ interface Simulation {
     lengths: Float64Array;
     impulses: Float64Array;
     rest: number;
+    currentRest?: number;
     anchor: THREE.Vector3;
     body: Body;
     grab: Grab | null;
@@ -863,7 +864,8 @@ const solveSegment = (
     }
     const delta = scratch.a.subVectors(b, a);
     const length = delta.length();
-    const stretch = length - sim.rest;
+    const effectiveRest = sim.grab ? (sim.currentRest ?? sim.rest) : sim.rest;
+    const stretch = length - effectiveRest;
     if (stretch <= 0 || length < 1e-9) return;
     const normal = delta.divideScalar(length);
     const wb = last ? bodyWeight(body, r, normal) : NODE_WEIGHT;
@@ -875,8 +877,11 @@ const solveSegment = (
 
     if (wa) a.addScaledVector(normal, lambda * wa);
     if (last) {
-        scratch.c.copy(normal).multiplyScalar(-lambda);
-        pushBody(body, r, scratch.c);
+        if (!sim.grab) {
+            const impulseMag = Math.min(lambda, 3.0);
+            scratch.c.copy(normal).multiplyScalar(-impulseMag);
+            pushBody(body, r, scratch.c);
+        }
     } else {
         b.addScaledVector(normal, -lambda * wb);
     }
@@ -960,6 +965,16 @@ const stepSimulation = (
         0.8;
     const windZ = physics.breeze * Math.sin(time * 0.37 + 0.6) * 0.5;
     const grab = sim.grab;
+    if (grab) {
+        const hangPos = scratch.c
+            .copy(body.hang)
+            .applyQuaternion(body.quaternion)
+            .add(body.position);
+        const currentDist = nodes[0].distanceTo(hangPos);
+        sim.currentRest = Math.max(sim.rest, currentDist / JOINTS);
+    } else {
+        sim.currentRest = sim.rest;
+    }
     const pin = scratch.pin;
     const nodeDrag = Math.exp(-physics.nodeDrag * h);
     const linearDrag = Math.exp(-physics.linearDrag * h);
@@ -1718,6 +1733,7 @@ const Lanyard = ({
             toPointer(event);
             const hit = pickCard();
             if (!hit) return;
+            canvas.style.touchAction = 'none';
             sim.grab = {
                 local: hit.point
                     .clone()
@@ -1780,6 +1796,7 @@ const Lanyard = ({
         };
 
         const onPointerUp = (event: PointerEvent) => {
+            canvas.style.touchAction = settingsRef.current!.interactive ? 'pan-y' : 'auto';
             if (!sim.grab) return;
             const hadPress = !!press;
             const pressPoint = press?.point.clone();
@@ -1813,7 +1830,16 @@ const Lanyard = ({
             if (!settingsRef.current!.interactive || event.touches.length !== 1)
                 return;
             toPointer(event.touches[0]);
-            if (pickCard()) event.preventDefault();
+            if (pickCard()) {
+                event.preventDefault();
+                canvas.style.touchAction = 'none';
+            }
+        };
+
+        const onTouchMove = (event: TouchEvent) => {
+            if (sim.grab && event.touches.length > 0) {
+                event.preventDefault();
+            }
         };
 
         canvas.addEventListener('pointerdown', onPointerDown);
@@ -1822,6 +1848,9 @@ const Lanyard = ({
         canvas.addEventListener('pointercancel', onPointerUp);
         canvas.addEventListener('lostpointercapture', onPointerUp);
         canvas.addEventListener('touchstart', onTouchStart, {
+            passive: false,
+        });
+        canvas.addEventListener('touchmove', onTouchMove, {
             passive: false,
         });
 

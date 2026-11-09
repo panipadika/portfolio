@@ -172,8 +172,8 @@ export default function HeroSection() {
 
                     {/* Right Column: desktop grid spacer + mobile-only Lanyard (order-1 on mobile so it appears first) */}
                     <div className="relative order-1 lg:order-2 lg:col-span-5">
-                        {/* Mobile Lanyard (appears at the top before headline on mobile) */}
-                        <div className="relative z-10 flex w-full items-center justify-center lg:hidden">
+                        {/* Mobile Lanyard (appears at the top before headline on mobile, spacious unclipped drag area) */}
+                        <div className="relative z-10 flex w-full items-center justify-center lg:hidden overflow-visible">
                             {!isDesktop && (
                                 <LanyardCanvas
                                     frontImage="/card-front.png"
@@ -186,7 +186,7 @@ export default function HeroSection() {
                                     cornerRadius={0.3}
                                     size={0.53}
                                     anchor="center"
-                                    strapLength={0.48}
+                                    strapLength={0.42}
                                     strapColor="#111111"
                                     strapWidth={0.6}
                                     metal="silver"
@@ -196,7 +196,7 @@ export default function HeroSection() {
                                     breeze={0.2}
                                     interactive={true}
                                     intro={true}
-                                    className="h-[360px] sm:h-[440px]"
+                                    className="h-[500px] sm:h-[580px] -mb-32 sm:-mb-36"
                                 />
                             )}
                         </div>

@@ -169,9 +169,6 @@ export default function Navbar({ isVisible = true }) {
                                 <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#262f6b] to-[#4e63d9] text-xs font-bold text-white shadow-md border border-white/20">
                                     PP
                                 </div>
-                                <span className="font-mono text-xs font-bold tracking-wider text-slate-200">
-                                    PANJI<span className="text-[#7185e8]">.DEV</span>
-                                </span>
                             </a>
 
                             {/* Tombol Kontrol Kanan: Audio & Hamburger */}
@@ -244,13 +241,6 @@ export default function Navbar({ isVisible = true }) {
                                     </div>
 
                                     {/* Mobile Menu Footer Info */}
-                                    <div className="mt-2 border-t border-white/10 pt-2 px-3 flex items-center justify-between text-[11px] text-slate-400">
-                                        <span className="font-mono">Pani Padika</span>
-                                        <span className="inline-flex items-center gap-1.5 text-emerald-400 font-medium">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                            Available for hire
-                                        </span>
-                                    </div>
                                 </motion.nav>
                             )}
                         </AnimatePresence>
