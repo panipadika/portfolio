@@ -21,10 +21,19 @@ class CredentialController extends Controller
     public function index(Request $request): View
     {
         $category = $request->input('category');
+        $search = $request->input('search');
 
         $query = Credential::query();
         if ($category && in_array($category, ['certificate', 'achievement', 'tech_stack'], true)) {
             $query->where('category', $category);
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('issuer_or_level', 'like', "%{$search}%")
+                    ->orWhere('year', 'like', "%{$search}%");
+            });
         }
 
         $items = $query->orderBy('sort_order', 'asc')->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
@@ -33,7 +42,7 @@ class CredentialController extends Controller
         $achievementCount = Credential::where('category', 'achievement')->count();
         $techStackCount = Credential::where('category', 'tech_stack')->count();
 
-        return view('admin.credentials.index', compact('items', 'category', 'certificateCount', 'achievementCount', 'techStackCount'));
+        return view('admin.credentials.index', compact('items', 'category', 'search', 'certificateCount', 'achievementCount', 'techStackCount'));
     }
 
     public function create(Request $request): View

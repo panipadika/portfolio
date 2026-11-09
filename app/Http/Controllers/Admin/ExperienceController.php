@@ -17,10 +17,20 @@ class ExperienceController extends Controller
     public function index(Request $request): View
     {
         $type = $request->input('type');
+        $search = $request->input('search');
 
         $query = Experience::query();
         if ($type && in_array($type, ['education', 'experience'], true)) {
             $query->where('type', $type);
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('institution', 'like', "%{$search}%")
+                    ->orWhere('role_or_major', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('period', 'like', "%{$search}%");
+            });
         }
 
         $items = $query->orderBy('sort_order', 'asc')->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
@@ -28,7 +38,7 @@ class ExperienceController extends Controller
         $educationCount = Experience::where('type', 'education')->count();
         $experienceCount = Experience::where('type', 'experience')->count();
 
-        return view('admin.experiences.index', compact('items', 'type', 'educationCount', 'experienceCount'));
+        return view('admin.experiences.index', compact('items', 'type', 'search', 'educationCount', 'experienceCount'));
     }
 
     public function create(Request $request): View

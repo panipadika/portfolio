@@ -20,7 +20,7 @@
                 <span class="text-xs text-indigo-300">({{ $stats['featured_projects_count'] }} Featured)</span>
             </div>
             <a href="{{ route('admin.projects.index') }}" class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#7185e8] hover:text-white transition-colors">
-                Kelola projek <span>→</span>
+                Kelola projek
             </a>
         </div>
 
@@ -37,7 +37,7 @@
                 <span class="text-xs text-emerald-300">({{ $stats['education_count'] }} Edu, {{ $stats['experience_count'] }} Exp)</span>
             </div>
             <a href="{{ route('admin.experiences.index') }}" class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-white transition-colors">
-                Kelola riwayat <span>→</span>
+                Kelola riwayat
             </a>
         </div>
 
@@ -54,7 +54,7 @@
                 <span class="text-xs text-amber-300">({{ $stats['certificates_count'] }} Sertifikat, {{ $stats['tech_stack_count'] }} Tech)</span>
             </div>
             <a href="{{ route('admin.credentials.index') }}" class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-white transition-colors">
-                Kelola kredensial <span>→</span>
+                Kelola kredensial 
             </a>
         </div>
 
@@ -75,40 +75,42 @@
                 @endif
             </div>
             <a href="{{ route('admin.messages.index') }}" class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-rose-400 hover:text-white transition-colors">
-                Buka inbox pesan <span>→</span>
+                Buka inbox pesan 
             </a>
         </div>
     </div>
 
-    <!-- Quick Actions Panel -->
-    <div class="rounded-3xl border border-white/10 bg-[#0d1322]/50 p-6 backdrop-blur-md">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono mb-4">Aksi Cepat</h2>
-        <div class="flex flex-wrap gap-3">
-            <a href="{{ route('admin.projects.create') }}" class="inline-flex items-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-600/20 px-4 py-2.5 text-xs font-semibold text-indigo-200 transition-all hover:bg-indigo-600/30 hover:scale-[1.02] active:scale-[0.98]">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Tambah Projek Baru
+    <!-- Quick Actions Panel (Clean, Cohesive & Compact) -->
+    <div class="rounded-3xl border border-white/10 bg-[#0d1322]/80 p-5 shadow-xl backdrop-blur-xl">
+        <div class="flex items-center justify-between mb-3.5">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Aksi Cepat</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+            <a href="{{ route('admin.projects.create') }}" class="group flex items-center justify-center gap-2 rounded-xl border border-indigo-500/25 bg-indigo-600/15 px-3 py-2.5 text-xs font-semibold text-indigo-200 transition-all duration-200 hover:bg-indigo-600/25 hover:border-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] shadow-sm">
+                <svg class="h-4 w-4 shrink-0 text-indigo-400 transition-transform group-hover:rotate-90 duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span class="truncate">Tambah Projek</span>
             </a>
-            <a href="{{ route('admin.experiences.create', ['type' => 'experience']) }}" class="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-600/20 px-4 py-2.5 text-xs font-semibold text-emerald-200 transition-all hover:bg-emerald-600/30 hover:scale-[1.02] active:scale-[0.98]">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Tambah Pengalaman
+            <a href="{{ route('admin.experiences.create', ['type' => 'experience']) }}" class="group flex items-center justify-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-600/15 px-3 py-2.5 text-xs font-semibold text-emerald-200 transition-all duration-200 hover:bg-emerald-600/25 hover:border-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] shadow-sm">
+                <svg class="h-4 w-4 shrink-0 text-emerald-400 transition-transform group-hover:rotate-90 duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span class="truncate">Tambah Pengalaman</span>
             </a>
-            <a href="{{ route('admin.experiences.create', ['type' => 'education']) }}" class="inline-flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-600/20 px-4 py-2.5 text-xs font-semibold text-cyan-200 transition-all hover:bg-cyan-600/30 hover:scale-[1.02] active:scale-[0.98]">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Tambah Pendidikan
+            <a href="{{ route('admin.experiences.create', ['type' => 'education']) }}" class="group flex items-center justify-center gap-2 rounded-xl border border-cyan-500/25 bg-cyan-600/15 px-3 py-2.5 text-xs font-semibold text-cyan-200 transition-all duration-200 hover:bg-cyan-600/25 hover:border-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] shadow-sm">
+                <svg class="h-4 w-4 shrink-0 text-cyan-400 transition-transform group-hover:rotate-90 duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span class="truncate">Tambah Pendidikan</span>
             </a>
-            <a href="{{ route('admin.credentials.create', ['category' => 'certificate']) }}" class="inline-flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-600/20 px-4 py-2.5 text-xs font-semibold text-amber-200 transition-all hover:bg-amber-600/30 hover:scale-[1.02] active:scale-[0.98]">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Tambah Sertifikat
+            <a href="{{ route('admin.credentials.create', ['category' => 'certificate']) }}" class="group flex items-center justify-center gap-2 rounded-xl border border-amber-500/25 bg-amber-600/15 px-3 py-2.5 text-xs font-semibold text-amber-200 transition-all duration-200 hover:bg-amber-600/25 hover:border-amber-500/40 hover:scale-[1.02] active:scale-[0.98] shadow-sm">
+                <svg class="h-4 w-4 shrink-0 text-amber-400 transition-transform group-hover:rotate-90 duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span class="truncate">Tambah Sertifikat</span>
             </a>
-            <a href="{{ route('admin.settings.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-slate-300 transition-all hover:bg-white/10 hover:text-white">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{{ route('admin.settings.index') }}" class="group flex items-center justify-center gap-2 rounded-xl border border-slate-700/60 bg-slate-800/40 px-3 py-2.5 text-xs font-semibold text-slate-300 transition-all duration-200 hover:bg-slate-800/70 hover:border-slate-600 hover:scale-[1.02] active:scale-[0.98] shadow-sm">
+                <svg class="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:scale-110 duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <circle cx="18" cy="5" r="3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <circle cx="6" cy="12" r="3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <circle cx="18" cy="19" r="3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                Perbarui Kontak & Medsos
+                <span class="truncate">Kontak & Medsos</span>
             </a>
         </div>
     </div>

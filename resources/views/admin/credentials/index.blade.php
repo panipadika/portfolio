@@ -5,28 +5,56 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Header with Category Tabs & Add Button -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <!-- Header with Category Tabs, Live Search & Add Button -->
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <!-- Category Filter Tabs -->
-        <div class="inline-flex flex-wrap sm:flex-nowrap max-w-full overflow-x-auto rounded-2xl border border-white/10 bg-[#0d1322] p-1 shadow-lg">
-            <a href="{{ route('admin.credentials.index') }}" class="rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all {{ empty($category) ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:text-white' }}">
+        <div class="inline-flex flex-wrap sm:flex-nowrap shrink-0 max-w-full overflow-x-auto rounded-2xl border border-white/10 bg-[#0d1322] p-1 shadow-lg">
+            <a href="{{ route('admin.credentials.index', array_filter(['search' => $search ?? request('search')])) }}" class="rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition-all {{ empty($category) ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:text-white' }}">
                 Semua ({{ $certificateCount + $achievementCount + $techStackCount }})
             </a>
-            <a href="{{ route('admin.credentials.index', ['category' => 'certificate']) }}" class="rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all {{ $category === 'certificate' ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30' : 'text-slate-400 hover:text-white' }}">
+            <a href="{{ route('admin.credentials.index', array_filter(['category' => 'certificate', 'search' => $search ?? request('search')])) }}" class="rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition-all {{ $category === 'certificate' ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30' : 'text-slate-400 hover:text-white' }}">
                 Sertifikat ({{ $certificateCount }})
             </a>
-            <a href="{{ route('admin.credentials.index', ['category' => 'achievement']) }}" class="rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all {{ $category === 'achievement' ? 'bg-amber-600/20 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-white' }}">
+            <a href="{{ route('admin.credentials.index', array_filter(['category' => 'achievement', 'search' => $search ?? request('search')])) }}" class="rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition-all {{ $category === 'achievement' ? 'bg-amber-600/20 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-white' }}">
                 Prestasi ({{ $achievementCount }})
             </a>
-            <a href="{{ route('admin.credentials.index', ['category' => 'tech_stack']) }}" class="rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all {{ $category === 'tech_stack' ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30' : 'text-slate-400 hover:text-white' }}">
+            <a href="{{ route('admin.credentials.index', array_filter(['category' => 'tech_stack', 'search' => $search ?? request('search')])) }}" class="rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition-all {{ $category === 'tech_stack' ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30' : 'text-slate-400 hover:text-white' }}">
                 Tech Stack ({{ $techStackCount }})
             </a>
         </div>
 
-        <a href="{{ route('admin.credentials.create', ['category' => $category ?: 'certificate']) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#7185e8] px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Tambah Kredensial
-        </a>
+        <!-- Live Search Bar & Add Button -->
+        <div class="flex flex-1 items-center gap-3 lg:justify-end">
+            <!-- Search Form / Live Input -->
+            <form method="GET" action="{{ route('admin.credentials.index') }}" class="relative w-full max-w-xs sm:max-w-sm">
+                @if($category)
+                    <input type="hidden" name="category" value="{{ $category }}">
+                @endif
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input
+                    type="text"
+                    id="credentialLiveSearch"
+                    name="search"
+                    value="{{ $search ?? request('search') }}"
+                    placeholder="Cari nama skill, sertifikat, penerbit..."
+                    autocomplete="off"
+                    class="h-10 w-full rounded-xl border border-white/10 bg-[#0d1322] pl-9 pr-8 text-xs text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-all shadow-inner"
+                >
+                <button
+                    type="button"
+                    id="credentialClearSearch"
+                    class="absolute right-2.5 top-2.5 text-slate-500 hover:text-white text-xs cursor-pointer {{ empty($search ?? request('search')) ? 'hidden' : '' }}"
+                    title="Hapus pencarian"
+                >✕</button>
+            </form>
+
+            <a href="{{ route('admin.credentials.create', ['category' => $category ?: 'certificate']) }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#7185e8] px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span class="whitespace-nowrap">Tambah Kredensial</span>
+            </a>
+        </div>
     </div>
 
     <!-- Table Card -->
@@ -44,9 +72,9 @@
                         <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-white/5 font-sans">
+                <tbody id="credentialTableBody" class="divide-y divide-white/5 font-sans">
                     @forelse($items as $item)
-                        <tr class="transition-colors hover:bg-white/[0.02]">
+                        <tr class="transition-colors hover:bg-white/[0.02] credential-item-row" data-search="{{ strtolower($item->title . ' ' . $item->issuer_or_level . ' ' . $item->category . ' ' . $item->year . ' ' . ($item->category === 'tech_stack' ? 'tech stack keahlian skill' : ($item->category === 'certificate' ? 'sertifikat' : 'prestasi achievement'))) }}">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     @if($item->image_or_icon)
@@ -116,12 +144,21 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
+                        <tr id="credentialServerEmptyRow">
                             <td colspan="7" class="px-6 py-12 text-center text-slate-400">
                                 Belum ada data kredensial.
                             </td>
                         </tr>
                     @endforelse
+                    <!-- Empty State for Live Search Filter -->
+                    <tr id="credentialNoResultsRow" style="display: none;">
+                        <td colspan="7" class="px-6 py-12 text-center text-slate-400 font-sans">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <svg class="h-8 w-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <span class="text-xs">Tidak ada kredensial yang cocok dengan kata kunci pencarian.</span>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -134,4 +171,59 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('credentialLiveSearch');
+        const clearBtn = document.getElementById('credentialClearSearch');
+        const rows = document.querySelectorAll('.credential-item-row');
+        const noResultsRow = document.getElementById('credentialNoResultsRow');
+        const serverEmptyRow = document.getElementById('credentialServerEmptyRow');
+
+        if (!searchInput) return;
+
+        const performLiveFilter = (query) => {
+            const term = query.toLowerCase().trim();
+            let matches = 0;
+
+            rows.forEach(row => {
+                const searchData = row.getAttribute('data-search') || '';
+                const isMatch = term === '' || searchData.includes(term);
+                row.style.display = isMatch ? '' : 'none';
+                if (isMatch) matches++;
+            });
+
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', term.length === 0);
+            }
+
+            if (noResultsRow) {
+                noResultsRow.style.display = (matches === 0 && rows.length > 0) ? '' : 'none';
+            }
+
+            if (serverEmptyRow) {
+                serverEmptyRow.style.display = (rows.length === 0) ? '' : 'none';
+            }
+        };
+
+        searchInput.addEventListener('input', (e) => {
+            performLiveFilter(e.target.value);
+        });
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                performLiveFilter('');
+                searchInput.focus();
+            });
+        }
+
+        // Apply immediately if input prefilled
+        if (searchInput.value.trim().length > 0) {
+            performLiveFilter(searchInput.value);
+        }
+    });
+</script>
+@endpush
 

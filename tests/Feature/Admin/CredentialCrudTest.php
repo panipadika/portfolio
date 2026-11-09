@@ -21,6 +21,10 @@ test('admin can view credentials index and filter by category', function () {
 
     $certResponse = $this->get(route('admin.credentials.index', ['category' => 'certificate']));
     $certResponse->assertOk();
+
+    $searchResponse = $this->get(route('admin.credentials.index', ['search' => 'React']));
+    $searchResponse->assertOk();
+    $searchResponse->assertViewHas('search', 'React');
 });
 
 test('admin can store a credential with image upload', function () {

@@ -20,6 +20,10 @@ test('admin can view experience index with filter tabs', function () {
 
     $filteredResponse = $this->get(route('admin.experiences.index', ['type' => 'experience']));
     $filteredResponse->assertOk();
+
+    $searchResponse = $this->get(route('admin.experiences.index', ['search' => 'Diskominfo']));
+    $searchResponse->assertOk();
+    $searchResponse->assertViewHas('search', 'Diskominfo');
 });
 
 test('admin can store a new experience or education', function () {

@@ -5,25 +5,53 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Header with Type Tabs & Add Button -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <!-- Header with Type Tabs, Live Search & Add Button -->
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <!-- Type Filter Tabs -->
-        <div class="inline-flex rounded-2xl border border-white/10 bg-[#0d1322] p-1 shadow-lg">
-            <a href="{{ route('admin.experiences.index') }}" class="rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ empty($type) ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:text-white' }}">
+        <div class="inline-flex shrink-0 rounded-2xl border border-white/10 bg-[#0d1322] p-1 shadow-lg">
+            <a href="{{ route('admin.experiences.index', array_filter(['search' => $search ?? request('search')])) }}" class="rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ empty($type) ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:text-white' }}">
                 Semua ({{ $educationCount + $experienceCount }})
             </a>
-            <a href="{{ route('admin.experiences.index', ['type' => 'experience']) }}" class="rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $type === 'experience' ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-white' }}">
+            <a href="{{ route('admin.experiences.index', array_filter(['type' => 'experience', 'search' => $search ?? request('search')])) }}" class="rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $type === 'experience' ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-white' }}">
                 Pengalaman Kerja ({{ $experienceCount }})
             </a>
-            <a href="{{ route('admin.experiences.index', ['type' => 'education']) }}" class="rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $type === 'education' ? 'bg-cyan-600/20 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white' }}">
+            <a href="{{ route('admin.experiences.index', array_filter(['type' => 'education', 'search' => $search ?? request('search')])) }}" class="rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $type === 'education' ? 'bg-cyan-600/20 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white' }}">
                 Pendidikan ({{ $educationCount }})
             </a>
         </div>
 
-        <a href="{{ route('admin.experiences.create', ['type' => $type ?: 'experience']) }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#7185e8] px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Tambah Riwayat
-        </a>
+        <!-- Live Search Bar & Add Button -->
+        <div class="flex flex-1 items-center gap-3 lg:justify-end">
+            <!-- Search Form / Live Input -->
+            <form method="GET" action="{{ route('admin.experiences.index') }}" class="relative w-full max-w-xs sm:max-w-sm">
+                @if($type)
+                    <input type="hidden" name="type" value="{{ $type }}">
+                @endif
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input
+                    type="text"
+                    id="experienceLiveSearch"
+                    name="search"
+                    value="{{ $search ?? request('search') }}"
+                    placeholder="Cari institusi, peran, jurusan..."
+                    autocomplete="off"
+                    class="h-10 w-full rounded-xl border border-white/10 bg-[#0d1322] pl-9 pr-8 text-xs text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-all shadow-inner"
+                >
+                <button
+                    type="button"
+                    id="experienceClearSearch"
+                    class="absolute right-2.5 top-2.5 text-slate-500 hover:text-white text-xs cursor-pointer {{ empty($search ?? request('search')) ? 'hidden' : '' }}"
+                    title="Hapus pencarian"
+                >✕</button>
+            </form>
+
+            <a href="{{ route('admin.experiences.create', ['type' => $type ?: 'experience']) }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#7185e8] px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span class="whitespace-nowrap">Tambah Riwayat</span>
+            </a>
+        </div>
     </div>
 
     <!-- Table Card -->
@@ -40,9 +68,9 @@
                         <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-white/5 font-sans">
+                <tbody id="experienceTableBody" class="divide-y divide-white/5 font-sans">
                     @forelse($items as $item)
-                        <tr class="transition-colors hover:bg-white/[0.02]">
+                        <tr class="transition-colors hover:bg-white/[0.02] experience-item-row" data-search="{{ strtolower($item->institution . ' ' . $item->role_or_major . ' ' . $item->description . ' ' . $item->period . ' ' . ($item->type === 'experience' ? 'pengalaman kerja' : 'pendidikan')) }}">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($item->type === 'experience')
                                     <span class="inline-flex items-center rounded-full bg-emerald-500/20 px-2.5 py-1 text-[11px] font-bold text-emerald-300 border border-emerald-500/30 whitespace-nowrap">Pengalaman</span>
@@ -81,12 +109,21 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
+                        <tr id="experienceServerEmptyRow">
                             <td colspan="6" class="px-6 py-12 text-center text-slate-400">
                                 Belum ada data riwayat.
                             </td>
                         </tr>
                     @endforelse
+                    <!-- Empty State for Live Search Filter -->
+                    <tr id="experienceNoResultsRow" style="display: none;">
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-400 font-sans">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <svg class="h-8 w-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <span class="text-xs">Tidak ada riwayat yang cocok dengan kata kunci pencarian.</span>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -99,4 +136,59 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('experienceLiveSearch');
+        const clearBtn = document.getElementById('experienceClearSearch');
+        const rows = document.querySelectorAll('.experience-item-row');
+        const noResultsRow = document.getElementById('experienceNoResultsRow');
+        const serverEmptyRow = document.getElementById('experienceServerEmptyRow');
+
+        if (!searchInput) return;
+
+        const performLiveFilter = (query) => {
+            const term = query.toLowerCase().trim();
+            let matches = 0;
+
+            rows.forEach(row => {
+                const searchData = row.getAttribute('data-search') || '';
+                const isMatch = term === '' || searchData.includes(term);
+                row.style.display = isMatch ? '' : 'none';
+                if (isMatch) matches++;
+            });
+
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', term.length === 0);
+            }
+
+            if (noResultsRow) {
+                noResultsRow.style.display = (matches === 0 && rows.length > 0) ? '' : 'none';
+            }
+
+            if (serverEmptyRow) {
+                serverEmptyRow.style.display = (rows.length === 0) ? '' : 'none';
+            }
+        };
+
+        searchInput.addEventListener('input', (e) => {
+            performLiveFilter(e.target.value);
+        });
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                performLiveFilter('');
+                searchInput.focus();
+            });
+        }
+
+        // Apply immediately if input prefilled
+        if (searchInput.value.trim().length > 0) {
+            performLiveFilter(searchInput.value);
+        }
+    });
+</script>
+@endpush
 
