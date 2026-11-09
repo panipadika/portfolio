@@ -1,153 +1,248 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import {
-    ArrowRight,
-    Send,
-    Github,
-    Linkedin,
-    Instagram,
-    Sparkles,
-} from 'lucide-react';
+import { ArrowRight, Send, Github, Linkedin, Instagram } from 'lucide-react';
 import LanyardCanvas from '../../three/LanyardCanvas';
 import { SOCIAL_LINKS } from '../../config/socials';
+import StarBorder from '../ui/StarBorder';
+
+const ROLES = [
+    'Full-Stack Developer',
+    'Laravel & React Developer',
+    'AI Engineer',
+    'Creative 3D Developer',
+];
 
 export default function HeroSection() {
+    const [currentRoleIndex, setCurrentRoleIndex] = useState(0);
+    const [displayedText, setDisplayedText] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(() =>
+        typeof window !== 'undefined' ? window.innerWidth >= 1024 : true,
+    );
+
+    useEffect(() => {
+        const checkIsDesktop = () => {
+            const matches = window.innerWidth >= 1024;
+            setIsDesktop((prev) => (prev !== matches ? matches : prev));
+        };
+        window.addEventListener('resize', checkIsDesktop);
+        return () => window.removeEventListener('resize', checkIsDesktop);
+    }, []);
+
+    useEffect(() => {
+        const currentFullText = ROLES[currentRoleIndex];
+        let timer;
+
+        if (!isDeleting) {
+            if (displayedText.length < currentFullText.length) {
+                timer = setTimeout(() => {
+                    setDisplayedText(
+                        currentFullText.slice(0, displayedText.length + 1),
+                    );
+                }, 80);
+            } else {
+                timer = setTimeout(() => {
+                    setIsDeleting(true);
+                }, 1800);
+            }
+        } else {
+            if (displayedText.length > 0) {
+                timer = setTimeout(() => {
+                    setDisplayedText(
+                        currentFullText.slice(0, displayedText.length - 1),
+                    );
+                }, 40);
+            } else {
+                setIsDeleting(false);
+                setCurrentRoleIndex((prev) => (prev + 1) % ROLES.length);
+            }
+        }
+
+        return () => clearTimeout(timer);
+    }, [displayedText, isDeleting, currentRoleIndex]);
+
     return (
         <section
             id="Home"
-            className="relative overflow-visible pt-32 pb-20 md:py-36"
+            className="relative overflow-visible pt-28 pb-8 sm:pt-32 sm:pb-10 lg:pt-36 lg:pb-12"
         >
             {/* Background radial gradients (isolated clipping so blur glow blobs don't cause page scrollbars while letting 3D lanyard extend) */}
             <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
                 <div className="absolute top-1/4 left-10 h-96 w-96 rounded-full bg-indigo-600/10 blur-[140px]" />
-                <div className="absolute top-1/3 right-10 h-80 w-80 rounded-full bg-cyan-500/10 blur-[120px]" />
+                <div className="absolute top-1/3 right-10 h-80 w-80 rounded-full bg-[#4e63d9]/10 blur-[120px]" />
             </div>
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-8">
-                    {/* Left Column: 7 Cols Typography & CTAs */}
+                    {/* Left Column: 7 Cols Typography & CTAs (z-20 so text sits gracefully on top of the 3D card when dragged left) */}
                     <motion.div
                         initial={{ opacity: 0, y: 25 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                        className="relative z-10 flex flex-col items-start text-left lg:col-span-7"
+                        className="pointer-events-none relative z-20 flex flex-col items-start text-left lg:col-span-7"
                     >
-                        {/* Tech Badge */}
-                        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3.5 py-1.5 font-mono text-xs font-medium text-indigo-300 backdrop-blur-md">
-                            <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-400" />
-                            <span>Full-Stack Developer • React & Laravel</span>
-                            <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-                        </div>
-
-                        {/* Main Headline */}
-                        <h1 className="font-display mb-6 text-4xl leading-[1.15] font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                            Halo, Saya{' '}
-                            <span className="bg-gradient-to-r from-indigo-400 via-cyan-400 to-indigo-300 bg-clip-text text-transparent">
-                                Pani Padika
+                        {/* Main Headline (Welcome to My Portfolio) */}
+                        <h1 className="font-display mb-3 text-4xl leading-[1.1] font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+                            <span className="block bg-gradient-to-r from-[#262f6b] via-[#4e63d9] to-[#7185e8] bg-clip-text text-transparent">
+                                Welcome to
+                            </span>
+                            <span className="mt-1 block text-white">
+                                My Portfolio
                             </span>
                         </h1>
 
-                        {/* Sub-headline */}
+                        {/* Typewriter Dynamic Role Bar */}
+                        <div className="mb-6 flex min-h-[32px] items-center font-mono text-lg font-semibold text-[#7185e8] sm:text-xl">
+                            <span className="tracking-wide">
+                                {displayedText}
+                            </span>
+                            <span
+                                className="ml-1 inline-block h-5 w-0.5 animate-pulse bg-[#7185e8]"
+                                aria-hidden="true"
+                            />
+                        </div>
+
+                        {/* Narrative Description (Personal & Engaging per reference) */}
                         <p className="mb-8 max-w-2xl font-sans text-base leading-relaxed text-slate-300 sm:text-lg">
-                            Membangun aplikasi web performa tinggi dengan
-                            perpaduan arsitektur backend yang kokoh, basis data
-                            terstruktur, serta pengalaman antarmuka visual 3D
-                            interaktif yang memukau.
+                            Berawal dari rasa ingin tahu tentang bagaimana teknologi bekerja,
+                            kini saya menjadikan dunia pemrograman sebagai passion.
+                            Saya senang mengeksplorasi teknologi baru, membangun aplikasi,
+                            dan mengubah ide menjadi solusi digital yang nyata.
                         </p>
 
-                        {/* Action Buttons */}
-                        <div className="mb-10 flex w-full flex-wrap items-center gap-4 sm:w-auto">
-                            <a
-                                href="#Portofolio"
-                                className="inline-flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 transition-all duration-200 hover:scale-105 hover:from-indigo-500 hover:to-cyan-400 active:scale-95 sm:w-auto"
+                        {/* Action Buttons with React Bits StarBorder */}
+                        <div className="pointer-events-auto relative z-30 mb-20 flex w-full flex-wrap items-center gap-4 sm:w-auto">
+                            <StarBorder
+                                as="a"
+                                href="#Portfolio"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    document.getElementById('Portfolio')?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                color="#ffffff"
+                                trailColor="#7185e8"
+                                duration={4}
+                                direction="clockwise"
+                                stars={1}
+                                trailLength={0.3}
+                                thickness={1}
+                                radius={14}
+                                glow={0.6}
+                                hover="lap"
+                                sparkle={false}
+                                clickPulse
+                                theme="dark"
+                                backgroundColor="rgba(30, 41, 99, 0.85)"
+                                textColor="#ffffff"
+                                className="w-full sm:w-auto text-sm font-semibold shadow-lg shadow-[#262f6b]/40 transition-transform duration-200 hover:scale-105 active:scale-95"
                             >
                                 <span>Lihat Projek</span>
                                 <ArrowRight className="h-4 w-4" />
-                            </a>
+                            </StarBorder>
 
-                            <a
+                            <StarBorder
+                                as="a"
                                 href="#Contact"
-                                className="inline-flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-full border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-white/10 hover:text-white active:scale-95 sm:w-auto"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    document.getElementById('Contact')?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                color="#ffffff"
+                                trailColor="#ffffff"
+                                duration={4}
+                                direction="clockwise"
+                                stars={1}
+                                trailLength={0.3}
+                                thickness={1}
+                                radius={14}
+                                glow={0.6}
+                                hover="lap"
+                                sparkle={false}
+                                clickPulse
+                                theme="dark"
+                                backgroundColor="rgba(12, 12, 15, 0.85)"
+                                textColor="#e2e8f0"
+                                className="w-full sm:w-auto text-sm font-semibold transition-transform duration-200 hover:scale-105 active:scale-95"
                             >
                                 <Send className="h-4 w-4" />
                                 <span>Hubungi Saya</span>
-                            </a>
-                        </div>
-
-                        {/* Social Media Shortcut Pills */}
-                        <div className="flex w-full items-center gap-3 border-t border-white/5 pt-4">
-                            <span className="font-mono text-xs text-slate-500">
-                                Connect:
-                            </span>
-                            <a
-                                href={SOCIAL_LINKS.github.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                                aria-label={SOCIAL_LINKS.github.label}
-                            >
-                                <Github className="h-4 w-4" />
-                            </a>
-                            <a
-                                href={SOCIAL_LINKS.linkedin.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                                aria-label={SOCIAL_LINKS.linkedin.label}
-                            >
-                                <Linkedin className="h-4 w-4" />
-                            </a>
-                            <a
-                                href={SOCIAL_LINKS.instagram.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                                aria-label={SOCIAL_LINKS.instagram.label}
-                            >
-                                <Instagram className="h-4 w-4" />
-                            </a>
+                            </StarBorder>
                         </div>
                     </motion.div>
 
-                    {/* Right Column: 5 Cols 3D Lanyard ID Card (raised and balanced alongside introduction) */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{
-                            duration: 0.8,
-                            delay: 0.2,
-                            ease: [0.16, 1, 0.3, 1],
-                        }}
-                        className="relative z-10 flex items-center justify-center lg:col-span-5 lg:-mt-24 xl:-mt-32"
-                    >
-                        <div className="relative w-full">
-                            <LanyardCanvas
-                                frontImage="/card-front.png"
-                                backImage="/card-back.png"
-                                strapImage="/band.png"
-                                imageFit="cover"
-                                cardColor="#ffffff"
-                                orientation="portrait"
-                                finish="glossy"
-                                cornerRadius={0.3}
-                                size={0.62}
-                                anchor="center"
-                                strapLength={0.42}
-                                strapColor="#111111"
-                                strapWidth={0.8}
-                                metal="silver"
-                                gravity={1}
-                                damping={0.5}
-                                elasticity={0.5}
-                                breeze={0.5}
-                                interactive={true}
-                                intro={true}
-                                className="h-[480px] sm:h-[540px] lg:h-[660px] xl:h-[720px]"
-                            />
+                    {/* Right Column: desktop grid spacer + mobile-only Lanyard */}
+                    <div className="relative lg:col-span-5">
+                        {/* Mobile Lanyard (below headline on smaller screens) */}
+                        <div className="relative z-10 flex w-full items-center justify-center lg:hidden">
+                            {!isDesktop && (
+                                <LanyardCanvas
+                                    frontImage="/card-front.png"
+                                    backImage="/card-back.png"
+                                    strapImage="/band.png"
+                                    imageFit="cover"
+                                    cardColor="#ffffff"
+                                    orientation="portrait"
+                                    finish="glossy"
+                                    cornerRadius={0.3}
+                                    size={0.53}
+                                    anchor="center"
+                                    strapLength={0.48}
+                                    strapColor="#111111"
+                                    strapWidth={0.6}
+                                    metal="silver"
+                                    gravity={1}
+                                    damping={0.6}
+                                    elasticity={0.4}
+                                    breeze={0.2}
+                                    interactive={true}
+                                    intro={true}
+                                    className="h-[460px] sm:h-[500px]"
+                                />
+                            )}
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
             </div>
+
+            {/* Desktop-only: Full Hero unclipped 3D stage (z-10 so card glides behind text & navbar without blocking them) */}
+            {isDesktop && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{
+                        duration: 1,
+                        delay: 0.2,
+                        ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className="pointer-events-none absolute inset-0 z-10 hidden overflow-visible lg:block"
+                >
+                    <div className="pointer-events-auto h-full w-full">
+                        <LanyardCanvas
+                            frontImage="/card-front.png"
+                            backImage="/card-back.png"
+                            strapImage="/band.png"
+                            imageFit="cover"
+                            cardColor="#ffffff"
+                            orientation="portrait"
+                            finish="glossy"
+                            cornerRadius={0.3}
+                            size={0.53}
+                            anchor="right"
+                            strapLength={0.48}
+                            strapColor="#111111"
+                            strapWidth={0.6}
+                            metal="silver"
+                            gravity={1}
+                            damping={0.6}
+                            elasticity={0.4}
+                            breeze={0.2}
+                            interactive={true}
+                            intro={true}
+                            className="h-full w-full"
+                        />
+                    </div>
+                </motion.div>
+            )}
         </section>
     );
 }

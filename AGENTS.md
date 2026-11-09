@@ -11,11 +11,11 @@
 
 ## 1. Tech Stack Utama
 Proyek ini menggunakan arsitektur **Monorepo** di lingkungan **Laragon**:
-* **Backend Framework:** Laravel 11 / 12 (PHP 8.2+)
+* **Backend Framework:** Laravel 13 (PHP 8.5)
 * **Database:** MySQL (dikelola melalui phpMyAdmin di Laragon)
-* **Frontend Library:** React 18+ (di-bundle menggunakan Laravel Vite Plugin)
-* **3D & WebGL:** Three.js, `@react-three/fiber` (R3F), `@react-three/drei`, `@react-three/rapier` (untuk fisika *lanyard/ID card*)
-* **Styling & Animasi:** Tailwind CSS, Framer Motion, Lucide React (ikon)
+* **Frontend Framework:** Inertia.js v3 + React 19 (di-bundle menggunakan Vite + Laravel Vite Plugin)
+* **3D & WebGL:** Standalone Three.js Physics Engine (React Bits Lanyard) di `resources/js/three/` (Lanyard.tsx & LanyardCanvas.jsx)
+* **Styling & Animasi:** Tailwind CSS v4, Framer Motion, Lucide React (ikon)
 * **HTTP Client:** Axios (terkonfigurasi dengan CSRF token Laravel)
 
 ---
@@ -35,31 +35,35 @@ portfolio/
 │   ├── migrations/                # Skema tabel MySQL (projects, credentials, experiences, messages)
 │   └── seeders/                   # Seeder data awal portofolio (Projects, Certificates, Tech Stack, Education)
 ├── public/
-│   ├── assets/3d/                 # File model 3D (.glb, .gltf, tekstur lanyard)
-│   └── assets/images/             # Gambar pratinjau proyek & sertifikat
+│   ├── assets/images/             # Gambar pratinjau proyek & sertifikat
+│   ├── card-front.png             # Tekstur depan 3D ID Card
+│   ├── card-back.png              # Tekstur belakang 3D ID Card
+│   └── band.png                   # Tekstur tali lanyard 3D
 ├── resources/
 │   ├── css/
-│   │   └── app.css                # Entry point Tailwind CSS & custom scrollbar/utilities
+│   │   └── app.css                # Entry point Tailwind CSS v4 & custom tokens/scrollbar
 │   ├── js/
 │   │   ├── components/            # Komponen UI React per seksi
-│   │   │   ├── common/            # Navbar, Footer, Preloader, Button
+│   │   │   ├── common/            # Navbar, Footer, Preloader
 │   │   │   ├── sections/          # HeroSection, AboutSection, SpotifySection, PortfolioSection, ContactSection
-│   │   │   └── ui/                # Komponen kecil (Badge, TabButton, Modal, StatCard)
-│   │   ├── three/                 # Seluruh logika Three.js / React Three Fiber
-│   │   │   ├── LanyardCanvas.jsx  # Canvas utama 3D ID Card
-│   │   │   └── IdCardModel.jsx    # Mesh, tekstur, dan fisika kartu 3D
-│   │   ├── hooks/                 # Custom React Hooks (useAssetPreloader, usePortfolioData)
+│   │   │   ├── ui/                # Komponen kecil (ProjectModal, Badge, StatCard)
+│   │   │   └── PortfolioApp.jsx   # Root layout Single-Page Application portofolio
+│   │   ├── three/                 # Seluruh logika Three.js Standalone Physics Engine
+│   │   │   ├── LanyardCanvas.jsx  # Container & canvas wrapper 3D ID Card
+│   │   │   └── Lanyard.tsx        # Mesh, tekstur, dan simulasi fisika kartu & tali 3D
+│   │   ├── config/                # Konfigurasi aplikasi & tautan profil (socials.js)
+│   │   ├── hooks/                 # Custom React Hooks (useAssetPreloader, usePortfolioData, useBackgroundAudio)
 │   │   ├── services/              # Konfigurasi Axios & fungsi pemanggilan API (api.js)
-│   │   ├── App.jsx                # Root layout Single-Page Application
-│   │   └── main.jsx               # Entry point ReactDOM.createRoot
+│   │   ├── pages/                 # Halaman Inertia (welcome.tsx, dashboard.tsx)
+│   │   └── app.tsx                # Entry point createInertiaApp
 │   └── views/
-│       └── app.blade.php          # Satu-satunya file Blade pembungkus React
+│       └── app.blade.php          # File Blade pembungkus Inertia
 ├── routes/
 │   ├── api.php                    # Seluruh route endpoint JSON (/api/portfolio, /api/contact)
-│   └── web.php                    # Route wildcard untuk merender app.blade.php
+│   └── web.php                    # Route Inertia web
 ├── tests/
 │   └── Feature/                   # Automated testing untuk API Laravel
-└── vite.config.js                 # Konfigurasi Vite + React
+└── vite.config.ts                 # Konfigurasi Vite + React + Inertia
 ```
 
 ---

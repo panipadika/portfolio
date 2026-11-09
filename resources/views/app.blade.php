@@ -1,38 +1,46 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {{-- Inline script to detect system dark mode preference and apply it immediately --}}
+        {{-- Always enforce dark mode for Cosmic Space theme --}}
         <script>
-            (function() {
-                const appearance = '{{ $appearance ?? "system" }}';
-
-                if (appearance === 'system') {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                    if (prefersDark) {
-                        document.documentElement.classList.add('dark');
-                    }
-                }
-            })();
+            document.documentElement.classList.add('dark');
         </script>
 
-        {{-- Inline style to set the HTML background color based on our theme in app.css --}}
+        {{-- Inline style to set default dark space & eliminate text edit cursor (|) across the entire application --}}
         <style>
-            html {
-                background-color: oklch(1 0 0);
+            html, html.dark {
+                background-color: #0B0F17;
+                color-scheme: dark;
             }
-
-            html.dark {
-                background-color: oklch(0.145 0 0);
+            *, *::before, *::after {
+                cursor: default;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            a, button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"], input[type="checkbox"], input[type="radio"], select, option, summary, label[for], .cursor-pointer {
+                cursor: pointer;
+            }
+            input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="number"], input[type="tel"], input[type="url"], input[type="date"], input[type="datetime-local"], input:not([type]), textarea, [contenteditable="true"], [contenteditable=""], .cursor-text {
+                cursor: text;
+                user-select: text;
+                -webkit-user-select: text;
+            }
+            .selectable-text, .select-text {
+                user-select: text;
+                -webkit-user-select: text;
+            }
+            button:disabled, input:disabled, textarea:disabled, select:disabled, [aria-disabled="true"], .cursor-not-allowed {
+                cursor: not-allowed;
             }
         </style>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="icon" href="/favicon.ico?v=2" sizes="any">
+        <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
+        <link rel="icon" href="/favicon.png?v=2" type="image/png">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,7 +52,7 @@
             <title>Pani Padika — Full-Stack Developer</title>
         </x-inertia::head>
     </head>
-    <body class="font-sans antialiased bg-[#0B0F17] text-slate-50 selection:bg-indigo-500/30 selection:text-indigo-200 overflow-x-hidden min-h-screen">
+    <body class="font-sans antialiased bg-[#0B0F17] text-slate-50 selection:bg-indigo-500/30 selection:text-indigo-200 overflow-x-clip min-h-screen">
         <x-inertia::app />
     </body>
 </html>

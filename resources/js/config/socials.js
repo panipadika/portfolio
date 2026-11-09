@@ -23,4 +23,10 @@ export const SOCIAL_LINKS = {
         username: '@panipadika_',
         label: 'TikTok Profile',
     },
+    whatsapp: {
+        name: 'WhatsApp',
+        url: 'https://wa.me/6285322761245',
+        number: '+62 853-2276-1245',
+        label: 'WhatsApp Chat',
+    },
 };

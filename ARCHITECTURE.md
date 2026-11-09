@@ -10,19 +10,19 @@ Aplikasi dibangun dalam satu repositori terpadu (_Monorepo_) di mana Laravel ber
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                   CLIENT BROWSER (React SPA)                    │
+│              CLIENT BROWSER (Inertia v3 + React 19)             │
 │  ┌───────────────────────┐         ┌─────────────────────────┐  │
-│  │ UI Components (2D)    │         │ Three.js / R3F Canvas   │  │
-│  │ (Hero, Tabs, Contact) │         │ (3D Draggable ID Card)  │  │
+│  │ UI Components (2D)    │         │ Standalone Three.js     │  │
+│  │ (Hero, Tabs, Contact) │         │ (3D Physics ID Card)    │  │
 │  └───────────┬───────────┘         └────────────┬────────────┘  │
 └──────────────┼──────────────────────────────────┼───────────────┘
-               │ Axios HTTP JSON                  │ Load .GLB Asset
-               ▼ (/api/*)                         ▼ (/assets/3d/*)
+               │ Axios HTTP JSON                  │ Load Image Textures
+               ▼ (/api/*)                         ▼ (/card-front, /band)
 ┌─────────────────────────────────────────────────────────────────┐
-│                 LARAVEL BACKEND SERVER (Laragon)                │
+│            LARAVEL 13 BACKEND SERVER (PHP 8.5 Laragon)          │
 │  ┌───────────────────────┐         ┌─────────────────────────┐  │
 │  │ API Controllers &     │         │ Public Static Assets    │  │
-│  │ FormRequest Validation│         │ (3D Models & Images)    │  │
+│  │ FormRequest Validation│         │ (Textures & Thumbnails) │  │
 │  └───────────┬───────────┘         └─────────────────────────┘  │
 └──────────────┼──────────────────────────────────────────────────┘
                │ Eloquent ORM

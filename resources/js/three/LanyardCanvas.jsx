@@ -45,20 +45,20 @@ export default function LanyardCanvas({
     backImage = '/card-back.png',
     strapImage = '/band.png',
     imageFit = 'cover',
-    cardColor = '#94a3b8',
+    cardColor = '#ffffff',
     orientation = 'portrait',
     finish = 'glossy',
     cornerRadius = 0.3,
-    size = 0.6,
+    size = 0.53,
     anchor = 'right',
-    strapLength = 0.5,
+    strapLength = 0.48,
     strapColor = '#111111',
-    strapWidth = 0.8,
+    strapWidth = 0.6,
     metal = 'silver',
     gravity = 1,
-    damping = 0.5,
-    elasticity = 0.5,
-    breeze = 0.5,
+    damping = 0.6,
+    elasticity = 0.4,
+    breeze = 0.2,
     interactive = true,
     intro = true,
     className = '',
@@ -76,11 +76,11 @@ export default function LanyardCanvas({
         >
             {/* Ambient glow blobs behind 3D canvas (z-0 per DESIGN.md) */}
             <div
-                className="pointer-events-none absolute top-1/2 left-1/2 z-0 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-indigo-600/25 via-cyan-500/20 to-purple-600/25 blur-3xl sm:h-96 sm:w-96"
+                className={`pointer-events-none absolute top-1/2 z-0 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-[#262f6b]/30 via-[#4e63d9]/25 to-indigo-600/25 blur-3xl sm:h-96 sm:w-96 ${anchor === 'right' ? 'left-[77%]' : 'left-1/2'}`}
                 aria-hidden="true"
             />
             <div
-                className="pointer-events-none absolute top-1/3 left-1/2 z-0 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/15 blur-2xl"
+                className={`pointer-events-none absolute top-1/3 z-0 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#4e63d9]/15 blur-2xl ${anchor === 'right' ? 'left-[77%]' : 'left-1/2'}`}
                 aria-hidden="true"
             />
 
@@ -125,14 +125,6 @@ export default function LanyardCanvas({
                         <div className="h-12 w-12 animate-spin rounded-full border-2 border-indigo-500/20 border-t-indigo-500" />
                     </div>
                 )}
-            </div>
-
-            {/* Interactive Dragging Prompt Badge */}
-            <div className="pointer-events-none absolute bottom-2 left-1/2 z-20 -translate-x-1/2">
-                <span className="bg-space-900/80 inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 font-mono text-xs font-medium text-slate-300 shadow-lg backdrop-blur-md">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
-                    Tarik atau klik kartu untuk memutar
-                </span>
             </div>
         </div>
     );

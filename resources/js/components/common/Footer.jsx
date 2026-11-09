@@ -7,28 +7,18 @@ export default function Footer() {
     };
 
     return (
-        <footer className="relative border-t border-white/10 bg-[#0B0F17] px-4 py-12 sm:px-6 lg:px-8">
+        <footer className="relative border-t border-white/10 bg-[#0B0F17]/40 backdrop-blur-md px-4 py-12 sm:px-6 lg:px-8">
             <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 md:flex-row">
                 {/* Brand & Tagline */}
                 <div className="flex flex-col items-center text-center md:items-start md:text-left">
                     <div className="flex items-center gap-2">
                         <span className="font-display text-lg font-extrabold text-white">
-                            Pani Padika
-                        </span>
-                        <span className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 font-mono text-[10px] text-indigo-400">
-                            Full-Stack Developer
+                            Pandika_Dev
                         </span>
                     </div>
                     <p className="mt-1 max-w-sm text-xs text-slate-400 sm:text-sm">
-                        Membangun pengalaman web modern dengan arsitektur
-                        tangguh dan antarmuka interaktif 3D.
+                        Membangun pengalaman web modern dan interaktif.
                     </p>
-                </div>
-
-                {/* Status Indicator */}
-                <div className="flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 font-mono text-xs text-emerald-400">
-                    <span className="h-2 w-2 animate-ping rounded-full bg-emerald-400" />
-                    <span>Available for New Projects</span>
                 </div>
 
                 {/* Back to Top */}
@@ -43,15 +33,9 @@ export default function Footer() {
                 </div>
             </div>
 
-            <div className="mx-auto mt-8 flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 font-mono text-xs text-slate-500 sm:flex-row">
+            <div className="mx-auto mt-8 flex max-w-7xl flex-col items-center justify-center gap-4 border-t border-white/5 pt-6 font-mono text-xs text-slate-500 sm:flex-row">
                 <div>
-                    © {new Date().getFullYear()} Pani Padika. All rights
-                    reserved.
-                </div>
-                <div className="flex items-center gap-1 text-slate-400">
-                    Dibuat dengan{' '}
-                    <Heart className="inline h-3.5 w-3.5 fill-rose-500 text-rose-500" />{' '}
-                    menggunakan Monorepo Laravel + React + Three.js
+                    © {new Date().getFullYear()} Pandika_Dev.
                 </div>
             </div>
         </footer>

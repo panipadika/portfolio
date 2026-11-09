@@ -23,7 +23,7 @@ export default function Preloader({
                     className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[#0B0F17] text-slate-50 select-none"
                 >
                     {/* Subtle background glow */}
-                    <div className="pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-gradient-to-r from-indigo-500/10 to-cyan-500/10 blur-[120px]" />
+                    <div className="pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-gradient-to-r from-[#262f6b]/15 to-[#4e63d9]/15 blur-[120px]" />
 
                     <div className="relative z-10 flex w-full max-w-md flex-col items-center px-6">
                         {/* Logo / Monogram */}
@@ -31,19 +31,21 @@ export default function Preloader({
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ duration: 0.5 }}
-                            className="mb-8 flex items-center gap-3"
+                            className="mb-8 flex items-center gap-3.5"
                         >
-                            <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-500 p-0.5 shadow-[0_0_25px_rgba(99,102,241,0.4)]">
-                                <div className="font-display flex h-full w-full items-center justify-center rounded-[14px] bg-[#0B0F17] text-xl font-extrabold text-white">
-                                    PP
-                                </div>
+                            <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-white/10 bg-black p-1 shadow-[0_0_30px_rgba(99,102,241,0.35)] ring-1 ring-white/10">
+                                <img
+                                    src="/logo-pp.png"
+                                    alt="Pani Padika Logo"
+                                    className="h-full w-full rounded-xl object-contain"
+                                />
                             </div>
                             <div>
-                                <span className="font-display block text-lg font-bold tracking-tight">
+                                <span className="font-display block text-lg font-bold tracking-tight text-white">
                                     Pani Padika
                                 </span>
                                 <span className="font-mono text-xs text-slate-400">
-                                    portfolio.v2
+                                    Portfolio
                                 </span>
                             </div>
                         </motion.div>
@@ -63,7 +65,7 @@ export default function Preloader({
                         {/* Progress Bar Container */}
                         <div className="mb-6 h-2 w-full overflow-hidden rounded-full border border-white/10 bg-white/5 p-0.5 shadow-inner">
                             <motion.div
-                                className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-500 shadow-[0_0_15px_#6366F1]"
+                                className="h-full rounded-full bg-gradient-to-r from-[#262f6b] via-[#4e63d9] to-[#7185e8] shadow-[0_0_15px_#4e63d9]"
                                 style={{ width: `${progress}%` }}
                                 transition={{ ease: 'easeOut', duration: 0.3 }}
                             />
@@ -101,11 +103,6 @@ export default function Preloader({
                                 </div>
                             </motion.div>
                         )}
-
-                        <div className="mt-4 font-mono text-[11px] text-slate-500">
-                            Interactive 3D Portfolio • Powered by Three.js &
-                            Laravel
-                        </div>
                     </div>
                 </motion.div>
             )}

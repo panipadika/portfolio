@@ -11,6 +11,9 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse as TwoFactorLoginResponseContract;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -21,7 +24,41 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(LoginResponseContract::class, function () {
+            return new class implements LoginResponseContract
+            {
+                public function toResponse($request)
+                {
+                    return $request->header('X-Inertia')
+                        ? Inertia::location(route('dashboard'))
+                        : redirect()->intended(route('dashboard'));
+                }
+            };
+        });
+
+        $this->app->singleton(TwoFactorLoginResponseContract::class, function () {
+            return new class implements TwoFactorLoginResponseContract
+            {
+                public function toResponse($request)
+                {
+                    return $request->header('X-Inertia')
+                        ? Inertia::location(route('dashboard'))
+                        : redirect()->intended(route('dashboard'));
+                }
+            };
+        });
+
+        $this->app->singleton(LogoutResponseContract::class, function () {
+            return new class implements LogoutResponseContract
+            {
+                public function toResponse($request)
+                {
+                    return $request->header('X-Inertia')
+                        ? Inertia::location('/')
+                        : redirect('/');
+                }
+            };
+        });
     }
 
     /**

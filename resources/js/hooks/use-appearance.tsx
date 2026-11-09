@@ -37,19 +37,17 @@ const getStoredAppearance = (): Appearance => {
     return (localStorage.getItem('appearance') as Appearance) || 'system';
 };
 
-const isDarkMode = (appearance: Appearance): boolean => {
-    return appearance === 'dark' || (appearance === 'system' && prefersDark());
+const isDarkMode = (_appearance: Appearance): boolean => {
+    return true;
 };
 
-const applyTheme = (appearance: Appearance): void => {
+const applyTheme = (_appearance: Appearance): void => {
     if (typeof document === 'undefined') {
         return;
     }
 
-    const isDark = isDarkMode(appearance);
-
-    document.documentElement.classList.toggle('dark', isDark);
-    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    document.documentElement.classList.add('dark');
+    document.documentElement.style.colorScheme = 'dark';
 };
 
 const subscribe = (callback: () => void) => {
@@ -75,16 +73,8 @@ export function initializeTheme(): void {
         return;
     }
 
-    if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'system');
-        setCookie('appearance', 'system');
-    }
-
-    currentAppearance = getStoredAppearance();
-    applyTheme(currentAppearance);
-
-    // Set up system theme change listener
-    mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+    currentAppearance = 'dark';
+    applyTheme('dark');
 }
 
 export function useAppearance(): UseAppearanceReturn {

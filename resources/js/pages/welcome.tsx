@@ -7,8 +7,7 @@ export default function Welcome() {
         <>
             <Head>
                 <title>
-                    Pani Padika — Full-Stack Developer | 3D Interactive
-                    Portfolio
+                    Pani Padika | Portfolio
                 </title>
                 <meta
                     name="description"

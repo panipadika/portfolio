@@ -5,27 +5,49 @@ import { useState, useEffect, useCallback, useRef } from 'react';
  * failure detection, retry mechanism, and skip/continue fallback.
  *
  * @param {string[]} assetUrls Array of image/model URLs to monitor.
+ * @param {number} timeoutMs Maximum wait time before triggering fallback controls (default: 6000ms).
  */
 export function useAssetPreloader(
-    assetUrls = [
-        '/assets/images/lanyard-card.png',
-        '/assets/images/lanyard-strap.png',
-    ],
+    assetUrls = ['/card-front.png', '/card-back.png', '/band.png'],
+    timeoutMs = 6000,
 ) {
     const [progress, setProgress] = useState(0);
     const [isLoaded, setIsLoaded] = useState(false);
     const [failedAssets, setFailedAssets] = useState([]);
     const [retryCount, setRetryCount] = useState(0);
     const isCancelledRef = useRef(false);
+    const timeoutRef = useRef(null);
 
     const loadAsset = (url) => {
         return new Promise((resolve, reject) => {
             const img = new Image();
+            let timer = null;
+
+            const cleanup = () => {
+                if (timer) clearTimeout(timer);
+                img.onload = null;
+                img.onerror = null;
+            };
+
+            timer = setTimeout(() => {
+                cleanup();
+                reject(new Error(`Timeout loading asset: ${url}`));
+            }, 5000);
+
             if (/^https?:\/\/|^\/\//i.test(url)) {
                 img.crossOrigin = 'anonymous';
             }
-            img.onload = () => resolve(url);
-            img.onerror = () => reject(url);
+
+            img.onload = () => {
+                cleanup();
+                resolve(url);
+            };
+
+            img.onerror = () => {
+                cleanup();
+                reject(new Error(`Failed loading asset: ${url}`));
+            };
+
             img.src = url;
         });
     };
@@ -34,6 +56,27 @@ export function useAssetPreloader(
         isCancelledRef.current = false;
         setProgress(15);
         setFailedAssets([]);
+
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        // Global safety timeout (6s) ensures preloader never hangs indefinitely
+        timeoutRef.current = setTimeout(() => {
+            if (!isCancelledRef.current) {
+                setIsLoaded((currentLoaded) => {
+                    if (!currentLoaded) {
+                        setFailedAssets((prev) =>
+                            prev.length > 0
+                                ? prev
+                                : ['Waktu pemuatan melebihi 6 detik'],
+                        );
+                        setProgress((p) => Math.min(p, 90));
+                    }
+                    return currentLoaded;
+                });
+            }
+        }, timeoutMs);
 
         const totalAssets = assetUrls.length;
         let loadedCount = 0;
@@ -59,12 +102,15 @@ export function useAssetPreloader(
 
         if (isCancelledRef.current) return;
 
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+
         if (failedList.length > 0) {
             setFailedAssets(failedList);
-            // Keep progress visible so user can retry or continue
             setProgress((prev) => Math.min(prev, 90));
         } else {
-            // Smoothly advance to 100%
             setProgress(100);
             setTimeout(() => {
                 if (!isCancelledRef.current) {
@@ -72,12 +118,15 @@ export function useAssetPreloader(
                 }
             }, 500);
         }
-    }, [assetUrls, retryCount]);
+    }, [assetUrls, timeoutMs, retryCount]);
 
     useEffect(() => {
         void startPreloading();
         return () => {
             isCancelledRef.current = true;
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
         };
     }, [startPreloading]);
 
@@ -86,6 +135,9 @@ export function useAssetPreloader(
     }, []);
 
     const skip = useCallback(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
         setProgress(100);
         setIsLoaded(true);
     }, []);

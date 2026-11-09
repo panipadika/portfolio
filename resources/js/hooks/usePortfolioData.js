@@ -10,6 +10,7 @@ export function usePortfolioData() {
         certificates: [],
         achievements: [],
         tech_stack: [],
+        settings: {},
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);

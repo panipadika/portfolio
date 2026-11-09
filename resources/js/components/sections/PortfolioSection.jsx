@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ExternalLink,
-    Github,
-    Award,
-    CheckCircle,
     Code2,
-    Layers,
-    Info,
+    Award,
+    Trophy,
+    Cpu,
+    ArrowRight,
+    ExternalLink,
+    X,
 } from 'lucide-react';
-import ProjectModal from '../ui/ProjectModal';
+import StarBorder from '../ui/StarBorder';
+import BorderGlow from '../ui/BorderGlow';
+import TechIcon from '../ui/TechIcon';
 
 const TABS = [
-    { id: 'projects', label: 'Projects', icon: Layers },
-    { id: 'certificates', label: 'Certificates', icon: CheckCircle },
-    { id: 'achievements', label: 'Achievements', icon: Award },
-    { id: 'tech_stack', label: 'Tech Stack', icon: Code2 },
+    { id: 'projects', label: 'Projects', icon: Code2 },
+    { id: 'certificates', label: 'Certificates', icon: Award },
+    { id: 'achievements', label: 'Achievements', icon: Trophy },
+    { id: 'tech_stack', label: 'Tech Stack', icon: Cpu },
 ];
 
 export default function PortfolioSection({
@@ -23,360 +25,397 @@ export default function PortfolioSection({
     certificates = [],
     achievements = [],
     techStack = [],
+    onSelectProject,
 }) {
     const [activeTab, setActiveTab] = useState('projects');
-    const [selectedProject, setSelectedProject] = useState(null);
+    const [previewItem, setPreviewItem] = useState(null);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                setPreviewItem(null);
+            }
+        };
+
+        if (previewItem) {
+            document.body.style.overflow = 'hidden';
+            window.addEventListener('keydown', handleKeyDown);
+        } else {
+            document.body.style.overflow = '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [previewItem]);
+
+    const handleSelectProject = (project) => {
+        if (onSelectProject) {
+            onSelectProject(project);
+        }
+    };
 
     return (
         <section
             id="Portfolio"
-            className="relative border-t border-white/5 bg-[#0B0F17] py-20 lg:py-28"
+            className="relative border-t border-white/5 bg-[#070b14]/50 py-20 lg:py-28"
+            aria-label="Portfolio Showcase"
         >
             <div id="Portofolio" className="sr-only" aria-hidden="true" />
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Section Heading */}
-                <div className="mx-auto mb-12 max-w-3xl text-center">
-                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 font-mono text-xs font-medium text-cyan-400">
-                        <span>Showcase Portofolio</span>
-                    </div>
-                    <h2 className="font-display mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                        Karya, Sertifikasi & Kemampuan
+                <div className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
+                    <h2 className="font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                        Portofolio
                     </h2>
-                    <p className="font-sans text-sm leading-relaxed text-slate-400 sm:text-base">
-                        Jelajahi karya nyata, bukti kompetensi formal, dan
-                        tumpukan teknologi yang saya kuasai secara mendalam.
-                    </p>
                 </div>
 
-                {/* Dynamic Tab Bar with Framer Motion layoutId */}
-                <div className="mb-14 flex justify-center">
-                    <div className="inline-flex max-w-full overflow-x-auto rounded-full border border-white/10 bg-white/5 p-1.5 backdrop-blur-xl">
-                        {TABS.map((tab) => {
-                            const Icon = tab.icon;
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`relative flex cursor-pointer items-center gap-2 rounded-full px-4 py-2.5 text-xs font-medium whitespace-nowrap transition-colors sm:px-6 sm:text-sm ${
-                                        isActive
-                                            ? 'text-white'
-                                            : 'text-slate-400 hover:text-slate-200'
-                                    }`}
-                                >
-                                    <Icon className="h-4 w-4 shrink-0" />
-                                    <span>{tab.label}</span>
-                                    {isActive && (
-                                        <motion.div
-                                            layoutId="activeTab"
-                                            className="absolute inset-0 -z-10 rounded-full border border-indigo-500/40 bg-gradient-to-r from-indigo-500/30 to-cyan-500/25 shadow-md"
-                                            transition={{
-                                                type: 'spring',
-                                                stiffness: 450,
-                                                damping: 35,
-                                            }}
-                                        />
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Tab Content Panels */}
-                <AnimatePresence mode="wait">
-                    {/* 1. Projects Tab */}
-                    {activeTab === 'projects' && (
-                        <motion.div
-                            key="projects-panel"
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -15 }}
-                            transition={{ duration: 0.3 }}
-                            className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-                        >
-                            {projects && projects.length > 0 ? (
-                                projects.map((project) => (
-                                    <div
-                                        key={project.id}
-                                        className="bg-glass group flex flex-col overflow-hidden rounded-3xl border border-white/10 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-indigo-500/40"
-                                    >
-                                        {/* Thumbnail */}
-                                        <div className="relative h-48 overflow-hidden border-b border-white/5 bg-slate-900 sm:h-52">
-                                            <img
-                                                src={
-                                                    project.image_url ||
-                                                    '/assets/images/projects/sample.webp'
+                {/* Tabbed Catalog Grid View */}
+                <div className="w-full">
+                    {/* Top Dynamic Tab Navigation */}
+                    <div className="mb-14 flex justify-center">
+                                <div className="inline-flex max-w-full overflow-x-auto rounded-2xl border border-white/10 bg-[#0d1322]/80 p-1.5 shadow-2xl backdrop-blur-xl">
+                                    {TABS.map((tab) => {
+                                        const Icon = tab.icon;
+                                        const isActive = activeTab === tab.id;
+                                        return (
+                                            <button
+                                                key={tab.id}
+                                                type="button"
+                                                onClick={() =>
+                                                    setActiveTab(tab.id)
                                                 }
-                                                alt={project.title}
-                                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                onError={(e) => {
-                                                    e.currentTarget.src =
-                                                        'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80';
-                                                }}
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17] via-transparent to-transparent opacity-60" />
-                                        </div>
-
-                                        {/* Card Body */}
-                                        <div className="flex flex-1 flex-col justify-between p-6">
-                                            <div>
-                                                <h3 className="font-display mb-2 text-lg font-bold text-white transition-colors group-hover:text-cyan-400">
-                                                    {project.title}
-                                                </h3>
-                                                <p className="mb-4 line-clamp-2 text-xs leading-relaxed text-slate-400 sm:text-sm">
-                                                    {project.description}
-                                                </p>
-
-                                                {/* Tech tags */}
-                                                {project.tech_tags &&
-                                                    project.tech_tags.length >
-                                                        0 && (
-                                                        <div className="mb-6 flex flex-wrap gap-1.5">
-                                                            {project.tech_tags
-                                                                .slice(0, 3)
-                                                                .map(
-                                                                    (
-                                                                        tag,
-                                                                        idx,
-                                                                    ) => (
-                                                                        <span
-                                                                            key={
-                                                                                idx
-                                                                            }
-                                                                            className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-[11px] text-slate-300"
-                                                                        >
-                                                                            {
-                                                                                tag
-                                                                            }
-                                                                        </span>
-                                                                    ),
-                                                                )}
-                                                            {project.tech_tags
-                                                                .length > 3 && (
-                                                                <span className="rounded-full bg-white/5 px-2 py-0.5 font-mono text-[10px] text-slate-400">
-                                                                    +
-                                                                    {project
-                                                                        .tech_tags
-                                                                        .length -
-                                                                        3}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                            </div>
-
-                                            {/* Card Footer Actions */}
-                                            <div className="flex items-center gap-2 border-t border-white/5 pt-4">
-                                                <button
-                                                    onClick={() =>
-                                                        setSelectedProject(
-                                                            project,
-                                                        )
-                                                    }
-                                                    className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-white/10"
-                                                >
-                                                    <Info className="h-3.5 w-3.5 text-indigo-400" />
-                                                    <span>Details</span>
-                                                </button>
-
-                                                {project.demo_url && (
-                                                    <a
-                                                        href={project.demo_url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="rounded-xl border border-indigo-500/30 bg-indigo-600/20 p-2 text-indigo-300 transition-colors hover:bg-indigo-600/30"
-                                                        aria-label="Live Demo"
-                                                    >
-                                                        <ExternalLink className="h-3.5 w-3.5" />
-                                                    </a>
-                                                )}
-
-                                                {project.repo_url && (
-                                                    <a
-                                                        href={project.repo_url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="rounded-xl border border-white/10 bg-white/5 p-2 text-slate-300 transition-colors hover:bg-white/10"
-                                                        aria-label="Repository"
-                                                    >
-                                                        <Github className="h-3.5 w-3.5" />
-                                                    </a>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="col-span-full py-12 text-center font-mono text-sm text-slate-500">
-                                    Belum ada proyek yang ditampilkan.
-                                </div>
-                            )}
-                        </motion.div>
-                    )}
-
-                    {/* 2. Certificates Tab */}
-                    {activeTab === 'certificates' && (
-                        <motion.div
-                            key="certificates-panel"
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -15 }}
-                            transition={{ duration: 0.3 }}
-                            className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-                        >
-                            {certificates && certificates.length > 0 ? (
-                                certificates.map((cert) => (
-                                    <div
-                                        key={cert.id}
-                                        className="bg-glass group flex flex-col justify-between rounded-3xl border border-white/10 p-6 shadow-lg transition-all duration-300 hover:border-cyan-500/40"
-                                    >
-                                        <div>
-                                            <div className="mb-4 flex items-center justify-between">
-                                                <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-0.5 font-mono text-[11px] text-cyan-300">
-                                                    {cert.year || 'Certified'}
-                                                </span>
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-cyan-400">
-                                                    <CheckCircle className="h-4 w-4" />
-                                                </div>
-                                            </div>
-
-                                            <h3 className="font-display mb-1 text-base font-bold text-white transition-colors group-hover:text-cyan-400">
-                                                {cert.title}
-                                            </h3>
-                                            <p className="mb-4 font-sans text-xs text-slate-400">
-                                                Penerbit:{' '}
-                                                <span className="font-medium text-slate-200">
-                                                    {cert.issuer_or_level}
-                                                </span>
-                                            </p>
-                                        </div>
-
-                                        {cert.credential_url && (
-                                            <a
-                                                href={cert.credential_url}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                                className={`relative flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-300 sm:px-6 sm:py-2.5 sm:text-sm ${
+                                                    isActive
+                                                        ? 'bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#4e63d9] text-white shadow-[0_0_20px_rgba(78,99,217,0.35)] border border-[#7185e8]/40'
+                                                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                                                }`}
                                             >
-                                                <span>
-                                                    Lihat Bukti Kredensial
-                                                </span>
-                                                <ExternalLink className="h-3.5 w-3.5" />
-                                            </a>
-                                        )}
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="col-span-full py-12 text-center font-mono text-sm text-slate-500">
-                                    Belum ada sertifikat yang ditampilkan.
+                                                <Icon className="h-4 w-4 shrink-0" />
+                                                <span>{tab.label}</span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
-                            )}
-                        </motion.div>
-                    )}
+                            </div>
 
-                    {/* 3. Achievements Tab */}
-                    {activeTab === 'achievements' && (
-                        <motion.div
-                            key="achievements-panel"
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -15 }}
-                            transition={{ duration: 0.3 }}
-                            className="grid grid-cols-1 gap-6 md:grid-cols-2"
-                        >
-                            {achievements && achievements.length > 0 ? (
-                                achievements.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="bg-glass group flex items-start gap-4 rounded-3xl border border-white/10 p-6 shadow-lg transition-all duration-300 hover:border-purple-500/40"
+                            {/* Tab Panels */}
+                            <AnimatePresence mode="wait">
+                                {/* 1. Projects Tab (StarBorder Cards) */}
+                                {activeTab === 'projects' && (
+                                    <motion.div
+                                        key="projects-panel"
+                                        initial={{ opacity: 0, y: 15 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -15 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
                                     >
-                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-purple-500/20 bg-purple-500/10 text-purple-400 transition-transform group-hover:scale-110">
-                                            <Award className="h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <div className="mb-1 flex items-center gap-2">
-                                                <span className="font-mono text-xs text-purple-400">
-                                                    {item.year}
-                                                </span>
-                                                <span className="text-slate-600">
-                                                    •
-                                                </span>
-                                                <span className="text-xs text-slate-400">
-                                                    {item.issuer_or_level}
-                                                </span>
-                                            </div>
-                                            <h3 className="font-display text-lg font-bold text-white transition-colors group-hover:text-purple-300">
-                                                {item.title}
-                                            </h3>
-                                            {item.credential_url && (
-                                                <a
-                                                    href={item.credential_url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="mt-2 inline-flex items-center gap-1 font-mono text-xs text-indigo-400 hover:text-indigo-300"
+                                        {projects && projects.length > 0 ? (
+                                            projects.map((project) => (
+                                                <StarBorder
+                                                    key={project.id || project.slug}
+                                                    as="div"
+                                                    color="#60a5fa"
+                                                    trailColor="#38bdf8"
+                                                    duration={4}
+                                                    direction="clockwise"
+                                                    stars={1}
+                                                    trailLength={0.3}
+                                                    thickness={1.2}
+                                                    radius={24}
+                                                    glow={0.7}
+                                                    hover="lap"
+                                                    sparkle={false}
+                                                    clickPulse={true}
+                                                    theme="dark"
+                                                    backgroundColor="#0d1322"
+                                                    borderColor="rgba(255, 255, 255, 0.1)"
+                                                    className="group flex flex-col justify-between p-5 sm:p-6 shadow-2xl backdrop-blur-xl border border-white/10 rounded-3xl transition-transform duration-300 hover:-translate-y-1.5 cursor-default bg-[#0d1322]"
                                                 >
-                                                    <span>Kredensial</span>
-                                                    <ExternalLink className="h-3 w-3" />
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="col-span-full py-12 text-center font-mono text-sm text-slate-500">
-                                    Belum ada penghargaan yang ditampilkan.
-                                </div>
-                            )}
-                        </motion.div>
-                    )}
+                                                    {/* 1. Gambar (Thumbnail) */}
+                                                    <div
+                                                        onClick={() =>
+                                                            handleSelectProject(
+                                                                project,
+                                                            )
+                                                        }
+                                                        className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl bg-[#080d1a] border border-white/10 mb-5 flex items-center justify-center cursor-pointer"
+                                                        title="Klik untuk melihat detail proyek"
+                                                    >
+                                                        <img
+                                                            src={
+                                                                project.image_url ||
+                                                                '/assets/images/projects/cyber-gyzn.png'
+                                                            }
+                                                            alt={project.title}
+                                                            className="h-full w-full object-contain rounded-xl sm:rounded-2xl transition-transform duration-500 group-hover:scale-105"
+                                                            onError={(e) => {
+                                                                e.currentTarget.src =
+                                                                    'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80';
+                                                            }}
+                                                        />
+                                                    </div>
 
-                    {/* 4. Tech Stack Tab */}
-                    {activeTab === 'tech_stack' && (
-                        <motion.div
-                            key="tech-stack-panel"
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -15 }}
-                            transition={{ duration: 0.3 }}
-                            className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
-                        >
-                            {techStack && techStack.length > 0 ? (
-                                techStack.map((tech) => (
-                                    <div
-                                        key={tech.id}
-                                        className="bg-glass group flex flex-col items-center justify-center rounded-2xl border border-white/10 p-4 text-center transition-all hover:border-indigo-500/40 hover:bg-white/5"
+                                                    {/* 2. Nama (Title) & 3. Ringkasan (Summary) */}
+                                                    <div className="flex flex-1 flex-col justify-between">
+                                                        <div>
+                                                            <h3 className="font-display text-xl sm:text-2xl font-extrabold text-white tracking-tight mb-2.5 transition-colors group-hover:text-blue-400">
+                                                                {project.title}
+                                                            </h3>
+                                                            <p className="font-sans text-xs sm:text-sm leading-relaxed text-slate-400 line-clamp-3 mb-6">
+                                                                {project.description}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* 3. Detail Button Only */}
+                                                        <div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleSelectProject(
+                                                                        project,
+                                                                    )
+                                                                }
+                                                                className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-xs sm:text-sm font-medium text-slate-200 transition-all duration-300 hover:border-blue-500/40 hover:bg-blue-600/20 hover:text-white active:scale-95"
+                                                            >
+                                                                <span>Details</span>
+                                                                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </StarBorder>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-full py-16 text-center font-mono text-sm text-slate-500">
+                                                Belum ada proyek yang ditampilkan.
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+
+                                {/* 2. Certificates Tab (Matching Reference 1 & 2) */}
+                                {activeTab === 'certificates' && (
+                                    <motion.div
+                                        key="certificates-panel"
+                                        initial={{ opacity: 0, y: 15 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -15 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
                                     >
-                                        <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 font-mono text-sm font-bold text-slate-200 transition-all group-hover:scale-110 group-hover:text-cyan-400">
-                                            {tech.title
-                                                .substring(0, 2)
-                                                .toUpperCase()}
-                                        </div>
-                                        <span className="font-display text-xs font-semibold text-white transition-colors group-hover:text-cyan-300">
-                                            {tech.title}
-                                        </span>
-                                        <span className="mt-0.5 font-mono text-[10px] text-slate-400">
-                                            {tech.issuer_or_level ||
-                                                'Full-Stack'}
-                                        </span>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="col-span-full py-12 text-center font-mono text-sm text-slate-500">
-                                    Data tech stack sedang dimuat...
-                                </div>
-                            )}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                                        {certificates &&
+                                        certificates.length > 0 ? (
+                                            certificates.map((cert) => (
+                                                <div
+                                                    key={cert.id}
+                                                    onClick={() =>
+                                                        setPreviewItem(cert)
+                                                    }
+                                                    className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-[#0d1322]/80 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(37,99,235,0.25)] hover:-translate-y-1.5 sm:rounded-3xl"
+                                                >
+                                                    {/* Certificate Aspect Ratio Container */}
+                                                    <div className="relative aspect-[1.414/1] w-full overflow-hidden bg-black/40">
+                                                        <img
+                                                            src={
+                                                                cert.image_or_icon ||
+                                                                '/assets/images/certificates/sertifikat-stekom.png'
+                                                            }
+                                                            alt={cert.title}
+                                                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            onError={(e) => {
+                                                                e.currentTarget.src =
+                                                                    '/assets/images/certificates/sertifikat-stekom.png';
+                                                            }}
+                                                        />
 
-                {/* Project Detail Modal */}
-                <ProjectModal
-                    project={selectedProject}
-                    isOpen={!!selectedProject}
-                    onClose={() => setSelectedProject(null)}
-                />
+                                                        {/* Hover Overlay: Dark backdrop + centered "Lihat sertifikat ↗" (Matching Reference 2) */}
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/55 backdrop-blur-[1px] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                                            <div className="flex items-center gap-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                                                                <span className="font-sans text-base sm:text-lg font-bold text-white tracking-wide">
+                                                                    Lihat sertifikat
+                                                                </span>
+                                                                <ExternalLink className="h-5 w-5 text-white shrink-0" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-full py-16 text-center font-mono text-sm text-slate-500">
+                                                Belum ada sertifikat yang ditampilkan.
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+
+                                {/* 3. Achievements Tab (Matching Piagam Layout & Referensi) */}
+                                {activeTab === 'achievements' && (
+                                    <motion.div
+                                        key="achievements-panel"
+                                        initial={{ opacity: 0, y: 15 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -15 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                                    >
+                                        {achievements &&
+                                        achievements.length > 0 ? (
+                                            achievements.map((item) => (
+                                                <div
+                                                    key={item.id}
+                                                    onClick={() =>
+                                                        setPreviewItem(item)
+                                                    }
+                                                    className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-[#0d1322]/80 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(37,99,235,0.25)] hover:-translate-y-1.5 sm:rounded-3xl"
+                                                >
+                                                    {/* Piagam Aspect Ratio Container */}
+                                                    <div className="relative aspect-[1.414/1] w-full overflow-hidden bg-black/40">
+                                                        <img
+                                                            src={
+                                                                item.image_or_icon ||
+                                                                '/assets/images/achievements/piagam-ksm-2023.png'
+                                                            }
+                                                            alt={item.title}
+                                                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            onError={(e) => {
+                                                                e.currentTarget.src =
+                                                                    '/assets/images/achievements/piagam-ksm-2023.png';
+                                                            }}
+                                                        />
+
+                                                        {/* Hover Overlay: Dark backdrop + centered "Lihat piagam ↗" */}
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/55 backdrop-blur-[1px] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                                            <div className="flex items-center gap-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                                                                <span className="font-sans text-base sm:text-lg font-bold text-white tracking-wide">
+                                                                    Lihat piagam
+                                                                </span>
+                                                                <ExternalLink className="h-5 w-5 text-white shrink-0" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-full py-16 text-center font-mono text-sm text-slate-500">
+                                                Belum ada piagam/penghargaan yang ditampilkan.
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+
+                                {/* 4. Tech Stack Tab (React Bits Border Glow + Authentic Iconify Brand Logos) */}
+                                {activeTab === 'tech_stack' && (
+                                    <motion.div
+                                        key="tech-stack-panel"
+                                        initial={{ opacity: 0, y: 15 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -15 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-6"
+                                    >
+                                        {techStack && techStack.length > 0 ? (
+                                            techStack.map((tech) => (
+                                                <BorderGlow
+                                                    key={
+                                                        tech.id || tech.title
+                                                    }
+                                                    edgeSensitivity={30}
+                                                    glowColor="40 80 80"
+                                                    backgroundColor="#0d1322"
+                                                    borderRadius={24}
+                                                    glowRadius={40}
+                                                    glowIntensity={1.0}
+                                                    coneSpread={25}
+                                                    animated={false}
+                                                    colors={[
+                                                        '#c084fc',
+                                                        '#f472b6',
+                                                        '#38bdf8',
+                                                    ]}
+                                                    className="group flex flex-col items-center justify-center min-h-[145px] sm:min-h-[160px] p-5 sm:p-6 cursor-default shadow-xl transition-all duration-300 hover:-translate-y-1.5"
+                                                >
+                                                    <div className="flex h-full w-full flex-col items-center justify-center text-center">
+                                                        {/* Brand Logo with authentic color */}
+                                                        <div className="mb-3.5 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                                                            <TechIcon
+                                                                name={
+                                                                    tech.title
+                                                                }
+                                                                icon={
+                                                                    tech.image_or_icon
+                                                                }
+                                                                className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 drop-shadow-md"
+                                                            />
+                                                        </div>
+
+                                                        {/* Tech Name */}
+                                                        <span className="font-sans text-xs sm:text-sm font-semibold tracking-wide text-white transition-colors duration-300 group-hover:text-amber-200">
+                                                            {tech.title}
+                                                        </span>
+                                                    </div>
+                                                </BorderGlow>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-full py-16 text-center font-mono text-sm text-slate-500">
+                                                Data tech stack sedang dimuat...
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                </div>
             </div>
+
+            {/* Fullscreen Lightbox Modal (For Certificates & Achievements) */}
+            <AnimatePresence>
+                {previewItem && (
+                    <motion.div
+                        key="lightbox-backdrop"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        onClick={() => setPreviewItem(null)}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 md:p-6 cursor-zoom-out"
+                    >
+                        {/* Close Button Top Right (Prominent, High-Z-index, Glossy Glass) */}
+                        <button
+                            type="button"
+                            onClick={() => setPreviewItem(null)}
+                            className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-black/60 text-white/90 shadow-2xl backdrop-blur-md transition-all duration-200 hover:bg-white/20 hover:text-white hover:scale-110 active:scale-95"
+                            aria-label="Tutup pratinjau"
+                        >
+                            <X className="h-6 w-6" />
+                        </button>
+
+                        {/* Modal Image Box - Almost Full Screen (Hampir Full) */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            transition={{
+                                duration: 0.25,
+                                ease: [0.16, 1, 0.3, 1],
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="relative flex items-center justify-center max-h-[92vh] max-w-[96vw] cursor-default overflow-hidden rounded-2xl sm:rounded-3xl border border-white/20 bg-black/95 shadow-[0_0_80px_rgba(0,0,0,0.9)]"
+                        >
+                            <img
+                                src={
+                                    previewItem.image_or_icon ||
+                                    (previewItem.category === 'achievement'
+                                        ? '/assets/images/achievements/piagam-ksm-2023.png'
+                                        : '/assets/images/certificates/sertifikat-stekom.png')
+                                }
+                                alt={previewItem.title}
+                                className="h-auto max-h-[90vh] w-auto max-w-[95vw] rounded-2xl sm:rounded-3xl object-contain shadow-2xl"
+                            />
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </section>
     );
 }

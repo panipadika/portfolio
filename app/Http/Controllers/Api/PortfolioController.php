@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Credential;
 use App\Models\Experience;
 use App\Models\Project;
+use App\Models\SiteSetting;
 use Illuminate\Http\JsonResponse;
 
 class PortfolioController extends Controller
@@ -59,6 +60,7 @@ class PortfolioController extends Controller
                 'certificates' => $certificates,
                 'achievements' => $achievements,
                 'tech_stack' => $techStack,
+                'settings' => SiteSetting::allMap(),
             ],
         ]);
     }

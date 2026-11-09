@@ -176,15 +176,15 @@ const CARD_SIZES: Record<string, [number, number]> = {
 const ANCHORS: Record<string, number> = {
     left: 0.27,
     center: 0.5,
-    right: 0.73,
+    right: 0.77,
 };
 const THICKNESS = 0.018;
 const BEVEL = 0.007;
 const JOINTS = 4;
 const NODE_WEIGHT = 1 / 0.05;
-const MAX_STEP = 1 / 960;
+const MAX_STEP = 1 / 360;
 const ITERATIONS = 2;
-const SAMPLES = 72;
+const SAMPLES = 40;
 const FOV = 24;
 const STRAP_WIDTH = 0.36;
 const RING_RADIUS = 0.095;
@@ -595,6 +595,9 @@ const makeCanvasTexture = (canvas: HTMLCanvasElement, anisotropy: number) => {
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = anisotropy;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = true;
     return texture;
 };
 
@@ -698,6 +701,8 @@ const drawFitted = (
     height: number,
     fit: ImageFit,
 ) => {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     const scale = (fit === 'contain' ? Math.min : Math.max)(
         width / image.width,
         height / image.height,
@@ -715,6 +720,8 @@ const paintFace = (
 ) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.fillStyle = toCss(color);
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (image) drawFitted(ctx, image, canvas.width, canvas.height, fit);
@@ -725,14 +732,16 @@ const paintStrap = (
     image: HTMLImageElement | null,
     color: Rgb,
 ) => {
-    const across = 192;
+    const across = 256;
     const along = image
-        ? Math.max(64, Math.round((image.width / image.height) * across))
+        ? Math.max(128, Math.round((image.width / image.height) * across))
         : across * 2;
     canvas.width = across;
     canvas.height = along;
     const ctx = canvas.getContext('2d');
     if (!ctx) return along / across;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.fillStyle = toCss(color);
     ctx.fillRect(0, 0, across, along);
     if (image) {
@@ -828,14 +837,12 @@ const bodyWeight = (body: Body, r: THREE.Vector3, normal: THREE.Vector3) => {
 
 const pushBody = (body: Body, r: THREE.Vector3, impulse: THREE.Vector3) => {
     body.position.addScaledVector(impulse, 1 / body.mass);
-    rotateBody(
-        body.quaternion,
-        applyInverseInertia(
-            body,
-            scratch.e.crossVectors(r, impulse),
-            scratch.f,
-        ),
-    );
+    const torque = scratch.e.crossVectors(r, impulse);
+    const angularDelta = applyInverseInertia(body, torque, scratch.f);
+    if (angularDelta.lengthSq() > 0.0625) {
+        angularDelta.setLength(0.25);
+    }
+    rotateBody(body.quaternion, angularDelta);
 };
 
 const solveSegment = (
@@ -860,18 +867,19 @@ const solveSegment = (
     if (stretch <= 0 || length < 1e-9) return;
     const normal = delta.divideScalar(length);
     const wb = last ? bodyWeight(body, r, normal) : NODE_WEIGHT;
-    const rate = (length - sim.lengths[i]) / h;
-    const tension =
-        physics.hold * Math.tanh((physics.stiffness * stretch) / physics.hold) +
-        physics.spring * stretch +
-        physics.bandDamping * Math.max(0, rate);
-    const room = tension * h * h - sim.impulses[i];
-    if (room <= 0) return;
-    const lambda = Math.min(stretch / (wa + wb), room);
+    const wTotal = wa + wb;
+    if (wTotal <= 0) return;
+
+    const lambda = stretch / wTotal;
     sim.impulses[i] += lambda;
+
     if (wa) a.addScaledVector(normal, lambda * wa);
-    if (last) pushBody(body, r, normal.multiplyScalar(-lambda));
-    else b.addScaledVector(normal, -lambda * wb);
+    if (last) {
+        scratch.c.copy(normal).multiplyScalar(-lambda);
+        pushBody(body, r, scratch.c);
+    } else {
+        b.addScaledVector(normal, -lambda * wb);
+    }
 };
 
 const solvePin = (body: Body, grab: Grab, target: THREE.Vector3) => {
@@ -880,8 +888,11 @@ const solvePin = (body: Body, grab: Grab, target: THREE.Vector3) => {
     const distance = delta.length();
     if (distance < 1e-9) return;
     const normal = delta.divideScalar(distance);
-    const lambda = distance / bodyWeight(body, r, normal);
-    pushBody(body, r, normal.multiplyScalar(lambda));
+    const weight = bodyWeight(body, r, normal);
+    if (weight <= 0) return;
+    const lambda = distance / weight;
+    scratch.c.copy(normal).multiplyScalar(lambda);
+    pushBody(body, r, scratch.c);
 };
 
 const placeHanging = (sim: Simulation, layout: CardLayout, intro: boolean) => {
@@ -946,8 +957,8 @@ const stepSimulation = (
     const windX =
         physics.breeze *
         (Math.sin(time * 0.53) * 0.7 + Math.sin(time * 1.31 + 1.7) * 0.3) *
-        3;
-    const windZ = physics.breeze * Math.sin(time * 0.37 + 0.6) * 2;
+        0.8;
+    const windZ = physics.breeze * Math.sin(time * 0.37 + 0.6) * 0.5;
     const grab = sim.grab;
     const pin = scratch.pin;
     const nodeDrag = Math.exp(-physics.nodeDrag * h);
@@ -1153,7 +1164,7 @@ const Lanyard = ({
         container.appendChild(canvas);
 
         const anisotropy = Math.min(
-            8,
+            16,
             renderer.capabilities.getMaxAnisotropy(),
         );
         const scene = new THREE.Scene();
@@ -1213,15 +1224,22 @@ const Lanyard = ({
             map: frontTexture,
             normalMap: grain,
             normalScale: new THREE.Vector2(0.06, 0.06),
+            transparent: true,
+            opacity: 0.94,
         });
         const backMaterial = new THREE.MeshPhysicalMaterial({
             map: backTexture,
             normalMap: grain,
             normalScale: new THREE.Vector2(0.06, 0.06),
+            transparent: true,
+            opacity: 0.94,
         });
         frontMaterial.onBeforeCompile = injectFoil;
         backMaterial.onBeforeCompile = injectFoil;
-        const edgeMaterial = new THREE.MeshPhysicalMaterial();
+        const edgeMaterial = new THREE.MeshPhysicalMaterial({
+            transparent: true,
+            opacity: 0.94,
+        });
         const metalMaterial = new THREE.MeshStandardMaterial({
             metalness: 1,
         });
@@ -1288,6 +1306,9 @@ const Lanyard = ({
         let placed = false;
         let hovering = false;
         let press: Press | null = null;
+        let lastMoveTime = performance.now();
+        const lastMoveTarget = new THREE.Vector3();
+        const dragVelocity = new THREE.Vector3();
         let imageToken = 0;
         const reducedMotion =
             window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ??
@@ -1590,27 +1611,27 @@ const Lanyard = ({
 
         const physics = (): Physics => {
             const s = settingsRef.current!;
-            const gravity = 40 * clamp(s.gravity, 0, 3);
+            const gravity = 26 * clamp(s.gravity, 0, 3);
             const weight = Math.max(gravity, 20);
             const springy = clamp(s.elasticity, 0, 1);
             const settle = clamp(s.damping, 0, 1);
             return {
                 gravity,
-                hold: weight * mix(2.2, 5.5, springy),
-                stiffness: weight * 10 * JOINTS,
-                spring: weight * mix(0.1, 0.4, springy) * JOINTS,
-                bandDamping: weight * mix(0.3, 0.08, springy) * JOINTS,
-                linearDrag: 0.25 * Math.pow(16, settle),
-                angularDrag: 0.5 * Math.pow(12, settle),
-                air: 0.15,
-                broadside: 0.5,
-                spinAir: 0.03,
-                nodeDrag: 2,
-                nodeAir: 0.2,
-                twist: 30,
-                twistDamping: 3,
-                grip: 40,
-                gripDamping: 6,
+                hold: weight * mix(3.0, 7.0, springy),
+                stiffness: weight * 12 * JOINTS,
+                spring: weight * mix(0.12, 0.45, springy) * JOINTS,
+                bandDamping: weight * mix(0.35, 0.12, springy) * JOINTS,
+                linearDrag: 0.35 * Math.pow(12, settle),
+                angularDrag: 0.7 * Math.pow(10, settle),
+                air: 0.2,
+                broadside: 0.8,
+                spinAir: 0.04,
+                nodeDrag: 2.2,
+                nodeAir: 0.22,
+                twist: 22,
+                twistDamping: 8,
+                grip: 45,
+                gripDamping: 7,
                 breeze: reducedMotion ? 0 : clamp(s.breeze, 0, 1),
             };
         };
@@ -1713,6 +1734,9 @@ const Lanyard = ({
                 time: performance.now(),
                 point: hit.point.clone(),
             };
+            lastMoveTime = performance.now();
+            lastMoveTarget.copy(hit.point);
+            dragVelocity.set(0, 0, 0);
             canvas.setPointerCapture?.(event.pointerId);
             setCursor('grabbing');
             event.preventDefault();
@@ -1732,6 +1756,21 @@ const Lanyard = ({
                 )
                     press = null;
                 raycaster.ray.at(sim.grab.reach, sim.grab.target);
+                const now = performance.now();
+                const dtMove = (now - lastMoveTime) / 1000;
+                if (dtMove > 0.005) {
+                    const instantV = scratch.a
+                        .copy(sim.grab.target)
+                        .sub(lastMoveTarget)
+                        .divideScalar(dtMove);
+                    if (Number.isFinite(instantV.x + instantV.y + instantV.z)) {
+                        dragVelocity.lerp(instantV, 0.45);
+                        if (dragVelocity.lengthSq() > 400)
+                            dragVelocity.setLength(20);
+                    }
+                    lastMoveTarget.copy(sim.grab.target);
+                    lastMoveTime = now;
+                }
                 start();
                 return;
             }
@@ -1742,14 +1781,29 @@ const Lanyard = ({
 
         const onPointerUp = (event: PointerEvent) => {
             if (!sim.grab) return;
+            const hadPress = !!press;
+            const pressPoint = press?.point.clone();
+            const pressTime = press?.time ?? 0;
             sim.grab = null;
-            if (
-                press &&
-                event.type === 'pointerup' &&
-                performance.now() - press.time < 450
-            )
-                flip(press.point);
             press = null;
+
+            const now = performance.now();
+            const dtSinceMove = (now - lastMoveTime) / 1000;
+            if (!hadPress && dtSinceMove < 0.12 && dragVelocity.lengthSq() > 0.01) {
+                if (dragVelocity.lengthSq() > 400) dragVelocity.setLength(20);
+                sim.body.velocity.copy(dragVelocity).multiplyScalar(0.6);
+                sim.body.angular.x = clamp(sim.body.angular.x + dragVelocity.y * 0.25, -15, 15);
+                sim.body.angular.y = clamp(sim.body.angular.y - dragVelocity.x * 0.35, -15, 15);
+            }
+
+            if (
+                hadPress &&
+                pressPoint &&
+                event.type === 'pointerup' &&
+                now - pressTime < 450
+            )
+                flip(pressPoint);
+
             canvas.releasePointerCapture?.(event.pointerId);
             setCursor(hovering && event.pointerType !== 'touch' ? 'grab' : '');
             start();
