@@ -99,7 +99,7 @@ export default function AboutSection({
                         <span className="font-display text-3xl font-bold tracking-tight text-[#7185e8] sm:text-4xl md:text-5xl">
                             Hi, I'm
                         </span>
-                        <h3 className="font-display mt-1 mb-6 text-3xl font-extrabold tracking-tight text-white sm:mb-8 sm:text-4xl md:text-5xl">
+                        <h3 className="font-display mt-1 mb-6 text-3xl font-extrabold tracking-tight text-white sm:mb-50 sm:text-4xl md:text-5xl">
                             Pani Padika
                         </h3>
                     </div>
