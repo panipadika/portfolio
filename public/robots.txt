@@ -1,2 +1,16 @@
+# Robots.txt for Pani Padika Portfolio
 User-agent: *
-Disallow:
+Allow: /
+Allow: /assets/
+Allow: /build/
+
+# Disallow administrative, authentication, and private endpoints
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /two-factor-challenge
+Disallow: /api/
