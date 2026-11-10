@@ -172,19 +172,40 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
 
                     {/* Right Column: Technologies Used in a Glassmorphic Panel */}
                     <div className="w-full lg:col-span-5 xl:col-span-4">
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-md shadow-xl">
-                            <h2 className="mb-4 flex items-center gap-2.5 font-display text-base sm:text-lg font-bold text-white">
-                                <Code2 className="h-5 w-5 text-blue-400" />
-                                <span>Technologies Used</span>
-                            </h2>
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 backdrop-blur-md shadow-xl">
+                            <div className="mb-4 flex items-center justify-between border-b border-white/5 pb-3">
+                                <h2 className="flex items-center gap-2.5 font-display text-base sm:text-lg font-bold text-white">
+                                    <Code2 className="h-5 w-5 text-blue-400" />
+                                    <span>Technologies Used</span>
+                                </h2>
+                                {project.tech_tags && project.tech_tags.length > 0 && (
+                                    <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-blue-400 border border-blue-500/20">
+                                        {project.tech_tags.length}
+                                    </span>
+                                )}
+                            </div>
 
-                            <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                            <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                                 {project.tech_tags && project.tech_tags.length > 0 ? (
-                                    project.tech_tags.map((tag) => (
-                                        <TechBadge key={tag} name={tag} techStack={techStack} />
-                                    ))
+                                    project.tech_tags.map((tag, idx) => {
+                                        const isLastOdd =
+                                            project.tech_tags.length % 2 !== 0 &&
+                                            idx === project.tech_tags.length - 1;
+                                        return (
+                                            <div
+                                                key={tag}
+                                                className={isLastOdd ? 'col-span-2' : 'col-span-1'}
+                                            >
+                                                <TechBadge
+                                                    name={tag}
+                                                    techStack={techStack}
+                                                    fullWidth
+                                                />
+                                            </div>
+                                        );
+                                    })
                                 ) : (
-                                    <span className="text-xs text-slate-500">
+                                    <span className="col-span-2 py-2 text-xs text-slate-500">
                                         Teknologi standar web
                                     </span>
                                 )}

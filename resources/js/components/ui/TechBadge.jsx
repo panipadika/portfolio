@@ -166,7 +166,14 @@ export const TECH_ICONS = {
     },
 };
 
-export default function TechBadge({ name, icon, techStack = [], compact = false }) {
+export default function TechBadge({
+    name,
+    icon,
+    techStack = [],
+    compact = false,
+    fullWidth = false,
+    className = '',
+}) {
     // 1. Resolve custom icon / SVG from techStack list if available
     let resolvedIcon = icon;
     if (!resolvedIcon && Array.isArray(techStack) && techStack.length > 0) {
@@ -223,11 +230,26 @@ export default function TechBadge({ name, icon, techStack = [], compact = false 
                 '#f472b6',
                 '#38bdf8',
             ]}
-            contentClassName={compact ? 'flex items-center gap-1.5 px-2.5 py-1 relative overflow-hidden z-[1]' : 'flex items-center gap-2 px-3.5 py-2 relative overflow-hidden z-[1]'}
-            className="group inline-flex items-center cursor-default shadow-md transition-all duration-300 hover:scale-105"
+            contentClassName={
+                fullWidth
+                    ? 'flex items-center gap-2.5 px-3 py-2 sm:px-3.5 sm:py-2.5 relative overflow-hidden z-[1] w-full min-w-0'
+                    : compact
+                      ? 'flex items-center gap-1.5 px-2.5 py-1 relative overflow-hidden z-[1]'
+                      : 'flex items-center gap-2 px-3.5 py-2 relative overflow-hidden z-[1]'
+            }
+            className={`group ${fullWidth ? 'flex w-full' : 'inline-flex'} items-center cursor-default shadow-md transition-all duration-300 hover:scale-[1.02] ${className}`}
         >
-            {iconElement}
-            <span className={compact ? 'font-sans text-[11px] font-medium text-slate-200' : 'font-sans text-xs sm:text-sm font-medium text-slate-200'}>
+            <div className="shrink-0 flex items-center justify-center">
+                {iconElement}
+            </div>
+            <span
+                className={`${
+                    compact
+                        ? 'font-sans text-[11px] font-medium text-slate-200'
+                        : 'font-sans text-xs sm:text-sm font-medium text-slate-200'
+                } truncate min-w-0`}
+                title={name}
+            >
                 {name}
             </span>
         </BorderGlow>
