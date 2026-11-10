@@ -170,39 +170,53 @@ export default function HeroSection() {
                         </div>
                     </motion.div>
 
-                    {/* Right Column: desktop grid spacer + mobile-only Lanyard (order-1 on mobile so it appears first) */}
+                    {/* Right Column: desktop grid spacer + mobile layout spacer (order-1 on mobile so card hangs first) */}
                     <div className="relative order-1 lg:order-2 lg:col-span-5">
-                        {/* Mobile Lanyard (appears at the top before headline on mobile, spacious unclipped drag area) */}
-                        <div className="relative z-10 flex w-full items-center justify-center lg:hidden overflow-visible">
-                            {!isDesktop && (
-                                <LanyardCanvas
-                                    frontImage="/card-front.png"
-                                    backImage="/card-back.png"
-                                    strapImage="/band.png"
-                                    imageFit="cover"
-                                    cardColor="#ffffff"
-                                    orientation="portrait"
-                                    finish="glossy"
-                                    cornerRadius={0.3}
-                                    size={0.53}
-                                    anchor="center"
-                                    strapLength={0.42}
-                                    strapColor="#111111"
-                                    strapWidth={0.6}
-                                    metal="silver"
-                                    gravity={1}
-                                    damping={0.6}
-                                    elasticity={0.4}
-                                    breeze={0.2}
-                                    interactive={true}
-                                    intro={true}
-                                    className="h-[500px] sm:h-[580px] -mb-32 sm:-mb-36"
-                                />
-                            )}
-                        </div>
+                        {/* Mobile layout spacer: reserves vertical breathing room so headline begins cleanly below the hanging card */}
+                        <div className="h-[340px] sm:h-[400px] w-full lg:hidden" aria-hidden="true" />
                     </div>
                 </div>
             </div>
+
+            {/* Mobile-only: Full Hero unclipped 3D stage (spans full viewport width & height, extending past navbar without boundary clipping) */}
+            {!isDesktop && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{
+                        duration: 1,
+                        delay: 0.2,
+                        ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className="pointer-events-none absolute inset-x-0 -top-6 bottom-0 z-10 overflow-visible lg:hidden"
+                >
+                    <div className="pointer-events-auto h-full w-full">
+                        <LanyardCanvas
+                            frontImage="/card-front.png"
+                            backImage="/card-back.png"
+                            strapImage="/band.png"
+                            imageFit="cover"
+                            cardColor="#ffffff"
+                            orientation="portrait"
+                            finish="glossy"
+                            cornerRadius={0.3}
+                            size={0.53}
+                            anchor="center"
+                            strapLength={0.42}
+                            strapColor="#111111"
+                            strapWidth={0.6}
+                            metal="silver"
+                            gravity={1}
+                            damping={0.6}
+                            elasticity={0.4}
+                            breeze={0.2}
+                            interactive={true}
+                            intro={true}
+                            className="h-full w-full"
+                        />
+                    </div>
+                </motion.div>
+            )}
 
             {/* Desktop-only: Full Hero unclipped 3D stage (z-10 so card glides behind text & navbar without blocking them) */}
             {isDesktop && (
