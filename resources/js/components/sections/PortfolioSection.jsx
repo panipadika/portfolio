@@ -20,6 +20,26 @@ const TABS = [
     { id: 'tech_stack', label: 'Tech Stack', icon: Cpu },
 ];
 
+const panelContainerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.07,
+            delayChildren: 0.05,
+        },
+    },
+};
+
+const itemCardVariants = {
+    hidden: { opacity: 0, y: 22 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
+    },
+};
+
 export default function PortfolioSection({
     projects = [],
     certificates = [],
@@ -65,16 +85,28 @@ export default function PortfolioSection({
             <div id="Portofolio" className="sr-only" aria-hidden="true" />
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Section Heading */}
-                <div className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
+                <motion.div
+                    initial={{ opacity: 0, y: 25 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                    className="mx-auto mb-12 max-w-3xl text-center sm:mb-16"
+                >
                     <h2 className="font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
                         Portofolio
                     </h2>
-                </div>
+                </motion.div>
 
                 {/* Tabbed Catalog Grid View */}
                 <div className="w-full">
                     {/* Top Dynamic Tab Navigation */}
-                    <div className="relative mb-10 sm:mb-14 w-full">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.3 }}
+                        transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                        className="relative mb-10 sm:mb-14 w-full"
+                    >
                         {/* Horizontal scroll container with smooth touch scrolling and hidden scrollbar */}
                         <div className="flex w-full overflow-x-auto px-4 py-2 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden justify-start sm:justify-center">
                             <div className="inline-flex shrink-0 items-center gap-1 sm:gap-1.5 rounded-2xl border border-white/10 bg-[#0d1322]/90 p-1.5 shadow-2xl backdrop-blur-xl">
@@ -108,7 +140,7 @@ export default function PortfolioSection({
                             <span>geser tab kategori</span>
                             <span>→</span>
                         </div>
-                    </div>
+                    </motion.div>
 
                             {/* Tab Panels */}
                             <AnimatePresence mode="wait">
@@ -116,86 +148,90 @@ export default function PortfolioSection({
                                 {activeTab === 'projects' && (
                                     <motion.div
                                         key="projects-panel"
-                                        initial={{ opacity: 0, y: 15 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -15 }}
-                                        transition={{ duration: 0.3 }}
+                                        variants={panelContainerVariants}
+                                        initial="hidden"
+                                        animate="show"
+                                        exit={{ opacity: 0, y: -15, transition: { duration: 0.2 } }}
                                         className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
                                     >
                                         {projects && projects.length > 0 ? (
                                             projects.map((project) => (
-                                                <StarBorder
+                                                <motion.div
                                                     key={project.id || project.slug}
-                                                    as="div"
-                                                    color="#60a5fa"
-                                                    trailColor="#38bdf8"
-                                                    duration={4}
-                                                    direction="clockwise"
-                                                    stars={1}
-                                                    trailLength={0.3}
-                                                    thickness={1.2}
-                                                    radius={24}
-                                                    glow={0.7}
-                                                    hover="lap"
-                                                    sparkle={false}
-                                                    clickPulse={true}
-                                                    theme="dark"
-                                                    backgroundColor="#0d1322"
-                                                    borderColor="rgba(255, 255, 255, 0.1)"
-                                                    className="group flex flex-col justify-between p-5 sm:p-6 shadow-2xl backdrop-blur-xl border border-white/10 rounded-3xl transition-transform duration-300 hover:-translate-y-1.5 cursor-default bg-[#0d1322]"
+                                                    variants={itemCardVariants}
                                                 >
-                                                    {/* 1. Gambar (Thumbnail) */}
-                                                    <div
-                                                        onClick={() =>
-                                                            handleSelectProject(
-                                                                project,
-                                                            )
-                                                        }
-                                                        className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl bg-[#080d1a] border border-white/10 mb-5 flex items-center justify-center cursor-pointer"
-                                                        title="Klik untuk melihat detail proyek"
+                                                    <StarBorder
+                                                        as="div"
+                                                        color="#60a5fa"
+                                                        trailColor="#38bdf8"
+                                                        duration={4}
+                                                        direction="clockwise"
+                                                        stars={1}
+                                                        trailLength={0.3}
+                                                        thickness={1.2}
+                                                        radius={24}
+                                                        glow={0.7}
+                                                        hover="lap"
+                                                        sparkle={false}
+                                                        clickPulse={true}
+                                                        theme="dark"
+                                                        backgroundColor="#0d1322"
+                                                        borderColor="rgba(255, 255, 255, 0.1)"
+                                                        className="group flex flex-col justify-between p-5 sm:p-6 shadow-2xl backdrop-blur-xl border border-white/10 rounded-3xl transition-transform duration-300 hover:-translate-y-1.5 cursor-default bg-[#0d1322]"
                                                     >
-                                                        <img
-                                                            src={
-                                                                project.image_url ||
-                                                                '/assets/images/projects/cyber-gyzn.png'
+                                                        {/* 1. Gambar (Thumbnail) */}
+                                                        <div
+                                                            onClick={() =>
+                                                                handleSelectProject(
+                                                                    project,
+                                                                )
                                                             }
-                                                            alt={project.title}
-                                                            className="h-full w-full object-contain rounded-xl sm:rounded-2xl transition-transform duration-500 group-hover:scale-105"
-                                                            onError={(e) => {
-                                                                e.currentTarget.src =
-                                                                    'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80';
-                                                            }}
-                                                        />
-                                                    </div>
-
-                                                    {/* 2. Nama (Title) & 3. Ringkasan (Summary) */}
-                                                    <div className="flex flex-1 flex-col justify-between">
-                                                        <div>
-                                                            <h3 className="font-display text-xl sm:text-2xl font-extrabold text-white tracking-tight mb-2.5 transition-colors group-hover:text-blue-400">
-                                                                {project.title}
-                                                            </h3>
-                                                            <p className="font-sans text-xs sm:text-sm leading-relaxed text-slate-400 line-clamp-3 mb-6">
-                                                                {project.description}
-                                                            </p>
-                                                        </div>
-
-                                                        {/* 3. Detail Button Only */}
-                                                        <div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    handleSelectProject(
-                                                                        project,
-                                                                    )
+                                                            className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl bg-[#080d1a] border border-white/10 mb-5 flex items-center justify-center cursor-pointer"
+                                                            title="Klik untuk melihat detail proyek"
+                                                        >
+                                                            <img
+                                                                src={
+                                                                    project.image_url ||
+                                                                    '/assets/images/projects/cyber-gyzn.png'
                                                                 }
-                                                                className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-xs sm:text-sm font-medium text-slate-200 transition-all duration-300 hover:border-blue-500/40 hover:bg-blue-600/20 hover:text-white active:scale-95"
-                                                            >
-                                                                <span>Details</span>
-                                                                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                                                            </button>
+                                                                alt={project.title}
+                                                                className="h-full w-full object-contain rounded-xl sm:rounded-2xl transition-transform duration-500 group-hover:scale-105"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.src =
+                                                                        'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80';
+                                                                }}
+                                                            />
                                                         </div>
-                                                    </div>
-                                                </StarBorder>
+
+                                                        {/* 2. Nama (Title) & 3. Ringkasan (Summary) */}
+                                                        <div className="flex flex-1 flex-col justify-between">
+                                                            <div>
+                                                                <h3 className="font-display text-xl sm:text-2xl font-extrabold text-white tracking-tight mb-2.5 transition-colors group-hover:text-blue-400">
+                                                                    {project.title}
+                                                                </h3>
+                                                                <p className="font-sans text-xs sm:text-sm leading-relaxed text-slate-400 line-clamp-3 mb-6">
+                                                                    {project.description}
+                                                                </p>
+                                                            </div>
+
+                                                            {/* 3. Detail Button Only */}
+                                                            <div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        handleSelectProject(
+                                                                            project,
+                                                                        )
+                                                                    }
+                                                                    className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-xs sm:text-sm font-medium text-slate-200 transition-all duration-300 hover:border-blue-500/40 hover:bg-blue-600/20 hover:text-white active:scale-95"
+                                                                >
+                                                                    <span>Details</span>
+                                                                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </StarBorder>
+                                                </motion.div>
                                             ))
                                         ) : (
                                             <div className="col-span-full py-16 text-center font-mono text-sm text-slate-500">
@@ -209,17 +245,18 @@ export default function PortfolioSection({
                                 {activeTab === 'certificates' && (
                                     <motion.div
                                         key="certificates-panel"
-                                        initial={{ opacity: 0, y: 15 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -15 }}
-                                        transition={{ duration: 0.3 }}
+                                        variants={panelContainerVariants}
+                                        initial="hidden"
+                                        animate="show"
+                                        exit={{ opacity: 0, y: -15, transition: { duration: 0.2 } }}
                                         className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
                                     >
                                         {certificates &&
                                         certificates.length > 0 ? (
                                             certificates.map((cert) => (
-                                                <div
+                                                <motion.div
                                                     key={cert.id}
+                                                    variants={itemCardVariants}
                                                     onClick={() =>
                                                         setPreviewItem(cert)
                                                     }
@@ -250,7 +287,7 @@ export default function PortfolioSection({
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </motion.div>
                                             ))
                                         ) : (
                                             <div className="col-span-full py-16 text-center font-mono text-sm text-slate-500">
@@ -264,17 +301,18 @@ export default function PortfolioSection({
                                 {activeTab === 'achievements' && (
                                     <motion.div
                                         key="achievements-panel"
-                                        initial={{ opacity: 0, y: 15 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -15 }}
-                                        transition={{ duration: 0.3 }}
+                                        variants={panelContainerVariants}
+                                        initial="hidden"
+                                        animate="show"
+                                        exit={{ opacity: 0, y: -15, transition: { duration: 0.2 } }}
                                         className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
                                     >
                                         {achievements &&
                                         achievements.length > 0 ? (
                                             achievements.map((item) => (
-                                                <div
+                                                <motion.div
                                                     key={item.id}
+                                                    variants={itemCardVariants}
                                                     onClick={() =>
                                                         setPreviewItem(item)
                                                     }
@@ -305,7 +343,7 @@ export default function PortfolioSection({
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </motion.div>
                                             ))
                                         ) : (
                                             <div className="col-span-full py-16 text-center font-mono text-sm text-slate-500">
@@ -319,53 +357,55 @@ export default function PortfolioSection({
                                 {activeTab === 'tech_stack' && (
                                     <motion.div
                                         key="tech-stack-panel"
-                                        initial={{ opacity: 0, y: 15 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -15 }}
-                                        transition={{ duration: 0.3 }}
+                                        variants={panelContainerVariants}
+                                        initial="hidden"
+                                        animate="show"
+                                        exit={{ opacity: 0, y: -15, transition: { duration: 0.2 } }}
                                         className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-6"
                                     >
                                         {techStack && techStack.length > 0 ? (
                                             techStack.map((tech) => (
-                                                <BorderGlow
-                                                    key={
-                                                        tech.id || tech.title
-                                                    }
-                                                    edgeSensitivity={30}
-                                                    glowColor="40 80 80"
-                                                    backgroundColor="#0d1322"
-                                                    borderRadius={24}
-                                                    glowRadius={40}
-                                                    glowIntensity={1.0}
-                                                    coneSpread={25}
-                                                    animated={false}
-                                                    colors={[
-                                                        '#c084fc',
-                                                        '#f472b6',
-                                                        '#38bdf8',
-                                                    ]}
-                                                    className="group flex flex-col items-center justify-center min-h-[145px] sm:min-h-[160px] p-5 sm:p-6 cursor-default shadow-xl transition-all duration-300 hover:-translate-y-1.5"
+                                                <motion.div
+                                                    key={tech.id || tech.title}
+                                                    variants={itemCardVariants}
                                                 >
-                                                    <div className="flex h-full w-full flex-col items-center justify-center text-center">
-                                                        {/* Brand Logo with authentic color */}
-                                                        <div className="mb-3.5 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                                                            <TechIcon
-                                                                name={
-                                                                    tech.title
-                                                                }
-                                                                icon={
-                                                                    tech.image_or_icon
-                                                                }
-                                                                className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 drop-shadow-md"
-                                                            />
-                                                        </div>
+                                                    <BorderGlow
+                                                        edgeSensitivity={30}
+                                                        glowColor="40 80 80"
+                                                        backgroundColor="#0d1322"
+                                                        borderRadius={24}
+                                                        glowRadius={40}
+                                                        glowIntensity={1.0}
+                                                        coneSpread={25}
+                                                        animated={false}
+                                                        colors={[
+                                                            '#c084fc',
+                                                            '#f472b6',
+                                                            '#38bdf8',
+                                                        ]}
+                                                        className="group flex flex-col items-center justify-center min-h-[145px] sm:min-h-[160px] p-5 sm:p-6 cursor-default shadow-xl transition-all duration-300 hover:-translate-y-1.5"
+                                                    >
+                                                        <div className="flex h-full w-full flex-col items-center justify-center text-center">
+                                                            {/* Brand Logo with authentic color */}
+                                                            <div className="mb-3.5 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                                                                <TechIcon
+                                                                    name={
+                                                                        tech.title
+                                                                    }
+                                                                    icon={
+                                                                        tech.image_or_icon
+                                                                    }
+                                                                    className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 drop-shadow-md"
+                                                                />
+                                                            </div>
 
-                                                        {/* Tech Name */}
-                                                        <span className="font-sans text-xs sm:text-sm font-semibold tracking-wide text-white transition-colors duration-300 group-hover:text-amber-200">
-                                                            {tech.title}
-                                                        </span>
-                                                    </div>
-                                                </BorderGlow>
+                                                            {/* Tech Name */}
+                                                            <span className="font-sans text-xs sm:text-sm font-semibold tracking-wide text-white transition-colors duration-300 group-hover:text-amber-200">
+                                                                {tech.title}
+                                                            </span>
+                                                        </div>
+                                                    </BorderGlow>
+                                                </motion.div>
                                             ))
                                         ) : (
                                             <div className="col-span-full py-16 text-center font-mono text-sm text-slate-500">

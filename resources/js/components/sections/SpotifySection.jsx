@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, memo } from 'react';
+import { motion } from 'framer-motion';
 import { Music, ExternalLink } from 'lucide-react';
 import { useAudioDispatch } from '../../context/AudioContext';
 
@@ -193,7 +194,13 @@ const SpotifySection = memo(function SpotifySection({
         >
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Main Glassmorphic Card Container matching reference */}
-                <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d1322]/60 p-8 sm:p-10 lg:p-12 shadow-2xl backdrop-blur-xl">
+                <motion.div
+                    initial={{ opacity: 0, y: 35, scale: 0.98 }}
+                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                    viewport={{ once: true, amount: 0.2 }}
+                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                    className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d1322]/60 p-8 sm:p-10 lg:p-12 shadow-2xl backdrop-blur-xl"
+                >
                     {/* Background Cosmic Orbital Rings Decoration */}
                     <div
                         className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full border border-white/[0.04]"
@@ -216,7 +223,13 @@ const SpotifySection = memo(function SpotifySection({
 
                     <div className="relative z-10 grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
                         {/* Left Column: Heading, Description, and Pill Button (Original requested copy) */}
-                        <div className="flex flex-col items-start justify-center lg:col-span-6">
+                        <motion.div
+                            initial={{ opacity: 0, x: -25 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true, amount: 0.2 }}
+                            transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                            className="flex flex-col items-start justify-center lg:col-span-6"
+                        >
                             <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15]">
                                 Rhythm in Beats. <br />
                                 <span className="text-[#5c7cfa] sm:text-[#7185e8]">
@@ -238,24 +251,30 @@ const SpotifySection = memo(function SpotifySection({
                                     rel="noopener noreferrer"
                                     className="group inline-flex items-center gap-2.5 rounded-full border border-indigo-500/30 bg-indigo-950/40 px-6 py-3 font-sans text-sm font-semibold text-indigo-300 shadow-lg backdrop-blur-md transition-all duration-300 hover:border-indigo-400 hover:bg-indigo-900/50 hover:text-white hover:shadow-[0_0_20px_rgba(92,124,250,0.35)] active:scale-95"
                                 >
-                                    <Music className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+                                    <Music className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
                                     <span>Masuk ke Playlist Saya</span>
                                     <ExternalLink className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                                 </a>
                             </div>
-                        </div>
+                        </motion.div>
 
                         {/* Right Column: Spotify Embed Player (Isolated layout-contained container) */}
-                        <div className="w-full lg:col-span-6">
+                        <motion.div
+                            initial={{ opacity: 0, x: 25 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true, amount: 0.2 }}
+                            transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                            className="w-full lg:col-span-6"
+                        >
                             <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl bg-black/40 min-h-[352px] [contain:paint_layout]">
                                 <div
                                     ref={containerRef}
                                     className="w-full h-full min-h-[352px] [contain:strict] [transform:translate3d(0,0,0)]"
                                 />
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </section>
     );

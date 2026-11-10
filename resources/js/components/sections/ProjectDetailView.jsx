@@ -36,7 +36,12 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
 
             <div className="relative z-10 mx-auto w-full max-w-7xl">
                 {/* Top Bar: Back Button & Breadcrumbs */}
-                <div className="mb-10 sm:mb-14 flex flex-wrap items-center gap-4">
+                <motion.div
+                    initial={{ opacity: 0, y: -15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                    className="mb-10 sm:mb-14 flex flex-wrap items-center gap-4"
+                >
                     <button
                         type="button"
                         onClick={onBack}
@@ -61,12 +66,17 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
                             {project.title}
                         </span>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Two-Column Detail Layout Matching Reference */}
                 <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
                     {/* Left Column: Title, Full Description, Technologies Used Badges */}
-                    <div className="flex flex-col items-start justify-center lg:col-span-6">
+                    <motion.div
+                        initial={{ opacity: 0, x: -25 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.55, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex flex-col items-start justify-center lg:col-span-6"
+                    >
                         <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.1]">
                             {project.title}
                         </h1>
@@ -124,10 +134,15 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Right Column: Full Photo Showcase to Blue Border */}
-                    <div className="w-full lg:col-span-6">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="w-full lg:col-span-6"
+                    >
                         <div className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-[28px] sm:rounded-[36px] md:rounded-[40px] border border-blue-500/30 bg-[#070b14] shadow-[0_0_60px_rgba(37,99,235,0.2)]">
                             {project.demo_url ? (
                                 <a
@@ -173,7 +188,7 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
         </motion.div>

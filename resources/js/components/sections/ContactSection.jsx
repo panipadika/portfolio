@@ -181,16 +181,28 @@ export default function ContactSection({ settings = {} }) {
         >
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Section Heading */}
-                <div className="mx-auto mb-16 max-w-3xl text-center">
+                <motion.div
+                    initial={{ opacity: 0, y: 25 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                    className="mx-auto mb-16 max-w-3xl text-center"
+                >
                     <h2 className="font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
                         Hubungi Saya
                     </h2>
-                </div>
+                </motion.div>
 
                 {/* 12-Column Grid: 7 cols Form, 5 cols Find Me */}
                 <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
                     {/* Form Container (7 cols) */}
-                    <div className="bg-glass relative rounded-3xl border border-white/10 p-6 shadow-2xl sm:p-8 lg:col-span-7">
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, amount: 0.2 }}
+                        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                        className="bg-glass relative rounded-3xl border border-white/10 p-6 shadow-2xl sm:p-8 lg:col-span-7"
+                    >
                         <h3 className="font-display mb-2 text-xl font-bold text-white">
                             Mari Berkolaborasi
                         </h3>
@@ -312,10 +324,12 @@ export default function ContactSection({ settings = {} }) {
                             </div>
 
                             {/* Submit Button */}
-                            <button
+                            <motion.button
                                 type="submit"
                                 disabled={loading}
-                                className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#4e63d9] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#262f6b]/30 transition-all duration-200 hover:scale-[1.01] hover:from-[#313c87] hover:to-[#5d72e4] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                                whileHover={{ scale: 1.015 }}
+                                whileTap={{ scale: 0.985 }}
+                                className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#4e63d9] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#262f6b]/30 transition-all duration-200 hover:from-[#313c87] hover:to-[#5d72e4] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {loading ? (
                                     <>
@@ -328,12 +342,18 @@ export default function ContactSection({ settings = {} }) {
                                         <span>Kirim Pesan Sekarang</span>
                                     </>
                                 )}
-                            </button>
+                            </motion.button>
                         </form>
-                    </div>
+                    </motion.div>
 
                     {/* Find Me Panel (5 cols) */}
-                    <div className="flex flex-col gap-4 lg:col-span-5">
+                    <motion.div
+                        initial={{ opacity: 0, x: 30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, amount: 0.2 }}
+                        transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex flex-col gap-4 lg:col-span-5"
+                    >
                         {/* Quick Contact Info Card */}
                         <div className="bg-glass rounded-3xl border border-white/10 p-6">
                             <h3 className="font-display mb-4 text-lg font-bold text-white">
@@ -424,7 +444,7 @@ export default function ContactSection({ settings = {} }) {
                                 })}
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
         </section>

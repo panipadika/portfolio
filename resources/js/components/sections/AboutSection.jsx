@@ -86,26 +86,44 @@ export default function AboutSection({
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Section Header with Indonesian Badge & Title matching reference */}
-                <div className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
+                <motion.div
+                    initial={{ opacity: 0, y: 25 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                    className="mx-auto mb-12 max-w-3xl text-center sm:mb-16"
+                >
                     <h2 className="font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
                         Tentang Saya
                     </h2>
-                </div>
+                </motion.div>
 
                 {/* Profile Composition matching Reference Screenshot */}
                 <div className="mb-20 grid grid-cols-1 items-center gap-10 sm:mb-24 lg:grid-cols-12 lg:gap-8">
                     {/* Left Column: Greeting, Name, Primary Contact Action */}
-                    <div className="order-1 flex flex-col items-center text-center sm:items-start sm:text-left lg:col-span-4">
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, amount: 0.3 }}
+                        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                        className="order-1 flex flex-col items-center text-center sm:items-start sm:text-left lg:col-span-4"
+                    >
                         <span className="font-display text-3xl font-bold tracking-tight text-[#7185e8] sm:text-4xl md:text-5xl">
                             Hi, I'm
                         </span>
                         <h3 className="font-display mt-1 mb-6 text-3xl font-extrabold tracking-tight text-white sm:mb-50 sm:text-4xl md:text-5xl">
                             Pani Padika
                         </h3>
-                    </div>
+                    </motion.div>
 
                     {/* Center Column: Floating Cutout Portrait with Interactive Spider-Man Alter-Ego */}
-                    <div className="relative order-2 flex flex-col items-center justify-center py-6 lg:col-span-4 lg:py-0">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.92 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true, amount: 0.3 }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                        className="relative order-2 flex flex-col items-center justify-center py-6 lg:col-span-4 lg:py-0"
+                    >
                         {/* Orbital concentric rings */}
                         <div
                             className="pointer-events-none absolute h-64 w-64 rounded-full border border-white/5 sm:h-72 sm:w-72 md:h-80 md:w-80"
@@ -205,10 +223,16 @@ export default function AboutSection({
                                 </div>
                             )}
                         </motion.div>
-                    </div>
+                    </motion.div>
 
                     {/* Right Column: Bio Paragraphs & Portfolio Action */}
-                    <div className="order-3 flex flex-col items-center text-center sm:items-start sm:text-left lg:col-span-4 lg:pl-2">
+                    <motion.div
+                        initial={{ opacity: 0, x: 30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, amount: 0.3 }}
+                        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                        className="order-3 flex flex-col items-center text-center sm:items-start sm:text-left lg:col-span-4 lg:pl-2"
+                    >
                         <p className="font-sans text-sm leading-relaxed text-slate-300 sm:text-base">
                             Saya adalah Mahasiswa{' '}
                             <strong className="font-semibold text-white">
@@ -222,20 +246,25 @@ export default function AboutSection({
                            Bagi saya, setiap proyek merupakan kesempatan untuk mengasah kemampuan, 
                            mengeksplorasi teknologi baru, dan menciptakan solusi digital yang bermanfaat.
                         </p>
-                    </div>
+                    </motion.div>
                 </div>
 
                 {/* Timeline Grid: Education & Experience matching Reference */}
                 <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-12">
                     {/* Education Column */}
-                    <div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.2 }}
+                        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                    >
                         <h3 className="font-display mb-6 text-2xl font-bold tracking-tight text-white sm:text-3xl">
                             Education
                         </h3>
 
                         <div className="space-y-4">
                             {education && education.length > 0 ? (
-                                education.map((item) => {
+                                education.map((item, idx) => {
                                     const instKey = (item.institution || '').toLowerCase();
                                     const logoUrl = (instKey.includes('bsi') || instKey.includes('bina sarana informatika'))
                                         ? '/assets/images/institutions/logo-ubsi.png'
@@ -250,48 +279,55 @@ export default function AboutSection({
                                         : null;
 
                                     return (
-                                        <BorderGlow
+                                        <motion.div
                                             key={item.id}
-                                            edgeSensitivity={30}
-                                            glowColor="40 80 80"
-                                            backgroundColor="#0d1322"
-                                            borderRadius={20}
-                                            glowRadius={35}
-                                            glowIntensity={1.0}
-                                            coneSpread={25}
-                                            animated={false}
-                                            colors={['#c084fc', '#f472b6', '#38bdf8']}
-                                            className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-default"
+                                            initial={{ opacity: 0, y: 20 }}
+                                            whileInView={{ opacity: 1, y: 0 }}
+                                            viewport={{ once: true }}
+                                            transition={{ duration: 0.45, delay: idx * 0.08, ease: 'easeOut' }}
                                         >
-                                            <div className="flex w-full items-center gap-4 p-4.5 sm:p-5">
-                                                {/* Institution Logo */}
-                                                {logoUrl ? (
-                                                    <img
-                                                        src={logoUrl}
-                                                        alt={`Logo ${item.institution}`}
-                                                        className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 object-contain drop-shadow transition-transform duration-300 motion-safe:group-hover:scale-105"
-                                                        loading="lazy"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center">
-                                                        <GraduationCap className="h-7 w-7 text-indigo-400" />
-                                                    </div>
-                                                )}
+                                            <BorderGlow
+                                                edgeSensitivity={30}
+                                                glowColor="40 80 80"
+                                                backgroundColor="#0d1322"
+                                                borderRadius={20}
+                                                glowRadius={35}
+                                                glowIntensity={1.0}
+                                                coneSpread={25}
+                                                animated={false}
+                                                colors={['#c084fc', '#f472b6', '#38bdf8']}
+                                                className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-default"
+                                            >
+                                                <div className="flex w-full items-center gap-4 p-4.5 sm:p-5">
+                                                    {/* Institution Logo */}
+                                                    {logoUrl ? (
+                                                        <img
+                                                            src={logoUrl}
+                                                            alt={`Logo ${item.institution}`}
+                                                            className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 object-contain drop-shadow transition-transform duration-300 motion-safe:group-hover:scale-105"
+                                                            loading="lazy"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center">
+                                                            <GraduationCap className="h-7 w-7 text-indigo-400" />
+                                                        </div>
+                                                    )}
 
-                                                {/* Details */}
-                                                <div className="min-w-0 flex-1">
-                                                    <h4 className="font-display truncate text-base font-bold text-white transition-colors group-hover:text-cyan-300 sm:text-lg">
-                                                        {item.institution}
-                                                    </h4>
-                                                    <p className="mt-0.5 truncate text-xs font-medium text-slate-300 sm:text-sm">
-                                                        {item.role_or_major}
-                                                    </p>
-                                                    <div className="mt-1 font-mono text-xs font-semibold text-cyan-400">
-                                                        {item.period}
+                                                    {/* Details */}
+                                                    <div className="min-w-0 flex-1">
+                                                        <h4 className="font-display truncate text-base font-bold text-white transition-colors group-hover:text-cyan-300 sm:text-lg">
+                                                            {item.institution}
+                                                        </h4>
+                                                        <p className="mt-0.5 truncate text-xs font-medium text-slate-300 sm:text-sm">
+                                                            {item.role_or_major}
+                                                        </p>
+                                                        <div className="mt-1 font-mono text-xs font-semibold text-cyan-400">
+                                                            {item.period}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </BorderGlow>
+                                            </BorderGlow>
+                                        </motion.div>
                                     );
                                 })
                             ) : (
@@ -300,17 +336,22 @@ export default function AboutSection({
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Experience Column */}
-                    <div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.2 }}
+                        transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                    >
                         <h3 className="font-display mb-6 text-2xl font-bold tracking-tight text-white sm:text-3xl">
                             Experience
                         </h3>
 
                         <div className="space-y-4">
                             {experience && experience.length > 0 ? (
-                                experience.map((item) => {
+                                experience.map((item, idx) => {
                                     const instKey = (item.institution || '').toLowerCase();
                                     const logoUrl = instKey.includes('bappelitbangda')
                                         ? '/assets/images/institutions/logo-bappelitbangda.png'
@@ -319,48 +360,55 @@ export default function AboutSection({
                                         : null;
 
                                     return (
-                                        <BorderGlow
+                                        <motion.div
                                             key={item.id}
-                                            edgeSensitivity={30}
-                                            glowColor="40 80 80"
-                                            backgroundColor="#0d1322"
-                                            borderRadius={20}
-                                            glowRadius={35}
-                                            glowIntensity={1.0}
-                                            coneSpread={25}
-                                            animated={false}
-                                            colors={['#c084fc', '#f472b6', '#38bdf8']}
-                                            className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-default"
+                                            initial={{ opacity: 0, y: 20 }}
+                                            whileInView={{ opacity: 1, y: 0 }}
+                                            viewport={{ once: true }}
+                                            transition={{ duration: 0.45, delay: idx * 0.08, ease: 'easeOut' }}
                                         >
-                                            <div className="flex w-full items-center gap-4 p-4.5 sm:p-5">
-                                                {/* Institution Logo */}
-                                                {logoUrl ? (
-                                                    <img
-                                                        src={logoUrl}
-                                                        alt={`Logo ${item.institution}`}
-                                                        className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 object-contain drop-shadow transition-transform duration-300 motion-safe:group-hover:scale-105"
-                                                        loading="lazy"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center">
-                                                        <Briefcase className="h-7 w-7 text-[#7185e8]" />
-                                                    </div>
-                                                )}
+                                            <BorderGlow
+                                                edgeSensitivity={30}
+                                                glowColor="40 80 80"
+                                                backgroundColor="#0d1322"
+                                                borderRadius={20}
+                                                glowRadius={35}
+                                                glowIntensity={1.0}
+                                                coneSpread={25}
+                                                animated={false}
+                                                colors={['#c084fc', '#f472b6', '#38bdf8']}
+                                                className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-default"
+                                            >
+                                                <div className="flex w-full items-center gap-4 p-4.5 sm:p-5">
+                                                    {/* Institution Logo */}
+                                                    {logoUrl ? (
+                                                        <img
+                                                            src={logoUrl}
+                                                            alt={`Logo ${item.institution}`}
+                                                            className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 object-contain drop-shadow transition-transform duration-300 motion-safe:group-hover:scale-105"
+                                                            loading="lazy"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center">
+                                                            <Briefcase className="h-7 w-7 text-[#7185e8]" />
+                                                        </div>
+                                                    )}
 
-                                                {/* Details */}
-                                                <div className="min-w-0 flex-1">
-                                                    <h4 className="font-display truncate text-base font-bold text-white transition-colors group-hover:text-cyan-300 sm:text-lg">
-                                                        {item.institution}
-                                                    </h4>
-                                                    <p className="mt-0.5 truncate text-xs font-medium text-slate-300 sm:text-sm">
-                                                        {item.role_or_major}
-                                                    </p>
-                                                    <div className="mt-1 font-mono text-xs font-semibold text-cyan-400">
-                                                        {item.period}
+                                                    {/* Details */}
+                                                    <div className="min-w-0 flex-1">
+                                                        <h4 className="font-display truncate text-base font-bold text-white transition-colors group-hover:text-cyan-300 sm:text-lg">
+                                                            {item.institution}
+                                                        </h4>
+                                                        <p className="mt-0.5 truncate text-xs font-medium text-slate-300 sm:text-sm">
+                                                            {item.role_or_major}
+                                                        </p>
+                                                        <div className="mt-1 font-mono text-xs font-semibold text-cyan-400">
+                                                            {item.period}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </BorderGlow>
+                                            </BorderGlow>
+                                        </motion.div>
                                     );
                                 })
                             ) : (
@@ -369,7 +417,7 @@ export default function AboutSection({
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
         </section>
