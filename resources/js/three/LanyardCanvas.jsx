@@ -21,7 +21,7 @@ class LanyardErrorBoundary extends Component {
             return (
                 <div className="flex h-full w-full items-center justify-center">
                     <img
-                        src="/card-front.png"
+                        src="/card-front.webp"
                         alt="ID Card"
                         className="max-h-[80%] max-w-[80%] rounded-2xl object-contain shadow-2xl"
                     />
@@ -41,8 +41,8 @@ class LanyardErrorBoundary extends Component {
  * - Ambient radial gradient glow behind canvas (z-0 per DESIGN.md)
  */
 export default function LanyardCanvas({
-    frontImage = '/card-front.png',
-    backImage = '/card-back.png',
+    frontImage = '/card-front.webp',
+    backImage = '/card-back.webp',
     strapImage = '/band.png',
     imageFit = 'cover',
     cardColor = '#ffffff',

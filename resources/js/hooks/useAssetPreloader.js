@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
  * @param {number} timeoutMs Maximum wait time before triggering fallback controls (default: 6000ms).
  */
 export function useAssetPreloader(
-    assetUrls = ['/card-front.png', '/card-back.png', '/band.png'],
+    assetUrls = ['/card-front.webp', '/card-back.webp', '/band.png'],
     timeoutMs = 6000,
 ) {
     const [progress, setProgress] = useState(0);

@@ -192,8 +192,8 @@ export default function HeroSection() {
                 >
                     <div className="pointer-events-auto h-full w-full">
                         <LanyardCanvas
-                            frontImage="/card-front.png"
-                            backImage="/card-back.png"
+                            frontImage="/card-front.webp"
+                            backImage="/card-back.webp"
                             strapImage="/band.png"
                             imageFit="cover"
                             cardColor="#ffffff"
@@ -232,8 +232,8 @@ export default function HeroSection() {
                 >
                     <div className="pointer-events-auto h-full w-full">
                         <LanyardCanvas
-                            frontImage="/card-front.png"
-                            backImage="/card-back.png"
+                            frontImage="/card-front.webp"
+                            backImage="/card-back.webp"
                             strapImage="/band.png"
                             imageFit="cover"
                             cardColor="#ffffff"

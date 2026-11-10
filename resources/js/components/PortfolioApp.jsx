@@ -54,8 +54,8 @@ class GlobalErrorBoundary extends Component {
 export default function PortfolioApp() {
     const { progress, isLoaded, failedAssets, retry, skip } = useAssetPreloader(
         [
-            '/card-front.png',
-            '/card-back.png',
+            '/card-front.webp',
+            '/card-back.webp',
             '/band.png',
             '/logo-pp.png',
             '/assets/images/profile-transparent.png',
