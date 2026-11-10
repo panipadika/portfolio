@@ -31,6 +31,11 @@
         <meta name="twitter:description" content="Portofolio resmi Pani Padika, Full-Stack Web Developer. Menampilkan interaksi 3D ID Card, showcase projek Laravel + React, sertifikat, dan formulir kontak langsung.">
         <meta name="twitter:image" content="{{ asset('card-front.png') }}">
 
+        {{-- Preload 3D Lanyard Card & Strap Textures for Instant Appearance --}}
+        <link rel="preload" as="image" href="{{ asset('card-front.webp') }}" type="image/webp">
+        <link rel="preload" as="image" href="{{ asset('card-back.webp') }}" type="image/webp">
+        <link rel="preload" as="image" href="{{ asset('band.png') }}" type="image/png">
+
         {{-- Always enforce dark mode for Cosmic Space theme --}}
         <script>
             document.documentElement.classList.add('dark');

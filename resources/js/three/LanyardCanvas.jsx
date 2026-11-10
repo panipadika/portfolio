@@ -1,6 +1,5 @@
-import React, { Component, Suspense, lazy, useEffect, useState } from 'react';
-
-const Lanyard = lazy(() => import('./Lanyard.tsx'));
+import React, { Component, Suspense, useEffect, useState } from 'react';
+import Lanyard from './Lanyard.tsx';
 
 class LanyardErrorBoundary extends Component {
     constructor(props) {
@@ -63,7 +62,7 @@ export default function LanyardCanvas({
     intro = true,
     className = '',
 }) {
-    const [isMounted, setIsMounted] = useState(false);
+    const [isMounted, setIsMounted] = useState(() => typeof window !== 'undefined');
 
     useEffect(() => {
         setIsMounted(true);
@@ -88,13 +87,7 @@ export default function LanyardCanvas({
             <div className="relative z-10 h-full w-full">
                 {isMounted ? (
                     <LanyardErrorBoundary>
-                        <Suspense
-                            fallback={
-                                <div className="flex h-full w-full items-center justify-center">
-                                    <div className="h-12 w-12 animate-spin rounded-full border-2 border-indigo-500/20 border-t-indigo-500" />
-                                </div>
-                            }
-                        >
+                        <Suspense fallback={null}>
                             <Lanyard
                                 frontImage={frontImage}
                                 backImage={backImage}
@@ -120,11 +113,7 @@ export default function LanyardCanvas({
                             />
                         </Suspense>
                     </LanyardErrorBoundary>
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <div className="h-12 w-12 animate-spin rounded-full border-2 border-indigo-500/20 border-t-indigo-500" />
-                    </div>
-                )}
+                ) : null}
             </div>
         </div>
     );

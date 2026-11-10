@@ -180,16 +180,7 @@ export default function HeroSection() {
 
             {/* Mobile-only: Full Hero unclipped 3D stage (spans full viewport width & height, extending past navbar without boundary clipping) */}
             {!isDesktop && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{
-                        duration: 1,
-                        delay: 0.2,
-                        ease: [0.16, 1, 0.3, 1],
-                    }}
-                    className="pointer-events-none absolute inset-x-0 -top-6 bottom-0 z-10 overflow-visible lg:hidden"
-                >
+                <div className="pointer-events-none absolute inset-x-0 -top-6 bottom-0 z-10 overflow-visible lg:hidden">
                     <div className="pointer-events-auto h-full w-full">
                         <LanyardCanvas
                             frontImage="/card-front.webp"
@@ -215,21 +206,12 @@ export default function HeroSection() {
                             className="h-full w-full"
                         />
                     </div>
-                </motion.div>
+                </div>
             )}
 
             {/* Desktop-only: Full Hero unclipped 3D stage (z-10 so card glides behind text & navbar without blocking them) */}
             {isDesktop && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{
-                        duration: 1,
-                        delay: 0.2,
-                        ease: [0.16, 1, 0.3, 1],
-                    }}
-                    className="pointer-events-none absolute inset-0 z-10 hidden overflow-visible lg:block"
-                >
+                <div className="pointer-events-none absolute inset-0 z-10 hidden overflow-visible lg:block">
                     <div className="pointer-events-auto h-full w-full">
                         <LanyardCanvas
                             frontImage="/card-front.webp"
@@ -255,7 +237,7 @@ export default function HeroSection() {
                             className="h-full w-full"
                         />
                     </div>
-                </motion.div>
+                </div>
             )}
         </section>
     );
