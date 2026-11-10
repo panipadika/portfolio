@@ -196,10 +196,10 @@ const FACE_WIDTH = 1024;
 
 const FINISHES: Record<string, FinishLook> = {
     glossy: {
-        roughness: 0.12,
+        roughness: 0.15,
         metalness: 0,
-        clearcoat: 1,
-        clearcoatRoughness: 0.04,
+        clearcoat: 0.8,
+        clearcoatRoughness: 0.05,
         foil: 0,
         anisotropy: 0,
     },
@@ -576,14 +576,14 @@ const buildEnvironment = (renderer: THREE.WebGLRenderer) => {
         mesh.rotateZ(rotation);
         scene.add(mesh);
     };
-    panel(1.4, [0, 4.5, 8], [9, 4]);
-    panel(3.0, [-5.5, 0.5, 7], [0.9, 14]);
-    panel(2.0, [5, -0.5, 8], [0.6, 14]);
-    panel(1.8, [0, -1, 9], [24, 0.35], Math.PI / 3);
-    panel(1.2, [1, 2.5, 9], [24, 0.2], Math.PI / 3);
-    panel(0.8, [0, 6, -6], [12, 4]);
-    panel(0.3, [0, -7, 1], [16, 6]);
-    panel(0.5, [8, 0, -2], [4, 10]);
+    panel(2.0, [0, 4.5, 8], [9, 4]);
+    panel(4.5, [-5.5, 0.5, 7], [0.9, 14]);
+    panel(3.0, [5, -0.5, 8], [0.6, 14]);
+    panel(2.4, [0, -1, 9], [24, 0.35], Math.PI / 3);
+    panel(1.6, [1, 2.5, 9], [24, 0.2], Math.PI / 3);
+    panel(1.0, [0, 6, -6], [12, 4]);
+    panel(0.4, [0, -7, 1], [16, 6]);
+    panel(0.7, [8, 0, -2], [4, 10]);
     const pmrem = new THREE.PMREMGenerator(renderer);
     const target = pmrem.fromScene(scene, 0.035);
     pmrem.dispose();
@@ -1172,7 +1172,7 @@ const Lanyard = ({
         renderer.setClearColor(0x000000, 0);
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.NeutralToneMapping;
-        renderer.toneMappingExposure = 1;
+        renderer.toneMappingExposure = 1.15;
         const canvas = renderer.domElement;
         canvas.className = 'block w-full h-full';
         canvas.setAttribute('aria-hidden', 'true');
@@ -1186,11 +1186,12 @@ const Lanyard = ({
         const environment = buildEnvironment(renderer);
         scene.environment = environment.texture;
         const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 200);
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.1);
-        keyLight.position.set(-2.5, 4, 6);
-        const fillLight = new THREE.DirectionalLight(0xffffff, 0.25);
-        fillLight.position.set(3, -1, 4);
-        scene.add(keyLight, fillLight);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
+        keyLight.position.set(-2, 3.5, 6);
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.55);
+        fillLight.position.set(2.5, -0.5, 5);
+        scene.add(ambientLight, keyLight, fillLight);
 
         const imageCache = new Map<string, Promise<HTMLImageElement | null>>();
         const images: Images = { front: null, back: null, strap: null };
