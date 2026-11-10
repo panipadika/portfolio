@@ -232,7 +232,7 @@ export default function TechBadge({
             ]}
             contentClassName={
                 fullWidth
-                    ? 'flex items-center gap-2.5 px-3 py-2 sm:px-3.5 sm:py-2.5 relative overflow-hidden z-[1] w-full min-w-0'
+                    ? 'flex items-center gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 relative overflow-hidden z-[1] w-full min-w-0'
                     : compact
                       ? 'flex items-center gap-1.5 px-2.5 py-1 relative overflow-hidden z-[1]'
                       : 'flex items-center gap-2 px-3.5 py-2 relative overflow-hidden z-[1]'
@@ -247,8 +247,7 @@ export default function TechBadge({
                     compact
                         ? 'font-sans text-[11px] font-medium text-slate-200'
                         : 'font-sans text-xs sm:text-sm font-medium text-slate-200'
-                } truncate min-w-0`}
-                title={name}
+                } whitespace-nowrap min-w-0`}
             >
                 {name}
             </span>

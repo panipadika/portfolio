@@ -34,7 +34,7 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
                 aria-hidden="true"
             />
 
-            <div className="relative z-10 mx-auto w-full max-w-5xl">
+            <div className="relative z-10 mx-auto w-full max-w-6xl">
                 {/* Top Bar: Back Button & Breadcrumbs */}
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -127,10 +127,10 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.55, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start"
+                    className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start"
                 >
                     {/* Left Column: Title, Full Description, Action Buttons */}
-                    <div className="flex flex-col items-start lg:col-span-7 xl:col-span-8">
+                    <div className="flex flex-col items-start lg:col-span-7">
                         <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.15]">
                             {project.title}
                         </h1>
@@ -171,18 +171,13 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
                     </div>
 
                     {/* Right Column: Technologies Used in a Glassmorphic Panel */}
-                    <div className="w-full lg:col-span-5 xl:col-span-4">
+                    <div className="w-full lg:col-span-5">
                         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 backdrop-blur-md shadow-xl">
-                            <div className="mb-4 flex items-center justify-between border-b border-white/5 pb-3">
+                            <div className="mb-4 sm:mb-5 border-b border-white/5 pb-3 sm:pb-3.5">
                                 <h2 className="flex items-center gap-2.5 font-display text-base sm:text-lg font-bold text-white">
                                     <Code2 className="h-5 w-5 text-blue-400" />
                                     <span>Technologies Used</span>
                                 </h2>
-                                {project.tech_tags && project.tech_tags.length > 0 && (
-                                    <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-blue-400 border border-blue-500/20">
-                                        {project.tech_tags.length}
-                                    </span>
-                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
