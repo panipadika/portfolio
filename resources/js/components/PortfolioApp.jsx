@@ -1,9 +1,7 @@
 import React, { Component, useState, useEffect, useCallback, useRef } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { useAssetPreloader } from '../hooks/useAssetPreloader';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { AudioProvider } from '../context/AudioContext';
-import Preloader from './common/Preloader';
 import Navbar from './common/Navbar';
 import Footer from './common/Footer';
 import Galaxy from './ui/Galaxy';
@@ -52,17 +50,6 @@ class GlobalErrorBoundary extends Component {
 }
 
 export default function PortfolioApp() {
-    const { progress, isLoaded, failedAssets, retry, skip } = useAssetPreloader(
-        [
-            '/card-front.webp',
-            '/card-back.webp',
-            '/band.png',
-            '/logo-pp.png',
-            '/assets/images/profile-transparent.png',
-            '/assets/images/spiderman-transformed.png',
-        ],
-    );
-
     const {
         data: portfolioData,
         error: apiError,
@@ -194,17 +181,8 @@ export default function PortfolioApp() {
                         </div>
 
                         <div className="relative z-10 isolate">
-                            {/* 3D Asset Preloader */}
-                            <Preloader
-                                progress={progress}
-                                isLoaded={isLoaded}
-                                failedCount={failedAssets.length}
-                                onRetry={retry}
-                                onSkip={skip}
-                            />
-
                             {/* Main Single Page Application Navbar */}
-                            <Navbar isVisible={isLoaded && !selectedProject} />
+                            <Navbar isVisible={!selectedProject} />
 
                             {/* API Error Notification Banner (non-intrusive) */}
                             {apiError && (
