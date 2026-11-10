@@ -173,7 +173,7 @@ export default function HeroSection() {
                     {/* Right Column: desktop grid spacer + mobile layout spacer (order-1 on mobile so card hangs first) */}
                     <div className="relative order-1 lg:order-2 lg:col-span-5">
                         {/* Mobile layout spacer: reserves vertical breathing room so headline begins cleanly below the hanging card */}
-                        <div className="h-[340px] sm:h-[400px] w-full lg:hidden" aria-hidden="true" />
+                        <div className="h-[320px] sm:h-[360px] w-full lg:hidden" aria-hidden="true" />
                     </div>
                 </div>
             </div>
@@ -200,9 +200,9 @@ export default function HeroSection() {
                             orientation="portrait"
                             finish="glossy"
                             cornerRadius={0.3}
-                            size={0.53}
+                            size={0.33}
                             anchor="center"
-                            strapLength={0.42}
+                            strapLength={0.08}
                             strapColor="#111111"
                             strapWidth={0.6}
                             metal="silver"
