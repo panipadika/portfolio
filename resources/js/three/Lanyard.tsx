@@ -196,10 +196,10 @@ const FACE_WIDTH = 1024;
 
 const FINISHES: Record<string, FinishLook> = {
     glossy: {
-        roughness: 0.42,
+        roughness: 0.12,
         metalness: 0,
         clearcoat: 1,
-        clearcoatRoughness: 0.06,
+        clearcoatRoughness: 0.04,
         foil: 0,
         anisotropy: 0,
     },
@@ -576,14 +576,14 @@ const buildEnvironment = (renderer: THREE.WebGLRenderer) => {
         mesh.rotateZ(rotation);
         scene.add(mesh);
     };
-    panel(2.6, [0, 4.5, 8], [9, 4]);
-    panel(6, [-5.5, 0.5, 7], [0.9, 14]);
-    panel(4, [5, -0.5, 8], [0.6, 14]);
-    panel(3.5, [0, -1, 9], [24, 0.35], Math.PI / 3);
-    panel(2.5, [1, 2.5, 9], [24, 0.2], Math.PI / 3);
-    panel(1.4, [0, 6, -6], [12, 4]);
-    panel(0.5, [0, -7, 1], [16, 6]);
-    panel(0.9, [8, 0, -2], [4, 10]);
+    panel(1.4, [0, 4.5, 8], [9, 4]);
+    panel(3.0, [-5.5, 0.5, 7], [0.9, 14]);
+    panel(2.0, [5, -0.5, 8], [0.6, 14]);
+    panel(1.8, [0, -1, 9], [24, 0.35], Math.PI / 3);
+    panel(1.2, [1, 2.5, 9], [24, 0.2], Math.PI / 3);
+    panel(0.8, [0, 6, -6], [12, 4]);
+    panel(0.3, [0, -7, 1], [16, 6]);
+    panel(0.5, [8, 0, -2], [4, 10]);
     const pmrem = new THREE.PMREMGenerator(renderer);
     const target = pmrem.fromScene(scene, 0.035);
     pmrem.dispose();
@@ -1186,9 +1186,9 @@ const Lanyard = ({
         const environment = buildEnvironment(renderer);
         scene.environment = environment.texture;
         const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 200);
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.1);
         keyLight.position.set(-2.5, 4, 6);
-        const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.25);
         fillLight.position.set(3, -1, 4);
         scene.add(keyLight, fillLight);
 
@@ -1237,17 +1237,13 @@ const Lanyard = ({
 
         const frontMaterial = new THREE.MeshPhysicalMaterial({
             map: frontTexture,
-            normalMap: grain,
-            normalScale: new THREE.Vector2(0.06, 0.06),
-            transparent: true,
-            opacity: 0.94,
+            transparent: false,
+            opacity: 1.0,
         });
         const backMaterial = new THREE.MeshPhysicalMaterial({
             map: backTexture,
-            normalMap: grain,
-            normalScale: new THREE.Vector2(0.06, 0.06),
-            transparent: true,
-            opacity: 0.94,
+            transparent: false,
+            opacity: 1.0,
         });
         frontMaterial.onBeforeCompile = injectFoil;
         backMaterial.onBeforeCompile = injectFoil;
