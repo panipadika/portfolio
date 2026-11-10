@@ -17,7 +17,7 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="relative min-h-screen bg-[#050811] text-white flex flex-col justify-center px-4 sm:px-6 lg:px-12 py-12 lg:py-20 overflow-hidden"
+            className="relative min-h-screen bg-[#050811] text-white flex flex-col justify-start px-4 sm:px-6 lg:px-12 pt-8 pb-20 sm:pt-10 sm:pb-24 overflow-hidden"
             aria-label={`Project Detail: ${project.title}`}
         >
             {/* Ambient Background Glow (Sleek dark gradient, no Galaxy 3D particles) */}
@@ -34,13 +34,13 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
                 aria-hidden="true"
             />
 
-            <div className="relative z-10 mx-auto w-full max-w-7xl">
+            <div className="relative z-10 mx-auto w-full max-w-5xl">
                 {/* Top Bar: Back Button & Breadcrumbs */}
                 <motion.div
-                    initial={{ opacity: 0, y: -15 }}
+                    initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                    className="mb-10 sm:mb-14 flex flex-wrap items-center gap-4"
+                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    className="mb-6 sm:mb-8 flex flex-wrap items-center gap-4"
                 >
                     <button
                         type="button"
@@ -68,20 +68,74 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
                     </div>
                 </motion.div>
 
-                {/* Two-Column Detail Layout Matching Reference */}
-                <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
-                    {/* Left Column: Title, Full Description, Technologies Used Badges */}
-                    <motion.div
-                        initial={{ opacity: 0, x: -25 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.55, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                        className="flex flex-col items-start justify-center lg:col-span-6"
-                    >
-                        <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.1]">
+                {/* Hero Showcase Photo (Centered at top) */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.97, y: 15 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                    className="w-full mb-10 sm:mb-14"
+                >
+                    <div className="relative mx-auto w-full overflow-hidden rounded-[24px] sm:rounded-[32px] md:rounded-[36px] border border-blue-500/30 bg-[#070b14] shadow-[0_0_50px_rgba(37,99,235,0.22)]">
+                        {project.demo_url ? (
+                            <a
+                                href={project.demo_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="group relative block w-full cursor-pointer overflow-hidden"
+                                title="Buka Live Demo"
+                            >
+                                <img
+                                    src={
+                                        project.slug === 'cyber-gyzn'
+                                            ? '/assets/images/projects/cyber-gyzn-showcase.png'
+                                            : project.image_url ||
+                                              '/assets/images/projects/cyber-gyzn.png'
+                                    }
+                                    alt={project.title}
+                                    className="w-full h-auto block object-cover object-top transition-transform duration-500 group-hover:scale-[1.01]"
+                                    onError={(e) => {
+                                        e.currentTarget.src =
+                                            project.image_url ||
+                                            '/assets/images/projects/cyber-gyzn.png';
+                                    }}
+                                />
+                            </a>
+                        ) : (
+                            <div className="relative block w-full overflow-hidden">
+                                <img
+                                    src={
+                                        project.slug === 'cyber-gyzn'
+                                            ? '/assets/images/projects/cyber-gyzn-showcase.png'
+                                            : project.image_url ||
+                                              '/assets/images/projects/cyber-gyzn.png'
+                                    }
+                                    alt={project.title}
+                                    className="w-full h-auto block object-cover object-top transition-transform duration-500 hover:scale-[1.01]"
+                                    onError={(e) => {
+                                        e.currentTarget.src =
+                                            project.image_url ||
+                                            '/assets/images/projects/cyber-gyzn.png';
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </motion.div>
+
+                {/* Two-Column Detail Layout Below Photo */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.55, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                    className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start"
+                >
+                    {/* Left Column: Title, Full Description, Action Buttons */}
+                    <div className="flex flex-col items-start lg:col-span-7 xl:col-span-8">
+                        <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.15]">
                             {project.title}
                         </h1>
 
-                        <p className="mt-6 max-w-xl font-sans text-sm sm:text-base lg:text-lg leading-relaxed text-slate-300">
+                        <p className="mt-5 font-sans text-sm sm:text-base leading-relaxed text-slate-300">
                             {project.description}
                         </p>
 
@@ -114,15 +168,17 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
                                 )}
                             </div>
                         )}
+                    </div>
 
-                        {/* Technologies Used Section */}
-                        <div className="mt-10 w-full">
-                            <h2 className="mb-5 flex items-center gap-2.5 font-display text-lg sm:text-xl font-bold text-white">
+                    {/* Right Column: Technologies Used in a Glassmorphic Panel */}
+                    <div className="w-full lg:col-span-5 xl:col-span-4">
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-md shadow-xl">
+                            <h2 className="mb-4 flex items-center gap-2.5 font-display text-base sm:text-lg font-bold text-white">
                                 <Code2 className="h-5 w-5 text-blue-400" />
                                 <span>Technologies Used</span>
                             </h2>
 
-                            <div className="flex flex-wrap gap-2.5 sm:gap-3">
+                            <div className="flex flex-wrap gap-2 sm:gap-2.5">
                                 {project.tech_tags && project.tech_tags.length > 0 ? (
                                     project.tech_tags.map((tag) => (
                                         <TechBadge key={tag} name={tag} techStack={techStack} />
@@ -134,64 +190,9 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
                                 )}
                             </div>
                         </div>
-                    </motion.div>
-
-                    {/* Right Column: Full Photo Showcase to Blue Border */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                        className="w-full lg:col-span-6"
-                    >
-                        <div className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-[28px] sm:rounded-[36px] md:rounded-[40px] border border-blue-500/30 bg-[#070b14] shadow-[0_0_60px_rgba(37,99,235,0.2)]">
-                            {project.demo_url ? (
-                                <a
-                                    href={project.demo_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="group relative block w-full cursor-pointer overflow-hidden"
-                                    title="Buka Live Demo"
-                                >
-                                    <img
-                                        src={
-                                            project.slug === 'cyber-gyzn'
-                                                ? '/assets/images/projects/cyber-gyzn-showcase.png'
-                                                : project.image_url ||
-                                                  '/assets/images/projects/cyber-gyzn.png'
-                                        }
-                                        alt={project.title}
-                                        className="w-full h-auto block object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
-                                        onError={(e) => {
-                                            e.currentTarget.src =
-                                                project.image_url ||
-                                                '/assets/images/projects/cyber-gyzn.png';
-                                        }}
-                                    />
-                                </a>
-                            ) : (
-                                <div className="relative block w-full overflow-hidden">
-                                    <img
-                                        src={
-                                            project.slug === 'cyber-gyzn'
-                                                ? '/assets/images/projects/cyber-gyzn-showcase.png'
-                                                : project.image_url ||
-                                                  '/assets/images/projects/cyber-gyzn.png'
-                                        }
-                                        alt={project.title}
-                                        className="w-full h-auto block object-cover object-top transition-transform duration-500 hover:scale-[1.02]"
-                                        onError={(e) => {
-                                            e.currentTarget.src =
-                                                project.image_url ||
-                                                '/assets/images/projects/cyber-gyzn.png';
-                                        }}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </motion.div>
-                </div>
+                    </div>
+                </motion.div>
             </div>
         </motion.div>
     );
 }
-
