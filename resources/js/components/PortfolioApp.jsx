@@ -72,6 +72,7 @@ export default function PortfolioApp() {
     }, []);
 
     const scrollToPortfolio = useCallback(() => {
+        window.dispatchEvent(new CustomEvent('portfolio:nav-scroll'));
         const performScroll = () => {
             const el =
                 document.getElementById('Portfolio') ||
@@ -123,6 +124,7 @@ export default function PortfolioApp() {
     }, [portfolioData.projects]);
 
     const handleSelectProject = useCallback((project) => {
+        window.dispatchEvent(new CustomEvent('portfolio:nav-scroll'));
         setSelectedProject(project);
         const url = new URL(window.location.href);
         url.searchParams.set('project', project.slug || project.id);

@@ -73,18 +73,26 @@ export default function LanyardCanvas({
             className={`relative flex w-full items-center justify-center select-none ${className || 'h-[480px] sm:h-[540px] lg:h-[600px]'}`}
             style={{ width: '100%' }}
         >
-            {/* Ambient glow blobs behind 3D canvas (z-0 per DESIGN.md) */}
+            {/* Ambient radial gradient glow behind 3D canvas (zero-blur GPU compositor path) */}
             <div
-                className={`pointer-events-none absolute top-1/2 z-0 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-[#262f6b]/30 via-[#4e63d9]/25 to-indigo-600/25 blur-3xl sm:h-96 sm:w-96 ${anchor === 'right' ? 'left-[77%]' : 'left-1/2'}`}
+                className={`pointer-events-none absolute top-1/2 z-0 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full sm:h-[440px] sm:w-[440px] ${anchor === 'right' ? 'left-[77%]' : 'left-1/2'}`}
+                style={{
+                    background:
+                        'radial-gradient(circle, rgba(78,99,217,0.28) 0%, rgba(38,47,107,0.16) 42%, rgba(38,47,107,0) 72%)',
+                }}
                 aria-hidden="true"
             />
             <div
-                className={`pointer-events-none absolute top-1/3 z-0 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#4e63d9]/15 blur-2xl ${anchor === 'right' ? 'left-[77%]' : 'left-1/2'}`}
+                className={`pointer-events-none absolute top-1/3 z-0 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full ${anchor === 'right' ? 'left-[77%]' : 'left-1/2'}`}
+                style={{
+                    background:
+                        'radial-gradient(circle, rgba(113,133,232,0.18) 0%, rgba(78,99,217,0) 70%)',
+                }}
                 aria-hidden="true"
             />
 
-            {/* 3D Canvas Layer (z-10 per DESIGN.md) */}
-            <div className="relative z-10 h-full w-full">
+            {/* 3D Canvas Layer (z-10 per DESIGN.md, isolated GPU layer) */}
+            <div className="relative z-10 h-full w-full [transform:translateZ(0)]">
                 {isMounted ? (
                     <LanyardErrorBoundary>
                         <Suspense fallback={null}>

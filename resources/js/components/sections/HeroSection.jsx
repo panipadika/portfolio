@@ -66,10 +66,22 @@ export default function HeroSection() {
             id="Home"
             className="relative overflow-visible pt-20 pb-8 sm:pt-28 sm:pb-10 lg:pt-36 lg:pb-12"
         >
-            {/* Background radial gradients (isolated clipping so blur glow blobs don't cause page scrollbars while letting 3D lanyard extend) */}
+            {/* Background radial gradients (zero-blur GPU-friendly halos so 3D lanyard runs at full framerate without compositing stalls) */}
             <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-                <div className="absolute top-1/4 left-10 h-96 w-96 rounded-full bg-indigo-600/10 blur-[140px]" />
-                <div className="absolute top-1/3 right-10 h-80 w-80 rounded-full bg-[#4e63d9]/10 blur-[120px]" />
+                <div
+                    className="absolute top-[12%] -left-12 h-[420px] w-[420px] rounded-full opacity-80"
+                    style={{
+                        background:
+                            'radial-gradient(circle, rgba(79,70,229,0.14) 0%, rgba(79,70,229,0) 70%)',
+                    }}
+                />
+                <div
+                    className="absolute top-[22%] -right-12 h-[380px] w-[380px] rounded-full opacity-80"
+                    style={{
+                        background:
+                            'radial-gradient(circle, rgba(78,99,217,0.14) 0%, rgba(78,99,217,0) 70%)',
+                    }}
+                />
             </div>
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -198,9 +210,9 @@ export default function HeroSection() {
                             strapWidth={0.6}
                             metal="silver"
                             gravity={1}
-                            damping={0.6}
-                            elasticity={0.4}
-                            breeze={0.2}
+                            damping={0.44}
+                            elasticity={0.46}
+                            breeze={0.22}
                             interactive={true}
                             intro={true}
                             className="h-full w-full"
@@ -229,9 +241,9 @@ export default function HeroSection() {
                             strapWidth={0.6}
                             metal="silver"
                             gravity={1}
-                            damping={0.6}
-                            elasticity={0.4}
-                            breeze={0.2}
+                            damping={0.44}
+                            elasticity={0.46}
+                            breeze={0.22}
                             interactive={true}
                             intro={true}
                             className="h-full w-full"

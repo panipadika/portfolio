@@ -6,6 +6,7 @@ import { useAudioDispatch } from '../../context/AudioContext';
 const SpotifySection = memo(function SpotifySection({
     playlistUrl = 'https://open.spotify.com/playlist/0oIazSH9k7vJrpx4qlnAwX?si=baY2yGzlS76Z2slFx4_90A',
 }) {
+    const embedWrapperRef = useRef(null);
     const containerRef = useRef(null);
     const initializedRef = useRef(false);
     // Consumes stable dispatch only; will NOT re-render on play/pause/track transition
@@ -47,119 +48,467 @@ const SpotifySection = memo(function SpotifySection({
     const embedUrl = getEmbedUrl(playlistUrl);
     const spotifyUri = toSpotifyUri(playlistUrl);
 
-    // Prevent Spotify embed track changes or focus steals from auto-scrolling the viewport
+    // Prevent Spotify embed track changes, focus steals, or cross-frame scrollIntoView
+    // from hijacking page scroll—even while user is scrolling, holding, or clicking elsewhere
     useEffect(() => {
         const containerEl = containerRef.current;
-        if (!containerEl) return;
+        const wrapperEl = embedWrapperRef.current || containerEl;
+        if (!containerEl || !wrapperEl) return;
+
+        let isSectionVisible = false;
+        let isOutsideHolding = false;
+        let outsideHoldReleaseTimer = 0;
 
         let safeScrollY = window.scrollY;
-        let lockedScrollY = window.scrollY;
+        let guardTargetY = window.scrollY;
         let guardUntil = 0;
-        let lastSpotifyInteractionAt = 0;
-        let restoreRafId = 0;
 
-        const markSpotifyInteraction = () => {
-            lastSpotifyInteractionAt = Date.now();
-            guardUntil = 0;
-        };
+        let restoreRaf1 = 0;
+        let restoreRaf2 = 0;
+        let restoreTimeout1 = 0;
+        let restoreTimeout2 = 0;
 
-        const clearGuardOnUserScroll = () => {
-            guardUntil = 0;
-            if (restoreRafId) {
-                cancelAnimationFrame(restoreRafId);
-                restoreRafId = 0;
+        const scrollHistory = [{ t: performance.now(), y: window.scrollY }];
+        const activeOutsideTouches = new Map();
+        let outsidePointerDown = false;
+
+        let lastWheelAt = -Infinity;
+        let lastWheelDir = 0;
+        let lastWheelStep = 0;
+
+        let lastTouchSwipeAt = -Infinity;
+        let lastTouchSwipeDir = 0;
+        let lastTouchStep = 0;
+        let touchFlingUntil = -Infinity;
+
+        let lastKeyNavAt = -Infinity;
+        let lastScrollbarDragAt = -Infinity;
+        let allowSmoothNavUntil = -Infinity;
+        let lastDirectSpotifyInteractAt = -Infinity;
+
+        const recordHistory = (t, y) => {
+            scrollHistory.push({ t, y });
+            while (
+                scrollHistory.length > 30 ||
+                (scrollHistory.length > 2 && t - scrollHistory[0].t > 650)
+            ) {
+                scrollHistory.shift();
             }
         };
 
-        const restoreScrollPosition = (targetY) => {
-            if (Math.abs(window.scrollY - targetY) > 2) {
-                window.scrollTo({ top: targetY, behavior: 'instant' });
+        const syncInert = () => {
+            if ('inert' in containerEl) {
+                containerEl.inert = !isSectionVisible || isOutsideHolding;
             }
         };
 
-        const activateGuard = () => {
-            if (Date.now() - lastSpotifyInteractionAt < 1500) {
-                return;
-            }
-            lockedScrollY = safeScrollY;
-            guardUntil = Date.now() + 1400;
-            restoreScrollPosition(lockedScrollY);
-            if (restoreRafId) {
-                cancelAnimationFrame(restoreRafId);
-            }
-            restoreRafId = requestAnimationFrame(() => {
-                if (Date.now() < guardUntil) {
-                    restoreScrollPosition(lockedScrollY);
-                }
+        const checkInitialVisibility = () => {
+            const rect = wrapperEl.getBoundingClientRect();
+            isSectionVisible =
+                rect.bottom > 0 && rect.top < window.innerHeight;
+            syncInert();
+        };
+        checkInitialVisibility();
+
+        const isInsideWrapper = (target) =>
+            target instanceof Node && wrapperEl.contains(target);
+
+        const isOnScrollbar = (clientX) =>
+            typeof clientX === 'number' &&
+            clientX >= document.documentElement.clientWidth - 4;
+
+        const isStationaryOutsideHold = () => {
+            if (outsidePointerDown) return true;
+            if (activeOutsideTouches.size === 0) return false;
+            let maxMove = 0;
+            activeOutsideTouches.forEach((touch) => {
+                if (touch.maxMove > maxMove) maxMove = touch.maxMove;
             });
+            return maxMove < 10;
         };
 
-        const isFocusInsideSpotify = () => {
+        const isEmbedJumpingIntoView = (fromY, toY) => {
+            const rect = wrapperEl.getBoundingClientRect();
+            const vh = window.innerHeight || 800;
+            const centerNow = rect.top + rect.height / 2;
+            const centerBefore = centerNow + (toY - fromY);
+            const distBefore = Math.abs(centerBefore - vh / 2);
+            const distNow = Math.abs(centerNow - vh / 2);
+            const visibleNow = rect.bottom > 0 && rect.top < vh;
+            return visibleNow && distNow < distBefore - 36;
+        };
+
+        const getPreJumpScrollY = () => {
+            const now = performance.now();
+            if (scrollHistory.length >= 2) {
+                for (let i = scrollHistory.length - 1; i >= 1; i--) {
+                    const curr = scrollHistory[i];
+                    if (now - curr.t > 320) break;
+                    const prev = scrollHistory[i - 1];
+                    const delta = curr.y - prev.y;
+                    if (
+                        Math.abs(delta) > 90 &&
+                        curr.t > allowSmoothNavUntil &&
+                        isEmbedJumpingIntoView(prev.y, curr.y)
+                    ) {
+                        return prev.y;
+                    }
+                }
+            }
+            return safeScrollY;
+        };
+
+        const clearScheduledRestores = () => {
+            if (restoreRaf1) cancelAnimationFrame(restoreRaf1);
+            if (restoreRaf2) cancelAnimationFrame(restoreRaf2);
+            if (restoreTimeout1) clearTimeout(restoreTimeout1);
+            if (restoreTimeout2) clearTimeout(restoreTimeout2);
+            restoreRaf1 = 0;
+            restoreRaf2 = 0;
+            restoreTimeout1 = 0;
+            restoreTimeout2 = 0;
+        };
+
+        const enforceTargetY = (targetY) => {
+            const clamped = Math.max(0, targetY);
+            if (Math.abs(window.scrollY - clamped) > 2) {
+                window.scrollTo({ top: clamped, behavior: 'instant' });
+            }
+        };
+
+        const lockAndRestore = (targetY, durationMs = 1100) => {
+            const now = performance.now();
+            if (now < allowSmoothNavUntil) return;
+
+            guardTargetY = Math.max(0, targetY);
+            safeScrollY = guardTargetY;
+            guardUntil = Math.max(guardUntil, now + durationMs);
+
+            enforceTargetY(guardTargetY);
+            clearScheduledRestores();
+
+            const checkAndRestore = () => {
+                if (
+                    performance.now() < guardUntil &&
+                    performance.now() >= allowSmoothNavUntil
+                ) {
+                    enforceTargetY(guardTargetY);
+                }
+            };
+
+            restoreRaf1 = requestAnimationFrame(() => {
+                checkAndRestore();
+                restoreRaf2 = requestAnimationFrame(checkAndRestore);
+            });
+            restoreTimeout1 = setTimeout(checkAndRestore, 55);
+            restoreTimeout2 = setTimeout(checkAndRestore, 140);
+        };
+
+        const blurIframeIfStolen = () => {
+            const now = performance.now();
             const active = document.activeElement;
-            return Boolean(active && containerEl.contains(active));
+            if (!active || !containerEl.contains(active)) return false;
+
+            const userFocusedElsewhere =
+                !isSectionVisible ||
+                isOutsideHolding ||
+                now - lastTouchSwipeAt < 500 ||
+                now - lastWheelAt < 500;
+
+            if (
+                userFocusedElsewhere &&
+                now - lastDirectSpotifyInteractAt > 800
+            ) {
+                active.blur?.();
+                window.focus();
+                return true;
+            }
+            return false;
+        };
+
+        const isPlausibleUserStep = (step, now, strictGuard) => {
+            const absStep = Math.abs(step);
+            if (absStep === 0) return true;
+
+            if (now < allowSmoothNavUntil) return true;
+            if (now - lastKeyNavAt < 260) return true;
+            if (now - lastScrollbarDragAt < 320) return true;
+
+            if (isStationaryOutsideHold()) {
+                return absStep <= 12;
+            }
+
+            const recentWheel = now - lastWheelAt < 180;
+            const recentTouch =
+                now - lastTouchSwipeAt < 180 || now < touchFlingUntil;
+
+            if (!recentWheel && !recentTouch) {
+                return strictGuard ? absStep <= 16 : absStep <= 45;
+            }
+
+            if (recentWheel) {
+                const dirOk =
+                    lastWheelDir === 0 || Math.sign(step) === lastWheelDir;
+                const maxWheel = strictGuard
+                    ? Math.max(135, lastWheelStep * 2.2)
+                    : Math.max(240, lastWheelStep * 2.5);
+                if (dirOk && absStep <= maxWheel) return true;
+            }
+
+            if (recentTouch) {
+                const dirOk =
+                    lastTouchSwipeDir === 0 ||
+                    Math.sign(step) === lastTouchSwipeDir;
+                const maxTouch = strictGuard
+                    ? Math.max(115, lastTouchStep * 2.4 + 40)
+                    : Math.max(220, lastTouchStep * 2.8 + 80);
+                if (dirOk && absStep <= maxTouch) return true;
+            }
+
+            return false;
         };
 
         const handleWindowScroll = () => {
-            if (Date.now() < guardUntil) {
-                restoreScrollPosition(lockedScrollY);
+            const now = performance.now();
+            const y = window.scrollY;
+
+            if (now < allowSmoothNavUntil) {
+                safeScrollY = y;
+                guardTargetY = y;
+                guardUntil = 0;
+                recordHistory(now, y);
                 return;
             }
 
+            if (now < guardUntil) {
+                const step = y - guardTargetY;
+                if (isPlausibleUserStep(step, now, true)) {
+                    guardTargetY = y;
+                    safeScrollY = y;
+                    recordHistory(now, y);
+                } else {
+                    enforceTargetY(guardTargetY);
+                }
+                return;
+            }
+
+            const delta = y - safeScrollY;
             if (
-                isFocusInsideSpotify() &&
-                Date.now() - lastSpotifyInteractionAt > 1500
+                Math.abs(delta) > 12 &&
+                !isPlausibleUserStep(delta, now, false) &&
+                (isStationaryOutsideHold() ||
+                    isEmbedJumpingIntoView(safeScrollY, y) ||
+                    Math.abs(delta) > 220)
             ) {
-                activateGuard();
-                document.activeElement?.blur?.();
+                blurIframeIfStolen();
+                lockAndRestore(safeScrollY, 1000);
                 return;
             }
 
-            safeScrollY = window.scrollY;
+            safeScrollY = y;
+            recordHistory(now, y);
+        };
+
+        const handleSpotifyGuardEvent = () => {
+            const now = performance.now();
+            if (now < allowSmoothNavUntil) return;
+            const restoreY = getPreJumpScrollY();
+            blurIframeIfStolen();
+            lockAndRestore(restoreY, 1100);
         };
 
         const handleWindowBlur = () => {
             setTimeout(() => {
-                if (
-                    isFocusInsideSpotify() &&
-                    Date.now() - lastSpotifyInteractionAt > 1500
-                ) {
-                    activateGuard();
-                    document.activeElement?.blur?.();
-                    window.focus();
+                if (blurIframeIfStolen()) {
+                    const restoreY = getPreJumpScrollY();
+                    lockAndRestore(restoreY, 1100);
                 }
             }, 0);
         };
 
-        const handleSpotifyGuardEvent = () => {
-            activateGuard();
+        const setOutsideHold = (holding) => {
+            if (outsideHoldReleaseTimer) {
+                clearTimeout(outsideHoldReleaseTimer);
+                outsideHoldReleaseTimer = 0;
+            }
+            if (holding) {
+                isOutsideHolding = true;
+                syncInert();
+            } else {
+                outsideHoldReleaseTimer = setTimeout(() => {
+                    isOutsideHolding = false;
+                    syncInert();
+                }, 160);
+            }
         };
 
-        // Disable iframe focus completely while Spotify card is scrolled out of view
+        const onDocTouchStart = (e) => {
+            if (isInsideWrapper(e.target)) {
+                lastDirectSpotifyInteractAt = performance.now();
+                return;
+            }
+            for (const touch of e.changedTouches) {
+                activeOutsideTouches.set(touch.identifier, {
+                    startY: touch.clientY,
+                    lastY: touch.clientY,
+                    maxMove: 0,
+                });
+            }
+            setOutsideHold(true);
+        };
+
+        const onDocTouchMove = (e) => {
+            const now = performance.now();
+            for (const touch of e.changedTouches) {
+                const prev = activeOutsideTouches.get(touch.identifier);
+                if (!prev) continue;
+                const dy = touch.clientY - prev.lastY;
+                prev.lastY = touch.clientY;
+                prev.maxMove = Math.max(
+                    prev.maxMove,
+                    Math.abs(touch.clientY - prev.startY),
+                );
+                if (prev.maxMove >= 8 && Math.abs(dy) >= 1) {
+                    lastTouchSwipeAt = now;
+                    lastTouchSwipeDir = Math.sign(-dy);
+                    lastTouchStep = Math.abs(dy);
+                }
+            }
+        };
+
+        const onDocTouchEnd = (e) => {
+            const now = performance.now();
+            let hadSwipe = false;
+            for (const touch of e.changedTouches) {
+                const prev = activeOutsideTouches.get(touch.identifier);
+                if (prev && prev.maxMove >= 10) {
+                    hadSwipe = true;
+                }
+                activeOutsideTouches.delete(touch.identifier);
+            }
+            if (hadSwipe && lastTouchSwipeDir !== 0) {
+                touchFlingUntil = now + 950;
+            }
+            if (activeOutsideTouches.size === 0 && !outsidePointerDown) {
+                setOutsideHold(false);
+            }
+        };
+
+        const onDocPointerDown = (e) => {
+            if (e.pointerType === 'touch') return;
+            if (isInsideWrapper(e.target)) {
+                lastDirectSpotifyInteractAt = performance.now();
+                return;
+            }
+            if (isOnScrollbar(e.clientX)) {
+                lastScrollbarDragAt = performance.now();
+                return;
+            }
+            outsidePointerDown = true;
+            setOutsideHold(true);
+        };
+
+        const onDocPointerUp = (e) => {
+            if (e.pointerType === 'touch') return;
+            outsidePointerDown = false;
+            if (activeOutsideTouches.size === 0) {
+                setOutsideHold(false);
+            }
+        };
+
+        const onDocWheel = (e) => {
+            const now = performance.now();
+            lastWheelAt = now;
+            if (e.deltaY !== 0) {
+                lastWheelDir = Math.sign(e.deltaY);
+                lastWheelStep = Math.min(360, Math.abs(e.deltaY));
+            }
+        };
+
+        const onDocKeyDown = (e) => {
+            if (
+                e.key === 'ArrowUp' ||
+                e.key === 'ArrowDown' ||
+                e.key === 'PageUp' ||
+                e.key === 'PageDown' ||
+                e.key === 'Home' ||
+                e.key === 'End' ||
+                e.key === ' '
+            ) {
+                lastKeyNavAt = performance.now();
+            }
+        };
+
+        const onDocClick = (e) => {
+            const target = e.target;
+            if (!(target instanceof Element)) return;
+            const navTrigger = target.closest(
+                'a[href^="#"], [data-scroll-nav]',
+            );
+            if (navTrigger && !isInsideWrapper(navTrigger)) {
+                allowSmoothNavUntil = performance.now() + 1400;
+                guardUntil = 0;
+                clearScheduledRestores();
+            }
+        };
+
+        const onNavScrollEvent = () => {
+            allowSmoothNavUntil = performance.now() + 1400;
+            guardUntil = 0;
+            clearScheduledRestores();
+        };
+
         let observer = null;
         if ('IntersectionObserver' in window) {
             observer = new IntersectionObserver(
                 (entries) => {
-                    const isVisible = entries.some(
+                    isSectionVisible = entries.some(
                         (entry) => entry.isIntersecting,
                     );
-                    if ('inert' in containerEl) {
-                        containerEl.inert = !isVisible;
-                    }
+                    syncInert();
                 },
                 { threshold: 0 },
             );
-            observer.observe(containerEl);
+            observer.observe(wrapperEl);
         }
 
-        containerEl.addEventListener('pointerdown', markSpotifyInteraction, {
+        document.addEventListener('touchstart', onDocTouchStart, {
+            capture: true,
             passive: true,
         });
-        containerEl.addEventListener('touchstart', markSpotifyInteraction, {
+        document.addEventListener('touchmove', onDocTouchMove, {
+            capture: true,
             passive: true,
         });
-        containerEl.addEventListener('mouseenter', markSpotifyInteraction, {
+        document.addEventListener('touchend', onDocTouchEnd, {
+            capture: true,
             passive: true,
         });
+        document.addEventListener('touchcancel', onDocTouchEnd, {
+            capture: true,
+            passive: true,
+        });
+        document.addEventListener('pointerdown', onDocPointerDown, {
+            capture: true,
+            passive: true,
+        });
+        document.addEventListener('pointerup', onDocPointerUp, {
+            capture: true,
+            passive: true,
+        });
+        document.addEventListener('pointercancel', onDocPointerUp, {
+            capture: true,
+            passive: true,
+        });
+        document.addEventListener('wheel', onDocWheel, {
+            capture: true,
+            passive: true,
+        });
+        document.addEventListener('keydown', onDocKeyDown, {
+            capture: true,
+            passive: true,
+        });
+        document.addEventListener('click', onDocClick, { capture: true });
 
         window.addEventListener('scroll', handleWindowScroll, {
             passive: true,
@@ -169,45 +518,53 @@ const SpotifySection = memo(function SpotifySection({
             'spotify:scroll-guard',
             handleSpotifyGuardEvent,
         );
-        window.addEventListener('wheel', clearGuardOnUserScroll, {
-            passive: true,
-        });
-        window.addEventListener('touchmove', clearGuardOnUserScroll, {
-            passive: true,
-        });
-        window.addEventListener('keydown', clearGuardOnUserScroll, {
-            passive: true,
-        });
+        window.addEventListener('portfolio:nav-scroll', onNavScrollEvent);
+        window.addEventListener('popstate', onNavScrollEvent);
 
         return () => {
-            if (restoreRafId) {
-                cancelAnimationFrame(restoreRafId);
-            }
+            clearScheduledRestores();
+            if (outsideHoldReleaseTimer) clearTimeout(outsideHoldReleaseTimer);
             observer?.disconnect();
             if ('inert' in containerEl) {
                 containerEl.inert = false;
             }
-            containerEl.removeEventListener(
-                'pointerdown',
-                markSpotifyInteraction,
-            );
-            containerEl.removeEventListener(
-                'touchstart',
-                markSpotifyInteraction,
-            );
-            containerEl.removeEventListener(
-                'mouseenter',
-                markSpotifyInteraction,
-            );
+            document.removeEventListener('touchstart', onDocTouchStart, {
+                capture: true,
+            });
+            document.removeEventListener('touchmove', onDocTouchMove, {
+                capture: true,
+            });
+            document.removeEventListener('touchend', onDocTouchEnd, {
+                capture: true,
+            });
+            document.removeEventListener('touchcancel', onDocTouchEnd, {
+                capture: true,
+            });
+            document.removeEventListener('pointerdown', onDocPointerDown, {
+                capture: true,
+            });
+            document.removeEventListener('pointerup', onDocPointerUp, {
+                capture: true,
+            });
+            document.removeEventListener('pointercancel', onDocPointerUp, {
+                capture: true,
+            });
+            document.removeEventListener('wheel', onDocWheel, {
+                capture: true,
+            });
+            document.removeEventListener('keydown', onDocKeyDown, {
+                capture: true,
+            });
+            document.removeEventListener('click', onDocClick, { capture: true });
+
             window.removeEventListener('scroll', handleWindowScroll);
             window.removeEventListener('blur', handleWindowBlur);
             window.removeEventListener(
                 'spotify:scroll-guard',
                 handleSpotifyGuardEvent,
             );
-            window.removeEventListener('wheel', clearGuardOnUserScroll);
-            window.removeEventListener('touchmove', clearGuardOnUserScroll);
-            window.removeEventListener('keydown', clearGuardOnUserScroll);
+            window.removeEventListener('portfolio:nav-scroll', onNavScrollEvent);
+            window.removeEventListener('popstate', onNavScrollEvent);
         };
     }, []);
 
@@ -430,10 +787,13 @@ const SpotifySection = memo(function SpotifySection({
                             transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
                             className="w-full lg:col-span-6"
                         >
-                            <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl bg-black/40 min-h-[352px] [contain:paint_layout]">
+                            <div
+                                ref={embedWrapperRef}
+                                className="w-full max-w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl bg-black/40 min-h-[352px] [contain:paint_layout] [overflow-anchor:none]"
+                            >
                                 <div
                                     ref={containerRef}
-                                    className="w-full h-full min-h-[352px] [contain:strict] [transform:translate3d(0,0,0)]"
+                                    className="w-full h-full min-h-[352px] [contain:strict] [overflow-anchor:none] [transform:translate3d(0,0,0)]"
                                 />
                             </div>
                         </motion.div>

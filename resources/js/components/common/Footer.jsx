@@ -3,6 +3,7 @@ import { ArrowUp, Heart } from 'lucide-react';
 
 export default function Footer() {
     const scrollToTop = () => {
+        window.dispatchEvent(new CustomEvent('portfolio:nav-scroll'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 

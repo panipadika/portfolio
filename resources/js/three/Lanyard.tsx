@@ -115,6 +115,7 @@ interface Grab {
     reach: number;
     from: THREE.Vector3;
     target: THREE.Vector3;
+    rawTarget: THREE.Vector3;
 }
 
 interface Simulation {
@@ -183,16 +184,16 @@ const THICKNESS = 0.018;
 const BEVEL = 0.007;
 const JOINTS = 4;
 const NODE_WEIGHT = 1 / 0.05;
-const MAX_STEP = 1 / 360;
+const MAX_STEP = 1 / 200;
 const ITERATIONS = 2;
-const SAMPLES = 40;
+const SAMPLES = 28;
 const FOV = 24;
 const STRAP_WIDTH = 0.36;
 const RING_RADIUS = 0.095;
 const RING_TUBE = 0.0135;
 const EYELET_RADIUS = 0.036;
+const FACE_WIDTH = 896;
 const CLAMP_BODY = 0.15;
-const FACE_WIDTH = 1024;
 
 const FINISHES: Record<string, FinishLook> = {
     glossy: {
@@ -479,11 +480,11 @@ const buildCardGeometry = (layout: CardLayout) => {
         bevelEnabled: true,
         bevelThickness: BEVEL,
         bevelSize: BEVEL,
-        bevelSegments: 5,
-        curveSegments: 24,
+        bevelSegments: 3,
+        curveSegments: 16,
     });
     body.translate(0, 0, -THICKNESS / 2);
-    const face = new THREE.ShapeGeometry(outline, 24);
+    const face = new THREE.ShapeGeometry(outline, 16);
     const position = face.getAttribute('position');
     const uv = face.getAttribute('uv');
     for (let i = 0; i < position.count; i++) {
@@ -513,8 +514,8 @@ const buildClampGeometry = (width: number) => {
         bevelEnabled: true,
         bevelThickness: 0.014,
         bevelSize: 0.014,
-        bevelSegments: 6,
-        curveSegments: 10,
+        bevelSegments: 3,
+        curveSegments: 8,
     });
     geometry.translate(0, 0, -0.01);
     return geometry;
@@ -599,49 +600,6 @@ const makeCanvasTexture = (canvas: HTMLCanvasElement, anisotropy: number) => {
     texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.magFilter = THREE.LinearFilter;
     texture.generateMipmaps = true;
-    return texture;
-};
-
-const buildGrainTexture = () => {
-    const size = 128;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return new THREE.CanvasTexture(canvas);
-    const random = seeded(7);
-    const field = Float32Array.from({ length: size * size }, () => random());
-    const height = (x: number, y: number) => {
-        let sum = 0;
-        for (let j = -1; j <= 1; j++) {
-            for (let i = -1; i <= 1; i++)
-                sum +=
-                    field[
-                        ((y + j + size) % size) * size + ((x + i + size) % size)
-                    ];
-        }
-        return (sum / 9) * 1.6;
-    };
-    const image = ctx.createImageData(size, size);
-    for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-            const nx =
-                height((x - 1 + size) % size, y) - height((x + 1) % size, y);
-            const ny =
-                height(x, (y - 1 + size) % size) - height(x, (y + 1) % size);
-            const length = Math.hypot(nx, ny, 1);
-            const i = (y * size + x) * 4;
-            image.data[i] = ((nx / length) * 0.5 + 0.5) * 255;
-            image.data[i + 1] = ((ny / length) * 0.5 + 0.5) * 255;
-            image.data[i + 2] = ((1 / length) * 0.5 + 0.5) * 255;
-            image.data[i + 3] = 255;
-        }
-    }
-    ctx.putImageData(image, 0, 0);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(5, 7);
     return texture;
 };
 
@@ -840,8 +798,8 @@ const pushBody = (body: Body, r: THREE.Vector3, impulse: THREE.Vector3) => {
     body.position.addScaledVector(impulse, 1 / body.mass);
     const torque = scratch.e.crossVectors(r, impulse);
     const angularDelta = applyInverseInertia(body, torque, scratch.f);
-    if (angularDelta.lengthSq() > 0.0625) {
-        angularDelta.setLength(0.25);
+    if (angularDelta.lengthSq() > 0.0324) {
+        angularDelta.setLength(0.18);
     }
     rotateBody(body.quaternion, angularDelta);
 };
@@ -864,7 +822,7 @@ const solveSegment = (
     }
     const delta = scratch.a.subVectors(b, a);
     const length = delta.length();
-    const effectiveRest = sim.grab ? (sim.currentRest ?? sim.rest) : sim.rest;
+    const effectiveRest = sim.currentRest ?? sim.rest;
     const stretch = length - effectiveRest;
     if (stretch <= 0 || length < 1e-9) return;
     const normal = delta.divideScalar(length);
@@ -926,6 +884,7 @@ const placeHanging = (sim: Simulation, layout: CardLayout, intro: boolean) => {
         velocities[i].set(0, 0, 0);
     }
     sim.lengths.fill(sim.rest);
+    sim.currentRest = sim.rest;
     sim.turn = 0;
     sim.twist = 0;
     sim.twistRaw = 0;
@@ -938,6 +897,9 @@ const configureSimulation = (
     length: number,
 ) => {
     sim.rest = length / JOINTS;
+    if (!sim.grab) {
+        sim.currentRest = sim.rest;
+    }
     const { width, height } = layout;
     const body = sim.body;
     const t = THICKNESS + BEVEL * 2;
@@ -956,7 +918,10 @@ const stepSimulation = (
     physics: Physics,
     time: number,
 ) => {
-    const steps = Math.max(1, Math.ceil(dt / MAX_STEP - 1e-6));
+    const steps = Math.min(
+        6,
+        Math.max(1, Math.ceil(dt / MAX_STEP - 1e-6)),
+    );
     const h = dt / steps;
     const { nodes, previous, velocities, body } = sim;
     const windX =
@@ -966,6 +931,8 @@ const stepSimulation = (
     const windZ = physics.breeze * Math.sin(time * 0.37 + 0.6) * 0.5;
     const grab = sim.grab;
     if (grab) {
+        const smoothAlpha = 1 - Math.exp(-85 * dt);
+        grab.target.lerp(grab.rawTarget, smoothAlpha);
         const hangPos = scratch.c
             .copy(body.hang)
             .applyQuaternion(body.quaternion)
@@ -973,7 +940,15 @@ const stepSimulation = (
         const currentDist = nodes[0].distanceTo(hangPos);
         sim.currentRest = Math.max(sim.rest, currentDist / JOINTS);
     } else {
-        sim.currentRest = sim.rest;
+        const targetRest = sim.rest;
+        const prevRest = sim.currentRest ?? targetRest;
+        if (Math.abs(prevRest - targetRest) > 1e-4) {
+            sim.currentRest =
+                prevRest +
+                (targetRest - prevRest) * Math.min(1, 16 * dt);
+        } else {
+            sim.currentRest = targetRest;
+        }
     }
     const pin = scratch.pin;
     const nodeDrag = Math.exp(-physics.nodeDrag * h);
@@ -1165,6 +1140,7 @@ const Lanyard = ({
                 antialias: true,
                 alpha: true,
                 powerPreference: 'high-performance',
+                stencil: false,
             });
         } catch {
             return undefined;
@@ -1178,8 +1154,13 @@ const Lanyard = ({
         canvas.setAttribute('aria-hidden', 'true');
         container.appendChild(canvas);
 
+        const isInitialCompact =
+            Math.min(
+                window.innerWidth,
+                container.clientWidth || window.innerWidth,
+            ) < 768;
         const anisotropy = Math.min(
-            16,
+            isInitialCompact ? 4 : 8,
             renderer.capabilities.getMaxAnisotropy(),
         );
         const scene = new THREE.Scene();
@@ -1203,7 +1184,6 @@ const Lanyard = ({
         const strapTexture = makeCanvasTexture(strapCanvas, anisotropy);
         strapTexture.wrapS = THREE.ClampToEdgeWrapping;
         strapTexture.wrapT = THREE.RepeatWrapping;
-        const grain = buildGrainTexture();
         const weave = buildWeaveTexture();
         const foilUniforms = {
             foilStrength: { value: 0 },
@@ -1236,6 +1216,7 @@ const Lanyard = ({
                 );
         };
 
+        let foilBound = false;
         const frontMaterial = new THREE.MeshPhysicalMaterial({
             map: frontTexture,
             transparent: false,
@@ -1246,23 +1227,23 @@ const Lanyard = ({
             transparent: false,
             opacity: 1.0,
         });
-        frontMaterial.onBeforeCompile = injectFoil;
-        backMaterial.onBeforeCompile = injectFoil;
-        const edgeMaterial = new THREE.MeshPhysicalMaterial({
-            transparent: true,
-            opacity: 0.94,
+        frontMaterial.customProgramCacheKey = () =>
+            foilBound ? 'lanyard-foil-1' : 'lanyard-foil-0';
+        backMaterial.customProgramCacheKey = () =>
+            foilBound ? 'lanyard-foil-1' : 'lanyard-foil-0';
+        const edgeMaterial = new THREE.MeshStandardMaterial({
+            transparent: false,
+            opacity: 1.0,
         });
         const metalMaterial = new THREE.MeshStandardMaterial({
             metalness: 1,
         });
-        const bandMaterial = new THREE.MeshPhysicalMaterial({
+        const bandMaterial = new THREE.MeshStandardMaterial({
             map: strapTexture,
             normalMap: weave,
-            normalScale: new THREE.Vector2(0.7, 0.7),
-            roughness: 0.68,
-            sheen: 1,
-            sheenRoughness: 0.42,
-            sheenColor: new THREE.Color(0.32, 0.32, 0.34),
+            normalScale: new THREE.Vector2(0.55, 0.55),
+            roughness: 0.72,
+            metalness: 0.04,
             side: THREE.DoubleSide,
         });
 
@@ -1271,7 +1252,7 @@ const Lanyard = ({
         const frontMesh = new THREE.Mesh(undefined, frontMaterial);
         const backMesh = new THREE.Mesh(undefined, backMaterial);
         const ring = new THREE.Mesh(
-            new THREE.TorusGeometry(RING_RADIUS, RING_TUBE, 18, 72),
+            new THREE.TorusGeometry(RING_RADIUS, RING_TUBE, 12, 42),
             metalMaterial,
         );
         ring.rotation.y = Math.PI / 2 - 0.7;
@@ -1290,7 +1271,7 @@ const Lanyard = ({
         );
         clampMesh.position.y = EYELET_RADIUS + CLAMP_BODY / 2 - 0.004;
         const eyelet = new THREE.Mesh(
-            new THREE.TorusGeometry(EYELET_RADIUS, 0.0105, 14, 40),
+            new THREE.TorusGeometry(EYELET_RADIUS, 0.0105, 10, 24),
             metalMaterial,
         );
         clampGroup.add(clampMesh, eyelet);
@@ -1305,6 +1286,7 @@ const Lanyard = ({
             false,
             'centripetal',
         );
+        curve.arcLengthDivisions = 48;
         const view = { width: 1, height: 1 };
         let layout = cardLayout('portrait', 0.3);
         let applied: Applied = {};
@@ -1329,9 +1311,12 @@ const Lanyard = ({
         const paintFaces = () => {
             const s = settingsRef.current!;
             const color = parseColor(s.cardColor, [1, 1, 1]);
-            const width = FACE_WIDTH;
+            const width =
+                Math.min(view.width, window.innerWidth) < 768
+                    ? 640
+                    : FACE_WIDTH;
             const height = Math.round(
-                (FACE_WIDTH * layout.height) / layout.width,
+                (width * layout.height) / layout.width,
             );
             if (frontCanvas.width !== width || frontCanvas.height !== height) {
                 frontCanvas.width = width;
@@ -1355,13 +1340,17 @@ const Lanyard = ({
 
         const repaintStrap = () => {
             const s = settingsRef.current!;
+            const prevW = strapCanvas.width;
+            const prevH = strapCanvas.height;
             tileRatio = paintStrap(
                 strapCanvas,
                 images.strap,
                 parseColor(s.strapColor, [0.07, 0.07, 0.07]),
             ) as number;
             weave.repeat.set(2, 2 * tileRatio);
-            strapTexture.dispose();
+            if (prevW !== strapCanvas.width || prevH !== strapCanvas.height) {
+                strapTexture.dispose();
+            }
             strapTexture.needsUpdate = true;
             start();
         };
@@ -1458,6 +1447,15 @@ const Lanyard = ({
 
             const finish = FINISHES[s.finish] || FINISHES.glossy;
             const card = parseColor(s.cardColor, [1, 1, 1]);
+            const needsFoil = finish.foil > 0;
+            if (needsFoil !== foilBound) {
+                foilBound = needsFoil;
+                const compiler = needsFoil ? injectFoil : () => {};
+                frontMaterial.onBeforeCompile = compiler;
+                backMaterial.onBeforeCompile = compiler;
+                frontMaterial.needsUpdate = true;
+                backMaterial.needsUpdate = true;
+            }
             [frontMaterial, backMaterial].forEach((material) => {
                 material.roughness = finish.roughness;
                 material.metalness = finish.metalness;
@@ -1473,10 +1471,8 @@ const Lanyard = ({
                 card[2] * 0.92,
                 THREE.SRGBColorSpace,
             );
-            edgeMaterial.roughness = Math.min(finish.roughness, 0.35);
+            edgeMaterial.roughness = Math.min(finish.roughness, 0.32);
             edgeMaterial.metalness = finish.metalness;
-            edgeMaterial.clearcoat = 1;
-            edgeMaterial.clearcoatRoughness = 0.08;
             const metalLook = METALS[s.metal] || METALS.silver;
             metalMaterial.color.set(metalLook.color);
             metalMaterial.roughness = metalLook.roughness;
@@ -1641,9 +1637,9 @@ const Lanyard = ({
                 nodeDrag: 2.2,
                 nodeAir: 0.22,
                 twist: 22,
-                twistDamping: 8,
-                grip: 45,
-                gripDamping: 7,
+                twistDamping: 7.5,
+                grip: 24,
+                gripDamping: 7.5,
                 breeze: reducedMotion ? 0 : clamp(s.breeze, 0, 1),
             };
         };
@@ -1651,7 +1647,7 @@ const Lanyard = ({
         const tick = (now: number) => {
             raf = 0;
             if (!alive) return;
-            const dt = Math.min(1 / 30, Math.max(1 / 240, (now - last) / 1000));
+            const dt = Math.min(1 / 35, Math.max(1 / 240, (now - last) / 1000));
             last = now;
             time += dt;
             const current = physics();
@@ -1682,23 +1678,52 @@ const Lanyard = ({
 
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
+        let pendingTouchHit: {
+            hit: THREE.Intersection;
+            time: number;
+        } | null = null;
 
         const toPointer = (event: Point) => {
             const rect = canvas.getBoundingClientRect();
+            const width = rect.width || 1;
+            const height = rect.height || 1;
             pointer.set(
-                ((event.clientX - rect.left) / rect.width) * 2 - 1,
-                -((event.clientY - rect.top) / rect.height) * 2 + 1,
+                ((event.clientX - rect.left) / width) * 2 - 1,
+                -((event.clientY - rect.top) / height) * 2 + 1,
             );
             raycaster.setFromCamera(pointer, camera);
         };
 
-        const pickCard = () => {
+        const pickCard = (touchMarginPx = 0) => {
             cardGroup.updateMatrixWorld();
-            const hits = raycaster.intersectObjects(
-                [bodyMesh, frontMesh, backMesh],
-                false,
-            );
-            return hits[0] || null;
+            const meshes = [bodyMesh, frontMesh, backMesh];
+            const hits = raycaster.intersectObjects(meshes, false);
+            if (hits[0] || touchMarginPx <= 0) return hits[0] || null;
+
+            const rect = canvas.getBoundingClientRect();
+            const dx = (touchMarginPx / (rect.width || 1)) * 2;
+            const dy = (touchMarginPx / (rect.height || 1)) * 2;
+            const baseX = pointer.x;
+            const baseY = pointer.y;
+            const offsets: [number, number][] = [
+                [dx, 0],
+                [-dx, 0],
+                [0, dy],
+                [0, -dy],
+            ];
+            for (const [ox, oy] of offsets) {
+                pointer.set(baseX + ox, baseY + oy);
+                raycaster.setFromCamera(pointer, camera);
+                const nearHits = raycaster.intersectObjects(meshes, false);
+                if (nearHits[0]) {
+                    pointer.set(baseX, baseY);
+                    raycaster.setFromCamera(pointer, camera);
+                    return nearHits[0];
+                }
+            }
+            pointer.set(baseX, baseY);
+            raycaster.setFromCamera(pointer, camera);
+            return null;
         };
 
         const setCursor = (value: string) => {
@@ -1728,7 +1753,18 @@ const Lanyard = ({
         const onPointerDown = (event: PointerEvent) => {
             if (!settingsRef.current!.interactive || event.button > 0) return;
             toPointer(event);
-            const hit = pickCard();
+            const isTouch = event.pointerType === 'touch';
+            let hit: THREE.Intersection | null = null;
+            if (
+                isTouch &&
+                pendingTouchHit &&
+                performance.now() - pendingTouchHit.time < 64
+            ) {
+                hit = pendingTouchHit.hit;
+                pendingTouchHit = null;
+            } else {
+                hit = pickCard(isTouch ? 14 : 0);
+            }
             if (!hit) return;
             canvas.style.touchAction = 'none';
             sim.grab = {
@@ -1740,6 +1776,7 @@ const Lanyard = ({
                 reach: hit.distance,
                 from: hit.point.clone(),
                 target: hit.point.clone(),
+                rawTarget: hit.point.clone(),
             };
             press = {
                 x: event.clientX,
@@ -1758,30 +1795,32 @@ const Lanyard = ({
 
         const onPointerMove = (event: PointerEvent) => {
             if (!settingsRef.current!.interactive) return;
-            toPointer(event);
+            const latest = event.getCoalescedEvents?.()?.at(-1) ?? event;
+            toPointer(latest);
             if (sim.grab) {
                 if (
                     press &&
                     Math.hypot(
-                        event.clientX - press.x,
-                        event.clientY - press.y,
+                        latest.clientX - press.x,
+                        latest.clientY - press.y,
                     ) > 6
                 )
                     press = null;
-                raycaster.ray.at(sim.grab.reach, sim.grab.target);
+                raycaster.ray.at(sim.grab.reach, sim.grab.rawTarget);
                 const now = performance.now();
-                const dtMove = (now - lastMoveTime) / 1000;
-                if (dtMove > 0.005) {
+                const rawDt = (now - lastMoveTime) / 1000;
+                if (rawDt >= 0.008) {
+                    const dtMove = Math.max(0.012, rawDt);
                     const instantV = scratch.a
-                        .copy(sim.grab.target)
+                        .copy(sim.grab.rawTarget)
                         .sub(lastMoveTarget)
                         .divideScalar(dtMove);
                     if (Number.isFinite(instantV.x + instantV.y + instantV.z)) {
-                        dragVelocity.lerp(instantV, 0.45);
-                        if (dragVelocity.lengthSq() > 400)
-                            dragVelocity.setLength(20);
+                        dragVelocity.lerp(instantV, 0.38);
+                        if (dragVelocity.lengthSq() > 324)
+                            dragVelocity.setLength(18);
                     }
-                    lastMoveTarget.copy(sim.grab.target);
+                    lastMoveTarget.copy(sim.grab.rawTarget);
                     lastMoveTime = now;
                 }
                 start();
@@ -1793,7 +1832,10 @@ const Lanyard = ({
         };
 
         const onPointerUp = (event: PointerEvent) => {
-            canvas.style.touchAction = settingsRef.current!.interactive ? 'pan-y' : 'auto';
+            canvas.style.touchAction = settingsRef.current!.interactive
+                ? 'pan-y'
+                : 'auto';
+            pendingTouchHit = null;
             if (!sim.grab) return;
             const hadPress = !!press;
             const pressPoint = press?.point.clone();
@@ -1803,11 +1845,25 @@ const Lanyard = ({
 
             const now = performance.now();
             const dtSinceMove = (now - lastMoveTime) / 1000;
-            if (!hadPress && dtSinceMove < 0.12 && dragVelocity.lengthSq() > 0.01) {
-                if (dragVelocity.lengthSq() > 400) dragVelocity.setLength(20);
-                sim.body.velocity.copy(dragVelocity).multiplyScalar(0.6);
-                sim.body.angular.x = clamp(sim.body.angular.x + dragVelocity.y * 0.25, -15, 15);
-                sim.body.angular.y = clamp(sim.body.angular.y - dragVelocity.x * 0.35, -15, 15);
+            if (
+                !hadPress &&
+                dtSinceMove < 0.14 &&
+                dragVelocity.lengthSq() > 0.04
+            ) {
+                const clampedThrow = scratch.a.copy(dragVelocity);
+                if (clampedThrow.lengthSq() > 324) clampedThrow.setLength(18);
+                clampedThrow.multiplyScalar(0.55);
+                sim.body.velocity.lerp(clampedThrow, 0.55);
+                sim.body.angular.x = clamp(
+                    sim.body.angular.x + clampedThrow.y * 0.18,
+                    -10,
+                    10,
+                );
+                sim.body.angular.y = clamp(
+                    sim.body.angular.y - clampedThrow.x * 0.24,
+                    -10,
+                    10,
+                );
             }
 
             if (
@@ -1827,7 +1883,9 @@ const Lanyard = ({
             if (!settingsRef.current!.interactive || event.touches.length !== 1)
                 return;
             toPointer(event.touches[0]);
-            if (pickCard()) {
+            const hit = pickCard(14);
+            if (hit) {
+                pendingTouchHit = { hit, time: performance.now() };
                 event.preventDefault();
                 canvas.style.touchAction = 'none';
             }
@@ -1854,7 +1912,11 @@ const Lanyard = ({
         const resize = () => {
             view.width = Math.max(1, container.clientWidth);
             view.height = Math.max(1, container.clientHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            const maxDpr =
+                Math.min(view.width, window.innerWidth) < 768 ? 1.5 : 2;
+            renderer.setPixelRatio(
+                Math.min(window.devicePixelRatio || 1, maxDpr),
+            );
             renderer.setSize(view.width, view.height, false);
             apply();
             render();
@@ -1888,6 +1950,7 @@ const Lanyard = ({
             canvas.removeEventListener('pointercancel', onPointerUp);
             canvas.removeEventListener('lostpointercapture', onPointerUp);
             canvas.removeEventListener('touchstart', onTouchStart);
+            canvas.removeEventListener('touchmove', onTouchMove);
             [
                 bodyMesh,
                 frontMesh,
@@ -1904,7 +1967,7 @@ const Lanyard = ({
                 metalMaterial,
                 bandMaterial,
             ].forEach((material) => material.dispose());
-            [frontTexture, backTexture, strapTexture, grain, weave].forEach(
+            [frontTexture, backTexture, strapTexture, weave].forEach(
                 (texture) => texture.dispose(),
             );
             environment.dispose();
