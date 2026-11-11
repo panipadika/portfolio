@@ -8,7 +8,7 @@ on:
 
 concurrency:
   group: production-deploy
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -75,7 +75,7 @@ jobs:
         if: steps.check_secrets.outputs.ready == 'true'
         run: |
           rm -f .env database/database.sqlite
-          rm -rf node_modules
+          rm -rf node_modules vendor
           rm -rf public/hot
           rm -rf public/storage
           rm -rf storage/logs/*.log
@@ -101,6 +101,8 @@ jobs:
             **/.vscode/**
             **/.sokudo/**
             **/node_modules/**
+            vendor
+            vendor/**
             .env
             .env.*
             storage/**
