@@ -551,7 +551,8 @@ const Galaxy = ({
       canvas.width = Math.max(1, Math.round(width * ratio));
       canvas.height = Math.max(1, Math.round(height * ratio));
       render();
-      wake();
+      const isStatic = s.disableAnimation && !s.clickWarp && !s.mouseInteraction && (!s.intro || reduce);
+      if (!isStatic) wake();
     };
 
     const locate = (event: PointerEvent) => {

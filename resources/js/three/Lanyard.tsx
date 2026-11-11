@@ -918,10 +918,7 @@ const stepSimulation = (
     physics: Physics,
     time: number,
 ) => {
-    const steps = Math.min(
-        6,
-        Math.max(1, Math.ceil(dt / MAX_STEP - 1e-6)),
-    );
+    const steps = Math.min(6, Math.max(1, Math.ceil(dt / MAX_STEP - 1e-6)));
     const h = dt / steps;
     const { nodes, previous, velocities, body } = sim;
     const windX =
@@ -944,8 +941,7 @@ const stepSimulation = (
         const prevRest = sim.currentRest ?? targetRest;
         if (Math.abs(prevRest - targetRest) > 1e-4) {
             sim.currentRest =
-                prevRest +
-                (targetRest - prevRest) * Math.min(1, 16 * dt);
+                prevRest + (targetRest - prevRest) * Math.min(1, 16 * dt);
         } else {
             sim.currentRest = targetRest;
         }
@@ -1164,15 +1160,38 @@ const Lanyard = ({
             renderer.capabilities.getMaxAnisotropy(),
         );
         const scene = new THREE.Scene();
-        const environment = buildEnvironment(renderer);
-        scene.environment = environment.texture;
+        const environment = isInitialCompact
+            ? null
+            : buildEnvironment(renderer);
+        if (environment) {
+            scene.environment = environment.texture;
+        }
         const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 200);
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        const ambientLight = new THREE.AmbientLight(
+            0xffffff,
+            isInitialCompact ? 0.55 : 0.45,
+        );
+        const keyLight = new THREE.DirectionalLight(
+            0xffffff,
+            isInitialCompact ? 1.45 : 1.2,
+        );
         keyLight.position.set(-2, 3.5, 6);
-        const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
+        const fillLight = new THREE.DirectionalLight(
+            0xffffff,
+            isInitialCompact ? 0.55 : 0.35,
+        );
         fillLight.position.set(2.5, -0.5, 5);
         scene.add(ambientLight, keyLight, fillLight);
+        if (isInitialCompact) {
+            const hemiLight = new THREE.HemisphereLight(
+                0xf1f5ff,
+                0x1a2244,
+                1.35,
+            );
+            const rimLight = new THREE.DirectionalLight(0x9fb3ff, 0.75);
+            rimLight.position.set(0.5, 4, -5);
+            scene.add(hemiLight, rimLight);
+        }
 
         const imageCache = new Map<string, Promise<HTMLImageElement | null>>();
         const images: Images = { front: null, back: null, strap: null };
@@ -1217,16 +1236,36 @@ const Lanyard = ({
         };
 
         let foilBound = false;
-        const frontMaterial = new THREE.MeshPhysicalMaterial({
-            map: frontTexture,
-            transparent: false,
-            opacity: 1.0,
-        });
-        const backMaterial = new THREE.MeshPhysicalMaterial({
-            map: backTexture,
-            transparent: false,
-            opacity: 1.0,
-        });
+        const frontMaterial:
+            | THREE.MeshStandardMaterial
+            | THREE.MeshPhysicalMaterial = isInitialCompact
+            ? new THREE.MeshStandardMaterial({
+                  map: frontTexture,
+                  transparent: false,
+                  opacity: 1.0,
+                  roughness: 0.22,
+                  metalness: 0.06,
+              })
+            : new THREE.MeshPhysicalMaterial({
+                  map: frontTexture,
+                  transparent: false,
+                  opacity: 1.0,
+              });
+        const backMaterial:
+            | THREE.MeshStandardMaterial
+            | THREE.MeshPhysicalMaterial = isInitialCompact
+            ? new THREE.MeshStandardMaterial({
+                  map: backTexture,
+                  transparent: false,
+                  opacity: 1.0,
+                  roughness: 0.22,
+                  metalness: 0.06,
+              })
+            : new THREE.MeshPhysicalMaterial({
+                  map: backTexture,
+                  transparent: false,
+                  opacity: 1.0,
+              });
         frontMaterial.customProgramCacheKey = () =>
             foilBound ? 'lanyard-foil-1' : 'lanyard-foil-0';
         backMaterial.customProgramCacheKey = () =>
@@ -1315,9 +1354,7 @@ const Lanyard = ({
                 Math.min(view.width, window.innerWidth) < 768
                     ? 640
                     : FACE_WIDTH;
-            const height = Math.round(
-                (width * layout.height) / layout.width,
-            );
+            const height = Math.round((width * layout.height) / layout.width);
             if (frontCanvas.width !== width || frontCanvas.height !== height) {
                 frontCanvas.width = width;
                 frontCanvas.height = height;
@@ -1457,11 +1494,17 @@ const Lanyard = ({
                 backMaterial.needsUpdate = true;
             }
             [frontMaterial, backMaterial].forEach((material) => {
-                material.roughness = finish.roughness;
-                material.metalness = finish.metalness;
-                material.clearcoat = finish.clearcoat;
-                material.clearcoatRoughness = finish.clearcoatRoughness;
-                material.anisotropy = finish.anisotropy;
+                material.roughness = isInitialCompact
+                    ? Math.max(0.18, finish.roughness)
+                    : finish.roughness;
+                material.metalness = isInitialCompact
+                    ? Math.max(0.06, finish.metalness)
+                    : finish.metalness;
+                if (material instanceof THREE.MeshPhysicalMaterial) {
+                    material.clearcoat = finish.clearcoat;
+                    material.clearcoatRoughness = finish.clearcoatRoughness;
+                    material.anisotropy = finish.anisotropy;
+                }
             });
             foilUniforms.foilStrength.value = finish.foil;
             foilUniforms.foilAspect.value = layout.height / layout.width;
@@ -1665,7 +1708,8 @@ const Lanyard = ({
                 placeHanging(sim, layout, false);
             }
             render();
-            const resting = sim.calm > 1.2 && !sim.grab && current.breeze === 0;
+            const resting =
+                sim.calm > 0.65 && !sim.grab && current.breeze === 0;
             if (visible && !resting) raf = requestAnimationFrame(tick);
         };
 
@@ -1970,7 +2014,7 @@ const Lanyard = ({
             [frontTexture, backTexture, strapTexture, weave].forEach(
                 (texture) => texture.dispose(),
             );
-            environment.dispose();
+            environment?.dispose();
             renderer.dispose();
             if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
         };

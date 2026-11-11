@@ -1,4 +1,12 @@
-import React, { Component, useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+    Component,
+    Suspense,
+    lazy,
+    useState,
+    useEffect,
+    useCallback,
+    useRef,
+} from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { AudioProvider } from '../context/AudioContext';
@@ -9,8 +17,9 @@ import HeroSection from './sections/HeroSection';
 import AboutSection from './sections/AboutSection';
 import SpotifySection from './sections/SpotifySection';
 import PortfolioSection from './sections/PortfolioSection';
-import ProjectDetailView from './sections/ProjectDetailView';
 import ContactSection from './sections/ContactSection';
+
+const ProjectDetailView = lazy(() => import('./sections/ProjectDetailView'));
 
 class GlobalErrorBoundary extends Component {
     constructor(props) {
@@ -106,9 +115,13 @@ export default function PortfolioApp() {
         const syncFromUrl = () => {
             const params = new URLSearchParams(window.location.search);
             const slug = params.get('project');
-            if (slug && portfolioData.projects && portfolioData.projects.length > 0) {
+            if (
+                slug &&
+                portfolioData.projects &&
+                portfolioData.projects.length > 0
+            ) {
                 const found = portfolioData.projects.find(
-                    (p) => p.slug === slug || String(p.id) === slug
+                    (p) => p.slug === slug || String(p.id) === slug,
                 );
                 if (found) {
                     setSelectedProject(found);
@@ -128,7 +141,11 @@ export default function PortfolioApp() {
         setSelectedProject(project);
         const url = new URL(window.location.href);
         url.searchParams.set('project', project.slug || project.id);
-        window.history.pushState({ projectSlug: project.slug }, '', url.toString());
+        window.history.pushState(
+            { projectSlug: project.slug },
+            '',
+            url.toString(),
+        );
         window.scrollTo({ top: 0, behavior: 'instant' });
     }, []);
 
@@ -150,11 +167,13 @@ export default function PortfolioApp() {
                     {/* Dedicated Project Detail View (No Galaxy 3D Background, No Navbar, No Footer) */}
                     {selectedProject && (
                         <div className="relative z-40 min-h-screen bg-[#050811]">
-                            <ProjectDetailView
-                                project={selectedProject}
-                                techStack={portfolioData.tech_stack}
-                                onBack={handleBackToHome}
-                            />
+                            <Suspense fallback={null}>
+                                <ProjectDetailView
+                                    project={selectedProject}
+                                    techStack={portfolioData.tech_stack}
+                                    onBack={handleBackToHome}
+                                />
+                            </Suspense>
                         </div>
                     )}
 
@@ -165,19 +184,24 @@ export default function PortfolioApp() {
                     >
                         {/* Global Interactive Galaxy WebGL Background */}
                         <div
-                            className="fixed inset-0 z-0 pointer-events-none overflow-hidden"
+                            className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
                             aria-hidden="true"
                         >
                             <Galaxy
-                                dpr={1}
-                                density={isMobile ? 0.65 : 0.8}
+                                dpr={isMobile ? 0.8 : 1}
+                                density={isMobile ? 0.55 : 0.8}
                                 glowIntensity={0.25}
                                 flareIntensity={0.8}
                                 starSpeed={0.4}
                                 disableAnimation={isMobile}
                                 mouseRepulsion={!isMobile}
                                 clickWarp={!isMobile}
-                                starColors={['#ffffff', '#e2e8f0', '#7185e8', '#4e63d9']}
+                                starColors={[
+                                    '#ffffff',
+                                    '#e2e8f0',
+                                    '#7185e8',
+                                    '#4e63d9',
+                                ]}
                                 hueShift={140}
                                 saturation={0}
                                 starSize={1}
@@ -195,7 +219,7 @@ export default function PortfolioApp() {
                             />
                         </div>
 
-                        <div className="relative z-10 isolate">
+                        <div className="relative isolate z-10">
                             {/* Main Single Page Application Navbar */}
                             <Navbar isVisible={!selectedProject} />
 
@@ -206,9 +230,9 @@ export default function PortfolioApp() {
                                         <div className="flex items-center gap-2.5">
                                             <AlertCircle className="h-5 w-5 shrink-0 text-amber-400" />
                                             <span>
-                                                Gagal terhubung ke server portofolio (
-                                                {apiError}). Menampilkan data cadangan
-                                                lokal.
+                                                Gagal terhubung ke server
+                                                portofolio ({apiError}).
+                                                Menampilkan data cadangan lokal.
                                             </span>
                                         </div>
                                         <button
@@ -237,7 +261,9 @@ export default function PortfolioApp() {
                                     techStack={portfolioData.tech_stack}
                                     onSelectProject={handleSelectProject}
                                 />
-                                <ContactSection settings={portfolioData.settings} />
+                                <ContactSection
+                                    settings={portfolioData.settings}
+                                />
                             </main>
 
                             <Footer />

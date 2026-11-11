@@ -62,7 +62,9 @@ export default function LanyardCanvas({
     intro = true,
     className = '',
 }) {
-    const [isMounted, setIsMounted] = useState(() => typeof window !== 'undefined');
+    const [isMounted, setIsMounted] = useState(
+        () => typeof window !== 'undefined',
+    );
 
     useEffect(() => {
         setIsMounted(true);

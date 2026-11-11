@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { Music, ExternalLink } from 'lucide-react';
 import { useAudioDispatch } from '../../context/AudioContext';
@@ -9,6 +9,7 @@ const SpotifySection = memo(function SpotifySection({
     const embedWrapperRef = useRef(null);
     const containerRef = useRef(null);
     const initializedRef = useRef(false);
+    const [shouldLoadEmbed, setShouldLoadEmbed] = useState(false);
     // Consumes stable dispatch only; will NOT re-render on play/pause/track transition
     const { registerSpotifyController, unregisterSpotifyController } =
         useAudioDispatch();
@@ -104,8 +105,7 @@ const SpotifySection = memo(function SpotifySection({
 
         const checkInitialVisibility = () => {
             const rect = wrapperEl.getBoundingClientRect();
-            isSectionVisible =
-                rect.bottom > 0 && rect.top < window.innerHeight;
+            isSectionVisible = rect.bottom > 0 && rect.top < window.innerHeight;
             syncInert();
         };
         checkInitialVisibility();
@@ -555,7 +555,9 @@ const SpotifySection = memo(function SpotifySection({
             document.removeEventListener('keydown', onDocKeyDown, {
                 capture: true,
             });
-            document.removeEventListener('click', onDocClick, { capture: true });
+            document.removeEventListener('click', onDocClick, {
+                capture: true,
+            });
 
             window.removeEventListener('scroll', handleWindowScroll);
             window.removeEventListener('blur', handleWindowBlur);
@@ -563,13 +565,48 @@ const SpotifySection = memo(function SpotifySection({
                 'spotify:scroll-guard',
                 handleSpotifyGuardEvent,
             );
-            window.removeEventListener('portfolio:nav-scroll', onNavScrollEvent);
+            window.removeEventListener(
+                'portfolio:nav-scroll',
+                onNavScrollEvent,
+            );
             window.removeEventListener('popstate', onNavScrollEvent);
         };
     }, []);
 
+    // Defer loading Spotify's heavy third-party embed script until near viewport or explicit play toggle
+    useEffect(() => {
+        if (shouldLoadEmbed) return;
+
+        const target = embedWrapperRef.current || containerRef.current;
+        const triggerLoad = () => setShouldLoadEmbed(true);
+
+        let observer = null;
+        if (target && 'IntersectionObserver' in window) {
+            observer = new IntersectionObserver(
+                (entries) => {
+                    if (entries.some((entry) => entry.isIntersecting)) {
+                        triggerLoad();
+                        observer?.disconnect();
+                    }
+                },
+                { rootMargin: '650px 0px' },
+            );
+            observer.observe(target);
+        }
+
+        window.addEventListener('spotify:request-load', triggerLoad);
+        return () => {
+            observer?.disconnect();
+            window.removeEventListener('spotify:request-load', triggerLoad);
+        };
+    }, [shouldLoadEmbed]);
+
     // Initialize Spotify IFrame API Controller
     useEffect(() => {
+        if (!shouldLoadEmbed) {
+            return;
+        }
+
         let isMounted = true;
         let createdController = null;
 
@@ -701,6 +738,7 @@ const SpotifySection = memo(function SpotifySection({
             initializedRef.current = false;
         };
     }, [
+        shouldLoadEmbed,
         spotifyUri,
         embedUrl,
         registerSpotifyController,
@@ -720,7 +758,7 @@ const SpotifySection = memo(function SpotifySection({
                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
                     viewport={{ once: true, amount: 0.2 }}
                     transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d1322]/60 p-8 sm:p-10 lg:p-12 shadow-2xl backdrop-blur-xl"
+                    className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d1322]/60 p-8 shadow-2xl backdrop-blur-xl sm:p-10 lg:p-12"
                 >
                     {/* Background Cosmic Orbital Rings Decoration */}
                     <div
@@ -734,11 +772,19 @@ const SpotifySection = memo(function SpotifySection({
 
                     {/* Ambient Glow */}
                     <div
-                        className="pointer-events-none absolute -top-20 left-1/4 h-72 w-72 rounded-full bg-indigo-600/15 blur-[100px]"
+                        className="pointer-events-none absolute -top-20 left-1/4 h-72 w-72 rounded-full"
+                        style={{
+                            background:
+                                'radial-gradient(circle, rgba(79,70,229,0.16) 0%, rgba(79,70,229,0) 70%)',
+                        }}
                         aria-hidden="true"
                     />
                     <div
-                        className="pointer-events-none absolute -bottom-20 right-1/4 h-72 w-72 rounded-full bg-blue-600/10 blur-[100px]"
+                        className="pointer-events-none absolute right-1/4 -bottom-20 h-72 w-72 rounded-full"
+                        style={{
+                            background:
+                                'radial-gradient(circle, rgba(37,99,235,0.12) 0%, rgba(37,99,235,0) 70%)',
+                        }}
                         aria-hidden="true"
                     />
 
@@ -748,21 +794,26 @@ const SpotifySection = memo(function SpotifySection({
                             initial={{ opacity: 0, x: -25 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true, amount: 0.2 }}
-                            transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                            transition={{
+                                duration: 0.6,
+                                delay: 0.15,
+                                ease: [0.16, 1, 0.3, 1],
+                            }}
                             className="flex flex-col items-start justify-center lg:col-span-6"
                         >
-                            <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15]">
+                            <h2 className="font-display text-4xl leading-[1.15] font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
                                 Rhythm in Beats. <br />
                                 <span className="text-[#5c7cfa] sm:text-[#7185e8]">
                                     Logic in Code.
                                 </span>
                             </h2>
 
-                            <p className="mt-6 max-w-lg font-sans text-sm sm:text-base leading-relaxed text-slate-300">
-                                Setiap baris kode punya ritmenya tersendiri. Dari
-                                eksplorasi larut malam hingga merancang arsitektur web,
-                                inilah playlist music yang menjaga fokus dan kreativitas
-                                saya tetap mengalir.
+                            <p className="mt-6 max-w-lg font-sans text-sm leading-relaxed text-slate-300 sm:text-base">
+                                Setiap baris kode punya ritmenya tersendiri.
+                                Dari eksplorasi larut malam hingga merancang
+                                arsitektur web, inilah playlist music yang
+                                menjaga fokus dan kreativitas saya tetap
+                                mengalir.
                             </p>
 
                             <div className="mt-8">
@@ -784,16 +835,28 @@ const SpotifySection = memo(function SpotifySection({
                             initial={{ opacity: 0, x: 25 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true, amount: 0.2 }}
-                            transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                            transition={{
+                                duration: 0.6,
+                                delay: 0.25,
+                                ease: [0.16, 1, 0.3, 1],
+                            }}
                             className="w-full lg:col-span-6"
                         >
                             <div
                                 ref={embedWrapperRef}
-                                className="w-full max-w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl bg-black/40 min-h-[352px] [contain:paint_layout] [overflow-anchor:none]"
+                                className="relative min-h-[352px] w-full max-w-full overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-2xl [contain:paint_layout] [overflow-anchor:none]"
                             >
+                                {!shouldLoadEmbed && (
+                                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#090e1a] text-slate-400">
+                                        <Music className="h-7 w-7 text-[#7185e8]" />
+                                        <span className="font-mono text-xs tracking-wider uppercase">
+                                            Memuat pemutar Spotify...
+                                        </span>
+                                    </div>
+                                )}
                                 <div
                                     ref={containerRef}
-                                    className="w-full h-full min-h-[352px] [contain:strict] [overflow-anchor:none] [transform:translate3d(0,0,0)]"
+                                    className="h-full min-h-[352px] w-full [transform:translate3d(0,0,0)] [contain:strict] [overflow-anchor:none]"
                                 />
                             </div>
                         </motion.div>

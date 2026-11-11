@@ -203,6 +203,8 @@ export function AudioProvider({ children }) {
 
     // Unified toggle function called by Navbar sound button
     const toggleAudio = useCallback(() => {
+        window.dispatchEvent(new CustomEvent('spotify:request-load'));
+
         if (spotifyControllerRef.current) {
             window.dispatchEvent(new CustomEvent('spotify:scroll-guard'));
             try {

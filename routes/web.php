@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ExperienceController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\MediaImageController;
 use App\Http\Controllers\PublicStorageController;
 use App\Http\Middleware\EnsureDirectBladeVisit;
 use App\Models\SiteSetting;
@@ -49,7 +50,14 @@ Route::middleware(['auth', 'verified', EnsureDirectBladeVisit::class])->group(fu
     });
 });
 
+Route::get('media-opt/{width}/{path}', MediaImageController::class)
+    ->withoutMiddleware('web')
+    ->where('width', '128|640|960|1280')
+    ->where('path', '.*')
+    ->name('media.opt');
+
 Route::get('storage/{path}', PublicStorageController::class)
+    ->withoutMiddleware('web')
     ->where('path', '.*')
     ->name('storage.fallback');
 

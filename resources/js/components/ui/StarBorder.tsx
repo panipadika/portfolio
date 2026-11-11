@@ -262,6 +262,9 @@ const StarBorder = <T extends React.ElementType = 'button'>({
     if (!root || !canvas || !ctx) return undefined;
 
     const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? true : false;
+    const isCoarseOrCompact =
+      typeof window !== 'undefined' &&
+      (window.matchMedia?.('(pointer: coarse)').matches || window.innerWidth < 768);
     const point: Point = { x: 0, y: 0, nx: 0, ny: -1 };
     const state = {
       width: 0,
@@ -331,7 +334,7 @@ const StarBorder = <T extends React.ElementType = 'button'>({
       tip = true
     ) => {
       if (length < 0.5 || intensity <= 0) return;
-      const steps = clamp(Math.ceil(length / 2), 2, 90);
+      const steps = clamp(Math.ceil(length / 5), 2, 32);
       pointAt(shape, head, point);
       let px = point.x;
       let py = point.y;
@@ -498,7 +501,7 @@ const StarBorder = <T extends React.ElementType = 'button'>({
       const total = shape.total;
       const spacing = total / s.stars;
       const engaged = state.hovered || state.focused;
-      const cruise = reduce ? 0 : (s.direction * total) / s.duration;
+      const cruise = reduce || isCoarseOrCompact ? 0 : (s.direction * total) / s.duration;
 
       const revealTarget = s.hover === 'reveal' && !engaged ? 0 : 1;
       state.reveal += (revealTarget - state.reveal) * (1 - Math.exp(-dt / (revealTarget > state.reveal ? 0.16 : 0.45)));

@@ -9,6 +9,7 @@ import {
     Briefcase,
 } from 'lucide-react';
 import BorderGlow from '../ui/BorderGlow';
+import { optimizeImageSrc } from '../../lib/media';
 
 export default function AboutSection({
     stats,
@@ -18,6 +19,8 @@ export default function AboutSection({
     const [imgError, setImgError] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const shouldReduceMotion = useReducedMotion();
+    const isCompactViewport =
+        typeof window !== 'undefined' && window.innerWidth < 1024;
     const photoRef = useRef(null);
     const rafRef = useRef(null);
 
@@ -73,15 +76,32 @@ export default function AboutSection({
             {/* Semantic anchor alias for Indonesian navigation */}
             <div id="TentangSaya" className="sr-only" aria-hidden="true" />
 
-            {/* Ambient Deep Space Ambience per DESIGN.md */}
+            {/* Deep Space Radial Glows (zero-blur GPU-friendly halos) */}
             <div
                 className="pointer-events-none absolute inset-0 -z-10"
                 aria-hidden="true"
             >
-                {/* Deep Space Radial Glows */}
-                <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-indigo-600/10 blur-[140px]" />
-                <div className="absolute top-1/3 right-1/4 h-96 w-96 rounded-full bg-indigo-600/10 blur-[140px]" />
-                <div className="absolute bottom-1/4 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-[#4e63d9]/10 blur-[120px]" />
+                <div
+                    className="absolute top-[15%] left-[12%] h-[420px] w-[420px] rounded-full"
+                    style={{
+                        background:
+                            'radial-gradient(circle, rgba(79,70,229,0.13) 0%, rgba(79,70,229,0) 70%)',
+                    }}
+                />
+                <div
+                    className="absolute top-[25%] right-[12%] h-[420px] w-[420px] rounded-full"
+                    style={{
+                        background:
+                            'radial-gradient(circle, rgba(79,70,229,0.13) 0%, rgba(79,70,229,0) 70%)',
+                    }}
+                />
+                <div
+                    className="absolute bottom-[18%] left-1/2 h-[360px] w-[360px] -translate-x-1/2 rounded-full"
+                    style={{
+                        background:
+                            'radial-gradient(circle, rgba(78,99,217,0.12) 0%, rgba(78,99,217,0) 70%)',
+                    }}
+                />
             </div>
 
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -142,26 +162,29 @@ export default function AboutSection({
                             }`}
                             aria-hidden="true"
                         />
-                        {/* Dynamic Soft Cosmic Aura / Spider-Man Red Glow */}
+                        {/* Dynamic Soft Cosmic Aura / Spider-Man Red Glow (radial-gradient without heavy blur filter) */}
                         <div
-                            className={`pointer-events-none absolute h-72 w-72 rounded-full blur-[80px] transition-all duration-700 ${
-                                isHovered
-                                    ? 'bg-gradient-to-t from-rose-600/30 via-red-500/20 to-blue-500/15'
-                                    : 'bg-gradient-to-t from-[#262f6b]/45 via-[#4e63d9]/30 to-indigo-500/15'
-                            }`}
-                            aria-hidden="true"
-                        />
-                        <div
-                            className={`pointer-events-none absolute -bottom-4 h-48 w-48 rounded-full blur-[60px] transition-all duration-700 ${
-                                isHovered ? 'bg-rose-500/25' : 'bg-[#4e63d9]/20'
-                            }`}
+                            className="pointer-events-none absolute h-80 w-80 rounded-full transition-all duration-700"
+                            style={{
+                                background: isHovered
+                                    ? 'radial-gradient(circle, rgba(244,63,94,0.28) 0%, rgba(59,130,246,0.14) 45%, rgba(0,0,0,0) 72%)'
+                                    : 'radial-gradient(circle, rgba(78,99,217,0.34) 0%, rgba(38,47,107,0.20) 45%, rgba(0,0,0,0) 72%)',
+                            }}
                             aria-hidden="true"
                         />
 
                         {/* Floating Cutout Subject with Cursor Brush Spotlight Reveal */}
                         <motion.div
-                            animate={shouldReduceMotion ? undefined : { y: [0, -8, 0] }}
-                            transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+                            animate={
+                                shouldReduceMotion || isCompactViewport
+                                    ? undefined
+                                    : { y: [0, -8, 0] }
+                            }
+                            transition={{
+                                duration: 4.5,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                            }}
                             className="relative z-10 flex items-center justify-center select-none"
                         >
                             {!imgError ? (
@@ -173,7 +196,7 @@ export default function AboutSection({
                                         maskImage:
                                             'linear-gradient(to bottom, black 35%, rgba(0, 0, 0, 0.85) 60%, rgba(0, 0, 0, 0.3) 82%, transparent 100%)',
                                     }}
-                                    className="relative h-auto w-64 sm:w-72 md:w-80 max-h-[500px] touch-none cursor-crosshair"
+                                    className="relative h-auto max-h-[500px] w-64 cursor-crosshair touch-none sm:w-72 md:w-80"
                                     onPointerMove={handlePointerMove}
                                     onPointerDown={handlePointerDown}
                                     onPointerUp={handlePointerLeave}
@@ -182,23 +205,48 @@ export default function AboutSection({
                                 >
                                     {/* Layer 1: Base Real Photo (Always Visible) */}
                                     <img
-                                        src="/assets/images/profile-transparent.png"
+                                        src={optimizeImageSrc(
+                                            '/assets/images/profile-transparent.png',
+                                            640,
+                                        )}
                                         alt="Foto profil Pani Padika"
-                                        className={`h-full w-full object-contain pointer-events-none transition-all duration-300 ${
+                                        width={395}
+                                        height={590}
+                                        decoding="async"
+                                        className={`pointer-events-none h-full w-full object-contain transition-all duration-300 ${
                                             isHovered
                                                 ? 'drop-shadow-[0_8px_20px_rgba(239,68,68,0.2)]'
                                                 : 'drop-shadow-[0_8px_20px_rgba(78,99,217,0.2)]'
                                         }`}
                                         loading="lazy"
-                                        onError={() => setImgError(true)}
+                                        onError={(e) => {
+                                            if (
+                                                e.currentTarget.src.includes(
+                                                    '/media-opt/',
+                                                )
+                                            ) {
+                                                e.currentTarget.src =
+                                                    '/assets/images/profile-transparent.png';
+                                                return;
+                                            }
+                                            setImgError(true);
+                                        }}
                                     />
 
                                     {/* Layer 2: Transformed Spider-Man Photo (Revealed via Spotlight Mask) */}
                                     <img
-                                        src="/assets/images/spiderman-transformed.png"
+                                        src={optimizeImageSrc(
+                                            '/assets/images/spiderman-transformed.png',
+                                            640,
+                                        )}
                                         alt="Spider-Man Alter-Ego Reveal"
+                                        width={395}
+                                        height={590}
+                                        decoding="async"
                                         className={`pointer-events-none absolute inset-0 h-full w-full object-contain transition-opacity duration-200 ease-out ${
-                                            isHovered ? 'opacity-100' : 'opacity-0'
+                                            isHovered
+                                                ? 'opacity-100'
+                                                : 'opacity-0'
                                         }`}
                                         style={{
                                             WebkitMaskImage:
@@ -207,10 +255,20 @@ export default function AboutSection({
                                                 'radial-gradient(circle 115px at var(--x, -999px) var(--y, -999px), black 0%, black 45px, rgba(0, 0, 0, 0.5) 80px, transparent 115px)',
                                         }}
                                         loading="lazy"
+                                        onError={(e) => {
+                                            if (
+                                                e.currentTarget.src.includes(
+                                                    '/media-opt/',
+                                                )
+                                            ) {
+                                                e.currentTarget.src =
+                                                    '/assets/images/spiderman-transformed.png';
+                                            }
+                                        }}
                                     />
                                 </div>
                             ) : (
-                                <div className="flex h-72 w-64 flex-col items-center justify-center p-6 text-center rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md">
+                                <div className="flex h-72 w-64 flex-col items-center justify-center rounded-2xl border border-white/10 bg-slate-900/60 p-6 text-center backdrop-blur-md">
                                     <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400">
                                         <User className="h-8 w-8" />
                                     </div>
@@ -238,13 +296,16 @@ export default function AboutSection({
                             <strong className="font-semibold text-white">
                                 Sistem Informasi
                             </strong>{' '}
-                           yang memiliki ketertarikan dalam dunia teknologi dan pengembangan web. 
-                           Saya senang merancang dan membangun aplikasi web yang tidak hanya menarik secara visual, 
-                           tetapi juga fungsional, responsif, dan mudah digunakan.
+                            yang memiliki ketertarikan dalam dunia teknologi dan
+                            pengembangan web. Saya senang merancang dan
+                            membangun aplikasi web yang tidak hanya menarik
+                            secara visual, tetapi juga fungsional, responsif,
+                            dan mudah digunakan.
                         </p>
                         <p className="mt-4 font-sans text-sm leading-relaxed text-slate-400 sm:text-base">
-                           Bagi saya, setiap proyek merupakan kesempatan untuk mengasah kemampuan, 
-                           mengeksplorasi teknologi baru, dan menciptakan solusi digital yang bermanfaat.
+                            Bagi saya, setiap proyek merupakan kesempatan untuk
+                            mengasah kemampuan, mengeksplorasi teknologi baru,
+                            dan menciptakan solusi digital yang bermanfaat.
                         </p>
                     </motion.div>
                 </div>
@@ -265,18 +326,42 @@ export default function AboutSection({
                         <div className="space-y-4">
                             {education && education.length > 0 ? (
                                 education.map((item, idx) => {
-                                    const instKey = (item.institution || '').toLowerCase();
-                                    const logoUrl = (instKey.includes('bsi') || instKey.includes('bina sarana informatika'))
-                                        ? '/assets/images/institutions/logo-ubsi.png'
-                                        : (instKey.includes('smkn 1 rajadesa') || instKey.includes('smkn1 rajadesa') || instKey.includes('smk negeri 1 rajadesa'))
-                                        ? '/assets/images/institutions/logo-smkn1rajadesa.png'
-                                        : (instKey.includes('smpn 1 rajadesa') || instKey.includes('smpn1 rajadesa') || instKey.includes('smp negeri 1 rajadesa'))
-                                        ? '/assets/images/institutions/logo-smpn1rajadesa.png'
-                                        : instKey.includes('texmaco')
-                                        ? '/assets/images/institutions/logo-texmaco.png'
-                                        : instKey.includes('muhammadiyah')
-                                        ? '/assets/images/institutions/logo-muhammadiyah.png'
-                                        : null;
+                                    const instKey = (
+                                        item.institution || ''
+                                    ).toLowerCase();
+                                    const logoUrl =
+                                        instKey.includes('bsi') ||
+                                        instKey.includes(
+                                            'bina sarana informatika',
+                                        )
+                                            ? '/assets/images/institutions/logo-ubsi.png'
+                                            : instKey.includes(
+                                                    'smkn 1 rajadesa',
+                                                ) ||
+                                                instKey.includes(
+                                                    'smkn1 rajadesa',
+                                                ) ||
+                                                instKey.includes(
+                                                    'smk negeri 1 rajadesa',
+                                                )
+                                              ? '/assets/images/institutions/logo-smkn1rajadesa.png'
+                                              : instKey.includes(
+                                                      'smpn 1 rajadesa',
+                                                  ) ||
+                                                  instKey.includes(
+                                                      'smpn1 rajadesa',
+                                                  ) ||
+                                                  instKey.includes(
+                                                      'smp negeri 1 rajadesa',
+                                                  )
+                                                ? '/assets/images/institutions/logo-smpn1rajadesa.png'
+                                                : instKey.includes('texmaco')
+                                                  ? '/assets/images/institutions/logo-texmaco.png'
+                                                  : instKey.includes(
+                                                          'muhammadiyah',
+                                                      )
+                                                    ? '/assets/images/institutions/logo-muhammadiyah.png'
+                                                    : null;
 
                                     return (
                                         <motion.div
@@ -284,7 +369,11 @@ export default function AboutSection({
                                             initial={{ opacity: 0, y: 20 }}
                                             whileInView={{ opacity: 1, y: 0 }}
                                             viewport={{ once: true }}
-                                            transition={{ duration: 0.45, delay: idx * 0.08, ease: 'easeOut' }}
+                                            transition={{
+                                                duration: 0.45,
+                                                delay: idx * 0.08,
+                                                ease: 'easeOut',
+                                            }}
                                         >
                                             <BorderGlow
                                                 edgeSensitivity={30}
@@ -295,20 +384,40 @@ export default function AboutSection({
                                                 glowIntensity={1.0}
                                                 coneSpread={25}
                                                 animated={false}
-                                                colors={['#c084fc', '#f472b6', '#38bdf8']}
-                                                className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-default"
+                                                colors={[
+                                                    '#c084fc',
+                                                    '#f472b6',
+                                                    '#38bdf8',
+                                                ]}
+                                                className="group cursor-default transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                                             >
                                                 <div className="flex w-full items-center gap-4 p-4.5 sm:p-5">
                                                     {/* Institution Logo */}
                                                     {logoUrl ? (
                                                         <img
-                                                            src={logoUrl}
+                                                            src={optimizeImageSrc(
+                                                                logoUrl,
+                                                                128,
+                                                            )}
                                                             alt={`Logo ${item.institution}`}
-                                                            className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 object-contain drop-shadow transition-transform duration-300 motion-safe:group-hover:scale-105"
+                                                            width={56}
+                                                            height={56}
+                                                            decoding="async"
+                                                            className="h-12 w-12 shrink-0 object-contain drop-shadow transition-transform duration-300 motion-safe:group-hover:scale-105 sm:h-14 sm:w-14"
                                                             loading="lazy"
+                                                            onError={(e) => {
+                                                                if (
+                                                                    e.currentTarget.src.includes(
+                                                                        '/media-opt/',
+                                                                    )
+                                                                ) {
+                                                                    e.currentTarget.src =
+                                                                        logoUrl;
+                                                                }
+                                                            }}
                                                         />
                                                     ) : (
-                                                        <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center">
+                                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14">
                                                             <GraduationCap className="h-7 w-7 text-indigo-400" />
                                                         </div>
                                                     )}
@@ -343,7 +452,11 @@ export default function AboutSection({
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, amount: 0.2 }}
-                        transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{
+                            duration: 0.6,
+                            delay: 0.1,
+                            ease: [0.16, 1, 0.3, 1],
+                        }}
                     >
                         <h3 className="font-display mb-6 text-2xl font-bold tracking-tight text-white sm:text-3xl">
                             Experience
@@ -352,12 +465,17 @@ export default function AboutSection({
                         <div className="space-y-4">
                             {experience && experience.length > 0 ? (
                                 experience.map((item, idx) => {
-                                    const instKey = (item.institution || '').toLowerCase();
-                                    const logoUrl = instKey.includes('bappelitbangda')
+                                    const instKey = (
+                                        item.institution || ''
+                                    ).toLowerCase();
+                                    const logoUrl = instKey.includes(
+                                        'bappelitbangda',
+                                    )
                                         ? '/assets/images/institutions/logo-bappelitbangda.png'
-                                        : (instKey.includes('ascom') || instKey.includes('artha sarana'))
-                                        ? '/assets/images/institutions/logo-ascom.png'
-                                        : null;
+                                        : instKey.includes('ascom') ||
+                                            instKey.includes('artha sarana')
+                                          ? '/assets/images/institutions/logo-ascom.png'
+                                          : null;
 
                                     return (
                                         <motion.div
@@ -365,7 +483,11 @@ export default function AboutSection({
                                             initial={{ opacity: 0, y: 20 }}
                                             whileInView={{ opacity: 1, y: 0 }}
                                             viewport={{ once: true }}
-                                            transition={{ duration: 0.45, delay: idx * 0.08, ease: 'easeOut' }}
+                                            transition={{
+                                                duration: 0.45,
+                                                delay: idx * 0.08,
+                                                ease: 'easeOut',
+                                            }}
                                         >
                                             <BorderGlow
                                                 edgeSensitivity={30}
@@ -376,20 +498,40 @@ export default function AboutSection({
                                                 glowIntensity={1.0}
                                                 coneSpread={25}
                                                 animated={false}
-                                                colors={['#c084fc', '#f472b6', '#38bdf8']}
-                                                className="group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-default"
+                                                colors={[
+                                                    '#c084fc',
+                                                    '#f472b6',
+                                                    '#38bdf8',
+                                                ]}
+                                                className="group cursor-default transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                                             >
                                                 <div className="flex w-full items-center gap-4 p-4.5 sm:p-5">
                                                     {/* Institution Logo */}
                                                     {logoUrl ? (
                                                         <img
-                                                            src={logoUrl}
+                                                            src={optimizeImageSrc(
+                                                                logoUrl,
+                                                                128,
+                                                            )}
                                                             alt={`Logo ${item.institution}`}
-                                                            className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 object-contain drop-shadow transition-transform duration-300 motion-safe:group-hover:scale-105"
+                                                            width={56}
+                                                            height={56}
+                                                            decoding="async"
+                                                            className="h-12 w-12 shrink-0 object-contain drop-shadow transition-transform duration-300 motion-safe:group-hover:scale-105 sm:h-14 sm:w-14"
                                                             loading="lazy"
+                                                            onError={(e) => {
+                                                                if (
+                                                                    e.currentTarget.src.includes(
+                                                                        '/media-opt/',
+                                                                    )
+                                                                ) {
+                                                                    e.currentTarget.src =
+                                                                        logoUrl;
+                                                                }
+                                                            }}
                                                         />
                                                     ) : (
-                                                        <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center">
+                                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14">
                                                             <Briefcase className="h-7 w-7 text-[#7185e8]" />
                                                         </div>
                                                     )}

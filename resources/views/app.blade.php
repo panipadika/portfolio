@@ -31,16 +31,6 @@
         <meta name="twitter:description" content="Portofolio resmi Pani Padika, Full-Stack Web Developer. Menampilkan interaksi 3D ID Card, showcase projek Laravel + React, sertifikat, dan formulir kontak langsung.">
         <meta name="twitter:image" content="{{ asset('card-front.png') }}">
 
-        {{-- Preload 3D Lanyard Card & Strap Textures for Instant Appearance --}}
-        <link rel="preload" as="image" href="{{ asset('card-front.webp') }}" type="image/webp">
-        <link rel="preload" as="image" href="{{ asset('card-back.webp') }}" type="image/webp">
-        <link rel="preload" as="image" href="{{ asset('band.png') }}" type="image/png">
-
-        {{-- Always enforce dark mode for Cosmic Space theme --}}
-        <script>
-            document.documentElement.classList.add('dark');
-        </script>
-
         {{-- Inline style to set default dark space & eliminate text edit cursor (|) across the entire application --}}
         <style>
             html, html.dark {
@@ -69,6 +59,10 @@
             }
         </style>
 
+        <script>
+            document.documentElement.classList.add('dark');
+        </script>
+
         <link rel="icon" href="/favicon.ico?v=2" sizes="any">
         <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
         <link rel="icon" href="/favicon.png?v=2" type="image/png">
@@ -76,7 +70,15 @@
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+        <link
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap"
+            rel="stylesheet"
+            media="print"
+            onload="this.media='all'"
+        >
+        <noscript>
+            <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+        </noscript>
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])

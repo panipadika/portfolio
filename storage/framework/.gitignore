@@ -3,6 +3,8 @@ config.php
 down
 events.scanned.php
 lsp-*.php
+logs/
+media-cache/
 maintenance.php
 routes.php
 routes.scanned.php

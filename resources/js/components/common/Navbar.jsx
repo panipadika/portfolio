@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Menu, X } from 'lucide-react';
 import { useBackgroundAudio } from '../../hooks/useBackgroundAudio';
+import { optimizeImageSrc } from '../../lib/media';
 
 const NAV_LINKS = [
     { id: 'Home', label: 'Home', href: '#Home' },
@@ -39,7 +40,10 @@ export default function Navbar({ isVisible = true }) {
         if (!isMobileMenuOpen) return;
 
         const handleClickOutside = (e) => {
-            if (navContainerRef.current && !navContainerRef.current.contains(e.target)) {
+            if (
+                navContainerRef.current &&
+                !navContainerRef.current.contains(e.target)
+            ) {
                 setIsMobileMenuOpen(false);
             }
         };
@@ -51,7 +55,9 @@ export default function Navbar({ isVisible = true }) {
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('touchstart', handleClickOutside, { passive: true });
+        document.addEventListener('touchstart', handleClickOutside, {
+            passive: true,
+        });
         document.addEventListener('keydown', handleKeyDown);
 
         return () => {
@@ -80,17 +86,20 @@ export default function Navbar({ isVisible = true }) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -24 }}
                     transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                    className="pointer-events-none fixed top-4 sm:top-5 right-0 left-0 z-50 flex justify-center px-4"
+                    className="pointer-events-none fixed top-4 right-0 left-0 z-50 flex justify-center px-4 sm:top-5"
                 >
-                    <div ref={navContainerRef} className="pointer-events-auto flex flex-col items-center w-full max-w-sm md:max-w-none md:w-auto">
+                    <div
+                        ref={navContainerRef}
+                        className="pointer-events-auto flex w-full max-w-sm flex-col items-center md:w-auto md:max-w-none"
+                    >
                         {/* ================= DESKTOP NAVBAR (md and up) ================= */}
                         <nav
-                            className="hidden md:flex relative items-center gap-1.5 rounded-full border border-white/[0.15] bg-white/[0.03] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.35)] ring-1 ring-white/5 backdrop-blur-[6px] transition-colors duration-300"
+                            className="relative hidden items-center gap-1.5 rounded-full border border-white/[0.15] bg-white/[0.03] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.35)] ring-1 ring-white/5 backdrop-blur-[6px] transition-colors duration-300 md:flex"
                             aria-label="Main Navigation"
                         >
                             {/* Prismatic glass edge glint & top sheen */}
                             <div
-                                className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/25 via-[#7185e8]/25 via-emerald-400/20 via-rose-500/25 to-transparent"
+                                className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#7185e8]/25 via-emerald-400/20 via-rose-500/25 via-white/25 to-transparent"
                                 aria-hidden="true"
                             />
 
@@ -102,7 +111,11 @@ export default function Navbar({ isVisible = true }) {
                                         key={link.id}
                                         href={link.href}
                                         onClick={(e) =>
-                                            handleNavClick(e, link.id, link.href)
+                                            handleNavClick(
+                                                e,
+                                                link.id,
+                                                link.href,
+                                            )
                                         }
                                         className={`relative rounded-full px-5 py-2 text-sm transition-all duration-300 ${
                                             isActive
@@ -146,27 +159,42 @@ export default function Navbar({ isVisible = true }) {
                         </nav>
 
                         {/* ================= MOBILE NAVBAR (< md) ================= */}
-                        <div className="flex md:hidden w-full items-center justify-between rounded-full border border-white/[0.15] bg-[#0c1222]/85 px-3 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.45)] ring-1 ring-white/10 backdrop-blur-xl">
+                        <div className="flex w-full items-center justify-between rounded-full border border-white/[0.15] bg-[#0c1222]/85 px-3 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.45)] ring-1 ring-white/10 backdrop-blur-xl md:hidden">
                             {/* Logo PP di Sisi Kiri */}
                             <a
                                 href="#Home"
-                                onClick={(e) => handleNavClick(e, 'Home', '#Home')}
-                                className="flex items-center gap-2 group cursor-pointer pl-1"
+                                onClick={(e) =>
+                                    handleNavClick(e, 'Home', '#Home')
+                                }
+                                className="group flex cursor-pointer items-center gap-2 pl-1"
                                 aria-label="Kembali ke atas"
                             >
                                 <img
-                                    src="/logo-pp.png"
+                                    src={optimizeImageSrc('/logo-pp.png', 128)}
                                     alt="PP Logo"
-                                    className="h-8 w-8 rounded-full object-cover border border-white/20 shadow-md transition-transform duration-200 group-hover:scale-105"
+                                    width={32}
+                                    height={32}
+                                    decoding="async"
+                                    className="h-8 w-8 rounded-full border border-white/20 object-cover shadow-md transition-transform duration-200 group-hover:scale-105"
                                     onError={(e) => {
+                                        if (
+                                            e.currentTarget.src.includes(
+                                                '/media-opt/',
+                                            )
+                                        ) {
+                                            e.currentTarget.src =
+                                                '/logo-pp.png';
+                                            return;
+                                        }
                                         // Fallback monogram if image fails
                                         e.currentTarget.style.display = 'none';
                                         if (e.currentTarget.nextSibling) {
-                                            e.currentTarget.nextSibling.style.display = 'flex';
+                                            e.currentTarget.nextSibling.style.display =
+                                                'flex';
                                         }
                                     }}
                                 />
-                                <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#262f6b] to-[#4e63d9] text-xs font-bold text-white shadow-md border border-white/20">
+                                <div className="hidden h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-gradient-to-br from-[#262f6b] to-[#4e63d9] text-xs font-bold text-white shadow-md">
                                     PP
                                 </div>
                             </a>
@@ -178,7 +206,11 @@ export default function Navbar({ isVisible = true }) {
                                     type="button"
                                     onClick={toggleAudio}
                                     className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-white/[0.05] text-slate-300 shadow-sm transition-all duration-200 hover:bg-white/15 hover:text-white active:scale-95"
-                                    aria-label={isPlaying ? 'Matikan musik' : 'Putar musik'}
+                                    aria-label={
+                                        isPlaying
+                                            ? 'Matikan musik'
+                                            : 'Putar musik'
+                                    }
                                 >
                                     {isPlaying ? (
                                         <Volume2 className="h-4 w-4 animate-pulse text-[#7185e8]" />
@@ -190,8 +222,14 @@ export default function Navbar({ isVisible = true }) {
                                 {/* Hamburger Toggle Button */}
                                 <button
                                     type="button"
-                                    onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                                    aria-label={isMobileMenuOpen ? 'Tutup navigasi' : 'Buka navigasi'}
+                                    onClick={() =>
+                                        setIsMobileMenuOpen((prev) => !prev)
+                                    }
+                                    aria-label={
+                                        isMobileMenuOpen
+                                            ? 'Tutup navigasi'
+                                            : 'Buka navigasi'
+                                    }
                                     aria-expanded={isMobileMenuOpen}
                                     className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-white/[0.05] text-slate-200 shadow-sm transition-all duration-200 hover:bg-white/15 hover:text-white active:scale-95"
                                 >
@@ -211,23 +249,31 @@ export default function Navbar({ isVisible = true }) {
                                     initial={{ opacity: 0, y: -8, scale: 0.96 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                                    className="mt-2 w-full rounded-2xl border border-white/[0.12] bg-[#0c1222]/95 p-2 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 md:hidden"
+                                    transition={{
+                                        duration: 0.25,
+                                        ease: [0.16, 1, 0.3, 1],
+                                    }}
+                                    className="mt-2 w-full rounded-2xl border border-white/[0.12] bg-[#0c1222]/95 p-2 shadow-2xl ring-1 ring-white/10 backdrop-blur-2xl md:hidden"
                                     aria-label="Mobile Navigation Menu"
                                 >
                                     <div className="flex flex-col gap-1">
                                         {NAV_LINKS.map((link) => {
-                                            const isActive = activeSection === link.id;
+                                            const isActive =
+                                                activeSection === link.id;
                                             return (
                                                 <a
                                                     key={link.id}
                                                     href={link.href}
                                                     onClick={(e) =>
-                                                        handleNavClick(e, link.id, link.href)
+                                                        handleNavClick(
+                                                            e,
+                                                            link.id,
+                                                            link.href,
+                                                        )
                                                     }
                                                     className={`flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
                                                         isActive
-                                                            ? 'border border-[#7185e8]/30 bg-gradient-to-r from-[#262f6b]/70 to-[#4e63d9]/40 text-white font-semibold shadow-inner'
+                                                            ? 'border border-[#7185e8]/30 bg-gradient-to-r from-[#262f6b]/70 to-[#4e63d9]/40 font-semibold text-white shadow-inner'
                                                             : 'text-slate-300 hover:bg-white/[0.06] hover:text-white'
                                                     }`}
                                                 >
