@@ -57,7 +57,19 @@ export default function PortfolioApp() {
     } = usePortfolioData();
 
     const [selectedProject, setSelectedProject] = useState(null);
+    const [isMobile, setIsMobile] = useState(() =>
+        typeof window !== 'undefined' ? window.innerWidth < 1024 : false,
+    );
     const previousProjectRef = useRef(null);
+
+    useEffect(() => {
+        const checkIsMobile = () => {
+            const mobile = window.innerWidth < 1024;
+            setIsMobile((prev) => (prev !== mobile ? mobile : prev));
+        };
+        window.addEventListener('resize', checkIsMobile, { passive: true });
+        return () => window.removeEventListener('resize', checkIsMobile);
+    }, []);
 
     const scrollToPortfolio = useCallback(() => {
         const performScroll = () => {
@@ -156,12 +168,13 @@ export default function PortfolioApp() {
                         >
                             <Galaxy
                                 dpr={1}
-                                density={0.8}
+                                density={isMobile ? 0.65 : 0.8}
                                 glowIntensity={0.25}
                                 flareIntensity={0.8}
                                 starSpeed={0.4}
-                                mouseRepulsion
-                                clickWarp
+                                disableAnimation={isMobile}
+                                mouseRepulsion={!isMobile}
+                                clickWarp={!isMobile}
                                 starColors={['#ffffff', '#e2e8f0', '#7185e8', '#4e63d9']}
                                 hueShift={140}
                                 saturation={0}
@@ -169,10 +182,10 @@ export default function PortfolioApp() {
                                 twinkleIntensity={0.25}
                                 speed={0.8}
                                 rotationSpeed={0.08}
-                                layers={3}
+                                layers={isMobile ? 2 : 3}
                                 direction="forward"
                                 repulsionStrength={2}
-                                mouseInteraction
+                                mouseInteraction={!isMobile}
                                 intro={false}
                                 lightMode={false}
                                 transparent={true}

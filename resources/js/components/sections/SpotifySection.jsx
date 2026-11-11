@@ -47,6 +47,170 @@ const SpotifySection = memo(function SpotifySection({
     const embedUrl = getEmbedUrl(playlistUrl);
     const spotifyUri = toSpotifyUri(playlistUrl);
 
+    // Prevent Spotify embed track changes or focus steals from auto-scrolling the viewport
+    useEffect(() => {
+        const containerEl = containerRef.current;
+        if (!containerEl) return;
+
+        let safeScrollY = window.scrollY;
+        let lockedScrollY = window.scrollY;
+        let guardUntil = 0;
+        let lastSpotifyInteractionAt = 0;
+        let restoreRafId = 0;
+
+        const markSpotifyInteraction = () => {
+            lastSpotifyInteractionAt = Date.now();
+            guardUntil = 0;
+        };
+
+        const clearGuardOnUserScroll = () => {
+            guardUntil = 0;
+            if (restoreRafId) {
+                cancelAnimationFrame(restoreRafId);
+                restoreRafId = 0;
+            }
+        };
+
+        const restoreScrollPosition = (targetY) => {
+            if (Math.abs(window.scrollY - targetY) > 2) {
+                window.scrollTo({ top: targetY, behavior: 'instant' });
+            }
+        };
+
+        const activateGuard = () => {
+            if (Date.now() - lastSpotifyInteractionAt < 1500) {
+                return;
+            }
+            lockedScrollY = safeScrollY;
+            guardUntil = Date.now() + 1400;
+            restoreScrollPosition(lockedScrollY);
+            if (restoreRafId) {
+                cancelAnimationFrame(restoreRafId);
+            }
+            restoreRafId = requestAnimationFrame(() => {
+                if (Date.now() < guardUntil) {
+                    restoreScrollPosition(lockedScrollY);
+                }
+            });
+        };
+
+        const isFocusInsideSpotify = () => {
+            const active = document.activeElement;
+            return Boolean(active && containerEl.contains(active));
+        };
+
+        const handleWindowScroll = () => {
+            if (Date.now() < guardUntil) {
+                restoreScrollPosition(lockedScrollY);
+                return;
+            }
+
+            if (
+                isFocusInsideSpotify() &&
+                Date.now() - lastSpotifyInteractionAt > 1500
+            ) {
+                activateGuard();
+                document.activeElement?.blur?.();
+                return;
+            }
+
+            safeScrollY = window.scrollY;
+        };
+
+        const handleWindowBlur = () => {
+            setTimeout(() => {
+                if (
+                    isFocusInsideSpotify() &&
+                    Date.now() - lastSpotifyInteractionAt > 1500
+                ) {
+                    activateGuard();
+                    document.activeElement?.blur?.();
+                    window.focus();
+                }
+            }, 0);
+        };
+
+        const handleSpotifyGuardEvent = () => {
+            activateGuard();
+        };
+
+        // Disable iframe focus completely while Spotify card is scrolled out of view
+        let observer = null;
+        if ('IntersectionObserver' in window) {
+            observer = new IntersectionObserver(
+                (entries) => {
+                    const isVisible = entries.some(
+                        (entry) => entry.isIntersecting,
+                    );
+                    if ('inert' in containerEl) {
+                        containerEl.inert = !isVisible;
+                    }
+                },
+                { threshold: 0 },
+            );
+            observer.observe(containerEl);
+        }
+
+        containerEl.addEventListener('pointerdown', markSpotifyInteraction, {
+            passive: true,
+        });
+        containerEl.addEventListener('touchstart', markSpotifyInteraction, {
+            passive: true,
+        });
+        containerEl.addEventListener('mouseenter', markSpotifyInteraction, {
+            passive: true,
+        });
+
+        window.addEventListener('scroll', handleWindowScroll, {
+            passive: true,
+        });
+        window.addEventListener('blur', handleWindowBlur);
+        window.addEventListener(
+            'spotify:scroll-guard',
+            handleSpotifyGuardEvent,
+        );
+        window.addEventListener('wheel', clearGuardOnUserScroll, {
+            passive: true,
+        });
+        window.addEventListener('touchmove', clearGuardOnUserScroll, {
+            passive: true,
+        });
+        window.addEventListener('keydown', clearGuardOnUserScroll, {
+            passive: true,
+        });
+
+        return () => {
+            if (restoreRafId) {
+                cancelAnimationFrame(restoreRafId);
+            }
+            observer?.disconnect();
+            if ('inert' in containerEl) {
+                containerEl.inert = false;
+            }
+            containerEl.removeEventListener(
+                'pointerdown',
+                markSpotifyInteraction,
+            );
+            containerEl.removeEventListener(
+                'touchstart',
+                markSpotifyInteraction,
+            );
+            containerEl.removeEventListener(
+                'mouseenter',
+                markSpotifyInteraction,
+            );
+            window.removeEventListener('scroll', handleWindowScroll);
+            window.removeEventListener('blur', handleWindowBlur);
+            window.removeEventListener(
+                'spotify:scroll-guard',
+                handleSpotifyGuardEvent,
+            );
+            window.removeEventListener('wheel', clearGuardOnUserScroll);
+            window.removeEventListener('touchmove', clearGuardOnUserScroll);
+            window.removeEventListener('keydown', clearGuardOnUserScroll);
+        };
+    }, []);
+
     // Initialize Spotify IFrame API Controller
     useEffect(() => {
         let isMounted = true;

@@ -24,6 +24,7 @@ export function AudioProvider({ children }) {
     const [isSpotifyReady, setIsSpotifyReady] = useState(false);
     const spotifyControllerRef = useRef(null);
     const pendingActionRef = useRef(null);
+    const lastPlayingUriRef = useRef(null);
 
     // Web Audio API Ambient Fallback
     const audioCtxRef = useRef(null);
@@ -141,9 +142,25 @@ export function AudioProvider({ children }) {
 
         try {
             controller.addListener('playback_update', (e) => {
-                if (e && e.data && typeof e.data.isPaused === 'boolean') {
-                    const nextPlaying = !e.data.isPaused;
-                    setIsPlaying((prev) => (prev === nextPlaying ? prev : nextPlaying));
+                if (e && e.data) {
+                    if (
+                        e.data.playingURI &&
+                        e.data.playingURI !== lastPlayingUriRef.current
+                    ) {
+                        if (lastPlayingUriRef.current !== null) {
+                            window.dispatchEvent(
+                                new CustomEvent('spotify:scroll-guard'),
+                            );
+                        }
+                        lastPlayingUriRef.current = e.data.playingURI;
+                    }
+
+                    if (typeof e.data.isPaused === 'boolean') {
+                        const nextPlaying = !e.data.isPaused;
+                        setIsPlaying((prev) =>
+                            prev === nextPlaying ? prev : nextPlaying,
+                        );
+                    }
                 }
             });
         } catch (err) {
@@ -153,6 +170,7 @@ export function AudioProvider({ children }) {
         // If user already clicked play before controller was ready
         if (pendingActionRef.current === 'play') {
             pendingActionRef.current = null;
+            window.dispatchEvent(new CustomEvent('spotify:scroll-guard'));
             try {
                 controller.togglePlay();
             } catch (err) {
@@ -163,12 +181,14 @@ export function AudioProvider({ children }) {
 
     const unregisterSpotifyController = useCallback(() => {
         spotifyControllerRef.current = null;
+        lastPlayingUriRef.current = null;
         setIsSpotifyReady(false);
     }, []);
 
     // Unified toggle function called by Navbar sound button
     const toggleAudio = useCallback(() => {
         if (spotifyControllerRef.current) {
+            window.dispatchEvent(new CustomEvent('spotify:scroll-guard'));
             try {
                 spotifyControllerRef.current.togglePlay();
             } catch (err) {

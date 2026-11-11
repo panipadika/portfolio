@@ -564,14 +564,17 @@ const Galaxy = ({
     };
 
     const onPointerMove = (event: PointerEvent) => {
+      const s = settingsRef.current;
+      if (!s.mouseInteraction) return;
       locate(event);
       wake();
     };
 
     const onPointerDown = (event: PointerEvent) => {
       const s = settingsRef.current;
+      if (!s.clickWarp || reduce) return;
       locate(event);
-      if (!pointer.inside || !s.clickWarp || reduce) return;
+      if (!pointer.inside) return;
       state.boost = Math.min(1.6, state.boost + 1);
       wake();
     };
