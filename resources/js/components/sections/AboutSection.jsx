@@ -1,18 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import {
-    FileText,
-    Code2,
-    ArrowUpRight,
-    User,
-    GraduationCap,
-    Briefcase,
-} from 'lucide-react';
+import { User, GraduationCap, Briefcase } from 'lucide-react';
 import BorderGlow from '../ui/BorderGlow';
 import { optimizeImageSrc } from '../../lib/media';
 
 export default function AboutSection({
-    stats,
+    stats: _stats,
     education = [],
     experience = [],
 }) {

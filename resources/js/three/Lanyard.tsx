@@ -807,8 +807,8 @@ const pushBody = (body: Body, r: THREE.Vector3, impulse: THREE.Vector3) => {
 const solveSegment = (
     sim: Simulation,
     i: number,
-    h: number,
-    physics: Physics,
+    _h: number,
+    _physics: Physics,
 ) => {
     const { nodes, body } = sim;
     const a = nodes[i];
