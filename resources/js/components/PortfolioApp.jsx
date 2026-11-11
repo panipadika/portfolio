@@ -11,14 +11,14 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { AudioProvider } from '../context/AudioContext';
 import Navbar from './common/Navbar';
-import Footer from './common/Footer';
 import Galaxy from './ui/Galaxy';
 import HeroSection from './sections/HeroSection';
-import AboutSection from './sections/AboutSection';
-import SpotifySection from './sections/SpotifySection';
-import PortfolioSection from './sections/PortfolioSection';
-import ContactSection from './sections/ContactSection';
 
+const AboutSection = lazy(() => import('./sections/AboutSection'));
+const SpotifySection = lazy(() => import('./sections/SpotifySection'));
+const PortfolioSection = lazy(() => import('./sections/PortfolioSection'));
+const ContactSection = lazy(() => import('./sections/ContactSection'));
+const Footer = lazy(() => import('./common/Footer'));
 const ProjectDetailView = lazy(() => import('./sections/ProjectDetailView'));
 
 class GlobalErrorBoundary extends Component {
@@ -248,25 +248,71 @@ export default function PortfolioApp() {
 
                             <main>
                                 <HeroSection />
-                                <AboutSection
-                                    stats={portfolioData.stats}
-                                    education={portfolioData.education}
-                                    experience={portfolioData.experience}
-                                />
-                                <SpotifySection playlistUrl="https://open.spotify.com/playlist/0oIazSH9k7vJrpx4qlnAwX?si=baY2yGzlS76Z2slFx4_90A" />
-                                <PortfolioSection
-                                    projects={portfolioData.projects}
-                                    certificates={portfolioData.certificates}
-                                    achievements={portfolioData.achievements}
-                                    techStack={portfolioData.tech_stack}
-                                    onSelectProject={handleSelectProject}
-                                />
-                                <ContactSection
-                                    settings={portfolioData.settings}
-                                />
+                                <Suspense
+                                    fallback={
+                                        <section
+                                            id="About"
+                                            className="min-h-[760px] border-t border-white/5"
+                                            aria-hidden="true"
+                                        />
+                                    }
+                                >
+                                    <AboutSection
+                                        stats={portfolioData.stats}
+                                        education={portfolioData.education}
+                                        experience={portfolioData.experience}
+                                    />
+                                </Suspense>
+                                <Suspense
+                                    fallback={
+                                        <section
+                                            id="Spotify"
+                                            className="min-h-[520px]"
+                                            aria-hidden="true"
+                                        />
+                                    }
+                                >
+                                    <SpotifySection playlistUrl="https://open.spotify.com/playlist/0oIazSH9k7vJrpx4qlnAwX?si=baY2yGzlS76Z2slFx4_90A" />
+                                </Suspense>
+                                <Suspense
+                                    fallback={
+                                        <section
+                                            id="Portfolio"
+                                            className="min-h-[760px] border-t border-white/5 bg-[#070b14]/50"
+                                            aria-hidden="true"
+                                        />
+                                    }
+                                >
+                                    <PortfolioSection
+                                        projects={portfolioData.projects}
+                                        certificates={
+                                            portfolioData.certificates
+                                        }
+                                        achievements={
+                                            portfolioData.achievements
+                                        }
+                                        techStack={portfolioData.tech_stack}
+                                        onSelectProject={handleSelectProject}
+                                    />
+                                </Suspense>
+                                <Suspense
+                                    fallback={
+                                        <section
+                                            id="Contact"
+                                            className="min-h-[680px] border-t border-white/5"
+                                            aria-hidden="true"
+                                        />
+                                    }
+                                >
+                                    <ContactSection
+                                        settings={portfolioData.settings}
+                                    />
+                                </Suspense>
                             </main>
 
-                            <Footer />
+                            <Suspense fallback={null}>
+                                <Footer />
+                            </Suspense>
                         </div>
                     </div>
                 </div>

@@ -1203,7 +1203,7 @@ const Lanyard = ({
         const strapTexture = makeCanvasTexture(strapCanvas, anisotropy);
         strapTexture.wrapS = THREE.ClampToEdgeWrapping;
         strapTexture.wrapT = THREE.RepeatWrapping;
-        const weave = buildWeaveTexture();
+        const weave = isInitialCompact ? null : buildWeaveTexture();
         const foilUniforms = {
             foilStrength: { value: 0 },
             foilAspect: { value: 1.4 },
@@ -1281,7 +1281,7 @@ const Lanyard = ({
             map: strapTexture,
             normalMap: weave,
             normalScale: new THREE.Vector2(0.55, 0.55),
-            roughness: 0.72,
+            roughness: isInitialCompact ? 0.78 : 0.72,
             metalness: 0.04,
             side: THREE.DoubleSide,
         });
@@ -1352,7 +1352,7 @@ const Lanyard = ({
             const color = parseColor(s.cardColor, [1, 1, 1]);
             const width =
                 Math.min(view.width, window.innerWidth) < 768
-                    ? 640
+                    ? 512
                     : FACE_WIDTH;
             const height = Math.round((width * layout.height) / layout.width);
             if (frontCanvas.width !== width || frontCanvas.height !== height) {
@@ -1384,7 +1384,9 @@ const Lanyard = ({
                 images.strap,
                 parseColor(s.strapColor, [0.07, 0.07, 0.07]),
             ) as number;
-            weave.repeat.set(2, 2 * tileRatio);
+            if (weave) {
+                weave.repeat.set(2, 2 * tileRatio);
+            }
             if (prevW !== strapCanvas.width || prevH !== strapCanvas.height) {
                 strapTexture.dispose();
             }
@@ -1479,8 +1481,27 @@ const Lanyard = ({
                 });
             }
             const faceKey = `${layoutKey}|${s.cardColor}|${s.imageFit}`;
-            if (faceKey !== applied.faceKey) paintFaces();
-            if (s.strapColor !== applied.strapColor) repaintStrap();
+            if (faceKey !== applied.faceKey) {
+                if (images.front || !s.frontImage) {
+                    paintFaces();
+                } else {
+                    frontCanvas.width = 2;
+                    frontCanvas.height = 2;
+                    backCanvas.width = 2;
+                    backCanvas.height = 2;
+                    const cardRgb = parseColor(s.cardColor, [1, 1, 1]);
+                    paintFace(frontCanvas, null, cardRgb, s.imageFit);
+                    paintFace(backCanvas, null, cardRgb, s.imageFit);
+                    frontTexture.needsUpdate = true;
+                    backTexture.needsUpdate = true;
+                }
+            }
+            if (
+                s.strapColor !== applied.strapColor &&
+                (images.strap || !s.strapImage)
+            ) {
+                repaintStrap();
+            }
 
             const finish = FINISHES[s.finish] || FINISHES.glossy;
             const card = parseColor(s.cardColor, [1, 1, 1]);
@@ -1722,13 +1743,16 @@ const Lanyard = ({
 
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
+        let cachedRect: DOMRect | null = null;
         let pendingTouchHit: {
             hit: THREE.Intersection;
             time: number;
         } | null = null;
 
+        const getRect = () => cachedRect ?? canvas.getBoundingClientRect();
+
         const toPointer = (event: Point) => {
-            const rect = canvas.getBoundingClientRect();
+            const rect = getRect();
             const width = rect.width || 1;
             const height = rect.height || 1;
             pointer.set(
@@ -1744,7 +1768,7 @@ const Lanyard = ({
             const hits = raycaster.intersectObjects(meshes, false);
             if (hits[0] || touchMarginPx <= 0) return hits[0] || null;
 
-            const rect = canvas.getBoundingClientRect();
+            const rect = getRect();
             const dx = (touchMarginPx / (rect.width || 1)) * 2;
             const dy = (touchMarginPx / (rect.height || 1)) * 2;
             const baseX = pointer.x;
@@ -1810,6 +1834,7 @@ const Lanyard = ({
                 hit = pickCard(isTouch ? 14 : 0);
             }
             if (!hit) return;
+            cachedRect = canvas.getBoundingClientRect();
             canvas.style.touchAction = 'none';
             sim.grab = {
                 local: hit.point
@@ -1876,6 +1901,7 @@ const Lanyard = ({
         };
 
         const onPointerUp = (event: PointerEvent) => {
+            cachedRect = null;
             canvas.style.touchAction = settingsRef.current!.interactive
                 ? 'pan-y'
                 : 'auto';
@@ -1954,10 +1980,11 @@ const Lanyard = ({
         });
 
         const resize = () => {
+            cachedRect = null;
             view.width = Math.max(1, container.clientWidth);
             view.height = Math.max(1, container.clientHeight);
             const maxDpr =
-                Math.min(view.width, window.innerWidth) < 768 ? 1.5 : 2;
+                Math.min(view.width, window.innerWidth) < 768 ? 1.35 : 2;
             renderer.setPixelRatio(
                 Math.min(window.devicePixelRatio || 1, maxDpr),
             );
@@ -2012,7 +2039,7 @@ const Lanyard = ({
                 bandMaterial,
             ].forEach((material) => material.dispose());
             [frontTexture, backTexture, strapTexture, weave].forEach(
-                (texture) => texture.dispose(),
+                (texture) => texture?.dispose(),
             );
             environment?.dispose();
             renderer.dispose();

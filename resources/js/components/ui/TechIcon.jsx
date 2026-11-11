@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { optimizeImageSrc } from '../../lib/media';
 
 /**
  * Official Full-Color Brand SVG Icons for Tech Stack
@@ -139,10 +140,20 @@ export default function TechIcon({ name, icon, className = 'h-11 w-11' }) {
         ) {
             return (
                 <img
-                    src={trimmed}
+                    src={optimizeImageSrc(trimmed, 128)}
                     alt={name}
+                    width={44}
+                    height={44}
+                    loading="lazy"
+                    decoding="async"
                     className={`object-contain ${className}`}
-                    onError={() => setHasImgError(true)}
+                    onError={(e) => {
+                        if (e.currentTarget.src.includes('/media-opt/')) {
+                            e.currentTarget.src = trimmed;
+                            return;
+                        }
+                        setHasImgError(true);
+                    }}
                 />
             );
         }
@@ -154,6 +165,10 @@ export default function TechIcon({ name, icon, className = 'h-11 w-11' }) {
                 <img
                     src={`https://api.iconify.design/${prefix}/${iconName}.svg`}
                     alt={name}
+                    width={44}
+                    height={44}
+                    loading="lazy"
+                    decoding="async"
                     className={`object-contain ${className}`}
                     onError={() => setHasImgError(true)}
                 />
