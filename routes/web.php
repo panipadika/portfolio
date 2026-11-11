@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ExperienceController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\PublicStorageController;
 use App\Http\Middleware\EnsureDirectBladeVisit;
 use App\Models\SiteSetting;
 use Illuminate\Http\Request;
@@ -47,6 +48,10 @@ Route::middleware(['auth', 'verified', EnsureDirectBladeVisit::class])->group(fu
         Route::put('account/login-slug', [AccountController::class, 'updateLoginSlug'])->name('account.login-slug');
     });
 });
+
+Route::get('storage/{path}', PublicStorageController::class)
+    ->where('path', '.*')
+    ->name('storage.fallback');
 
 require __DIR__.'/settings.php';
 
