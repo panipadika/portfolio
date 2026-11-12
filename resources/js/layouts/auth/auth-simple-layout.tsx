@@ -1,6 +1,4 @@
-import { Link } from '@inertiajs/react';
-import { ArrowLeft, Lock, ShieldCheck } from 'lucide-react';
-import { home } from '@/routes';
+import { Lock, ShieldCheck } from 'lucide-react';
 import type { AuthLayoutProps } from '@/types';
 
 export default function AuthSimpleLayout({
@@ -19,25 +17,6 @@ export default function AuthSimpleLayout({
                 <div className="absolute -bottom-36 -left-24 h-[340px] w-[340px] rounded-full bg-[#262f6b]/50 blur-[115px]" />
                 <div className="absolute -right-20 -bottom-28 h-[320px] w-[320px] rounded-full bg-cyan-500/12 blur-[115px]" />
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_75%_65%_at_50%_45%,#000_35%,transparent_100%)] bg-[size:44px_44px]" />
-            </div>
-
-            {/* Top Action & Portal Status Bar */}
-            <div className="relative z-10 mb-4 flex w-full max-w-[440px] items-center justify-between gap-3">
-                <Link
-                    href={home()}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs font-medium text-slate-300 backdrop-blur-md transition-all hover:border-indigo-400/40 hover:bg-white/[0.08] hover:text-white"
-                >
-                    <ArrowLeft className="size-3.5" />
-                    <span>Kembali ke Portofolio</span>
-                </Link>
-
-                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 font-mono text-[10px] font-semibold tracking-wider text-emerald-300 uppercase backdrop-blur-md">
-                    <span className="relative flex size-1.5">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                        <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
-                    </span>
-                    Admin Portal
-                </span>
             </div>
 
             {/* Glassmorphism Main Card */}
@@ -60,19 +39,13 @@ export default function AuthSimpleLayout({
 
                     {/* Brand Identity & Header */}
                     <div className="mb-7 flex flex-col items-center text-center">
-                        <Link
-                            href={home()}
-                            className="group mb-4 inline-flex flex-col items-center"
-                            aria-label="Kembali ke beranda portofolio"
-                        >
-                            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-black p-1.5 shadow-[0_10px_30px_rgba(99,102,241,0.28)] transition-all duration-300 group-hover:scale-105 group-hover:border-indigo-400/50">
-                                <img
-                                    src="/assets/images/admin-logo.jpg"
-                                    alt="Pani Padika Logo"
-                                    className="h-full w-full rounded-xl object-contain"
-                                />
-                            </div>
-                        </Link>
+                        <div className="mb-4 flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-black p-1.5 shadow-[0_10px_30px_rgba(99,102,241,0.28)]">
+                            <img
+                                src="/assets/images/admin-logo.jpg"
+                                alt="Pani Padika Logo"
+                                className="h-full w-full rounded-xl object-contain"
+                            />
+                        </div>
 
                         <span className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-indigo-500/25 bg-indigo-500/10 px-3 py-0.5 font-mono text-[10px] font-semibold tracking-[0.16em] text-[#8ca0ff] uppercase">
                             <ShieldCheck className="size-3 text-cyan-400" />
