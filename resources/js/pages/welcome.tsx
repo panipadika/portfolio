@@ -9,7 +9,7 @@ export default function Welcome() {
                 <title>Pani Padika — Portfolio</title>
                 <meta
                     name="description"
-                    content="Portofolio resmi Pani Padika, Full-Stack Web Developer. Menampilkan interaksi 3D ID Card, showcase projek Laravel + React, sertifikat, dan formulir kontak langsung."
+                    content="Portofolio resmi Pani Padika, Full-Stack Web Developer."
                 />
                 <meta
                     name="keywords"
@@ -21,20 +21,29 @@ export default function Welcome() {
                 {/* Open Graph / Facebook / WhatsApp / LinkedIn */}
                 <meta property="og:type" content="website" />
                 <meta property="og:site_name" content="Pani Padika Portfolio" />
-                <meta property="og:title" content="Pani Padika — Full-Stack Developer" />
+                <meta
+                    property="og:title"
+                    content="Pani Padika — Full-Stack Developer"
+                />
                 <meta
                     property="og:description"
-                    content="Portofolio resmi Pani Padika, Full-Stack Web Developer. Menampilkan interaksi 3D ID Card, showcase projek Laravel + React, sertifikat, dan formulir kontak langsung."
+                    content="Portofolio resmi Pani Padika, Full-Stack Web Developer."
                 />
                 <meta property="og:image" content="/card-front.png" />
-                <meta property="og:image:alt" content="Pani Padika — Full-Stack Developer 3D ID Card" />
+                <meta
+                    property="og:image:alt"
+                    content="Pani Padika — Full-Stack Developer 3D ID Card"
+                />
 
                 {/* Twitter / X */}
                 <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content="Pani Padika — Full-Stack Developer" />
+                <meta
+                    name="twitter:title"
+                    content="Pani Padika — Full-Stack Developer"
+                />
                 <meta
                     name="twitter:description"
-                    content="Portofolio resmi Pani Padika, Full-Stack Web Developer. Menampilkan interaksi 3D ID Card, showcase projek Laravel + React, sertifikat, dan formulir kontak langsung."
+                    content="Portofolio resmi Pani Padika, Full-Stack Web Developer."
                 />
                 <meta name="twitter:image" content="/card-front.png" />
             </Head>

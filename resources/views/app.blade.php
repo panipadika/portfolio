@@ -6,7 +6,7 @@
 
         {{-- Primary SEO Meta Tags --}}
         <meta name="title" content="Pani Padika — Portfolio">
-        <meta name="description" content="Portofolio resmi Pani Padika, Full-Stack Web Developer. Menampilkan interaksi 3D ID Card, showcase projek Laravel + React, sertifikat, dan formulir kontak langsung.">
+        <meta name="description" content="Portofolio resmi Pani Padika, Full-Stack Web Developer.">
         <meta name="keywords" content="Pani Padika, Web Developer, Full-Stack Developer, Software Engineer, Laravel, React, Inertia.js, Three.js, Portfolio, Indonesia">
         <meta name="author" content="Pani Padika">
         <meta name="theme-color" content="#0B0F17">

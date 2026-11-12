@@ -180,7 +180,7 @@
                                     title="Bersihkan pencarian"
                                 >✕</button>
                                 <span class="hidden sm:inline-flex items-center">
-                                    <kbd id="adminGlobalSearchKbd" class="inline-flex items-center rounded-md border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-slate-400 select-none">Ctrl K</kbd>
+
                                 </span>
                                 <button
                                     type="button"
