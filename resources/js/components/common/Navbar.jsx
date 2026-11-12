@@ -44,7 +44,7 @@ export default function Navbar({ isVisible = true }) {
                 const el = document.getElementById(link.id);
                 if (el) {
                     const rect = el.getBoundingClientRect();
-                    if (rect.top <= 240) {
+                    if (rect.height > 0 && rect.top <= 240) {
                         setActiveSection(link.id);
                         break;
                     }
@@ -52,9 +52,24 @@ export default function Navbar({ isVisible = true }) {
             }
         };
 
+        const syncActiveSection = () => {
+            requestAnimationFrame(handleScroll);
+        };
+
+        if (isVisible) {
+            syncActiveSection();
+        }
+
         window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+        window.addEventListener('portfolio:nav-scroll', syncActiveSection);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener(
+                'portfolio:nav-scroll',
+                syncActiveSection,
+            );
+        };
+    }, [isVisible]);
 
     // Close mobile menu on click outside or on ESC key
     useEffect(() => {
@@ -95,6 +110,7 @@ export default function Navbar({ isVisible = true }) {
         const targetId = href.replace('#', '');
         const targetEl = document.getElementById(targetId);
         if (targetEl) {
+            window.dispatchEvent(new CustomEvent('portfolio:nav-scroll'));
             targetEl.scrollIntoView({ behavior: 'smooth' });
         }
     };

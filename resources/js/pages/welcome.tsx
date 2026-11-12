@@ -6,7 +6,7 @@ export default function Welcome() {
     return (
         <>
             <Head>
-                <title>Pani Padika — Full-Stack Developer</title>
+                <title>Pani Padika — Portfolio</title>
                 <meta
                     name="description"
                     content="Portofolio resmi Pani Padika, Full-Stack Web Developer. Menampilkan interaksi 3D ID Card, showcase projek Laravel + React, sertifikat, dan formulir kontak langsung."

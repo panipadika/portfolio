@@ -4,6 +4,7 @@ import React, {
     lazy,
     useState,
     useEffect,
+    useLayoutEffect,
     useCallback,
     useRef,
 } from 'react';
@@ -70,6 +71,7 @@ export default function PortfolioApp() {
         typeof window !== 'undefined' ? window.innerWidth < 1024 : false,
     );
     const previousProjectRef = useRef(null);
+    const savedReturnRef = useRef(null);
 
     useEffect(() => {
         const checkIsMobile = () => {
@@ -80,35 +82,85 @@ export default function PortfolioApp() {
         return () => window.removeEventListener('resize', checkIsMobile);
     }, []);
 
-    const scrollToPortfolio = useCallback(() => {
+    // Synchronously restore exact project-card scroll BEFORE browser paints Hero section
+    useLayoutEffect(() => {
+        const prevProject = previousProjectRef.current;
+        previousProjectRef.current = selectedProject;
+
+        if (!prevProject || selectedProject) {
+            return;
+        }
+
         window.dispatchEvent(new CustomEvent('portfolio:nav-scroll'));
-        const performScroll = () => {
-            const el =
-                document.getElementById('Portfolio') ||
-                document.getElementById('Portofolio');
-            if (el) {
-                const navOffset = 80;
-                const elementTop =
-                    el.getBoundingClientRect().top + window.pageYOffset;
-                window.scrollTo({
-                    top: Math.max(0, elementTop - navOffset),
-                    behavior: 'smooth',
-                });
+
+        const saved = savedReturnRef.current;
+        const targetSlug = String(
+            saved?.slug || prevProject.slug || prevProject.id || '',
+        );
+
+        const findCardElement = () => {
+            if (!targetSlug) return null;
+            const cards = document.querySelectorAll('[data-project-card]');
+            for (const card of cards) {
+                if (card.getAttribute('data-project-card') === targetSlug) {
+                    return card;
+                }
             }
+            return null;
         };
 
-        requestAnimationFrame(performScroll);
-        setTimeout(performScroll, 50);
-        setTimeout(performScroll, 150);
-    }, []);
+        const resolveTargetY = () => {
+            const cardEl = findCardElement();
+            if (cardEl && saved && typeof saved.cardViewportTop === 'number') {
+                return Math.max(
+                    0,
+                    cardEl.getBoundingClientRect().top +
+                        window.scrollY -
+                        saved.cardViewportTop,
+                );
+            }
+            if (saved && typeof saved.scrollY === 'number') {
+                return Math.max(0, saved.scrollY);
+            }
+            if (cardEl) {
+                return Math.max(
+                    0,
+                    cardEl.getBoundingClientRect().top + window.scrollY - 104,
+                );
+            }
+            const portfolioEl =
+                document.getElementById('Portfolio') ||
+                document.getElementById('Portofolio');
+            if (portfolioEl) {
+                return Math.max(
+                    0,
+                    portfolioEl.getBoundingClientRect().top +
+                        window.scrollY -
+                        80,
+                );
+            }
+            return 0;
+        };
 
-    // Watch transition from selectedProject -> null (user clicked Back or Projects breadcrumb)
-    useEffect(() => {
-        if (previousProjectRef.current && !selectedProject) {
-            scrollToPortfolio();
+        const resolvedY = resolveTargetY();
+        if (resolvedY > 0) {
+            window.scrollTo({ top: resolvedY, behavior: 'instant' });
+            document.documentElement.scrollTop = resolvedY;
         }
-        previousProjectRef.current = selectedProject;
-    }, [selectedProject, scrollToPortfolio]);
+
+        const rafId = requestAnimationFrame(() => {
+            const postLayoutY = resolveTargetY();
+            if (postLayoutY > 0 && Math.abs(window.scrollY - postLayoutY) > 8) {
+                window.scrollTo({ top: postLayoutY, behavior: 'instant' });
+            }
+            savedReturnRef.current = null;
+            if ('scrollRestoration' in window.history) {
+                window.history.scrollRestoration = 'auto';
+            }
+        });
+
+        return () => cancelAnimationFrame(rafId);
+    }, [selectedProject]);
 
     // Sync state with URL query parameter (?project=slug)
     useEffect(() => {
@@ -124,10 +176,14 @@ export default function PortfolioApp() {
                     (p) => p.slug === slug || String(p.id) === slug,
                 );
                 if (found) {
+                    if ('scrollRestoration' in window.history) {
+                        window.history.scrollRestoration = 'manual';
+                    }
                     setSelectedProject(found);
                     return;
                 }
             }
+            window.dispatchEvent(new CustomEvent('portfolio:nav-scroll'));
             setSelectedProject(null);
         };
 
@@ -137,12 +193,29 @@ export default function PortfolioApp() {
     }, [portfolioData.projects]);
 
     const handleSelectProject = useCallback((project) => {
+        const slug = String(project.slug || project.id);
+        let cardViewportTop = null;
+        const cards = document.querySelectorAll('[data-project-card]');
+        for (const card of cards) {
+            if (card.getAttribute('data-project-card') === slug) {
+                cardViewportTop = card.getBoundingClientRect().top;
+                break;
+            }
+        }
+        savedReturnRef.current = {
+            scrollY: window.scrollY,
+            slug,
+            cardViewportTop,
+        };
+        if ('scrollRestoration' in window.history) {
+            window.history.scrollRestoration = 'manual';
+        }
         window.dispatchEvent(new CustomEvent('portfolio:nav-scroll'));
         setSelectedProject(project);
         const url = new URL(window.location.href);
-        url.searchParams.set('project', project.slug || project.id);
+        url.searchParams.set('project', slug);
         window.history.pushState(
-            { projectSlug: project.slug },
+            { fromPortfolioList: true, projectSlug: project.slug },
             '',
             url.toString(),
         );
@@ -150,12 +223,17 @@ export default function PortfolioApp() {
     }, []);
 
     const handleBackToHome = useCallback(() => {
+        window.dispatchEvent(new CustomEvent('portfolio:nav-scroll'));
+        if (window.history.state?.fromPortfolioList) {
+            window.history.back();
+            return;
+        }
         setSelectedProject(null);
         const url = new URL(window.location.href);
         url.searchParams.delete('project');
-        window.history.pushState({}, '', url.pathname);
-        scrollToPortfolio();
-    }, [scrollToPortfolio]);
+        const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+        window.history.replaceState({}, '', nextUrl);
+    }, []);
 
     return (
         <GlobalErrorBoundary>
@@ -167,7 +245,11 @@ export default function PortfolioApp() {
                     {/* Dedicated Project Detail View (No Galaxy 3D Background, No Navbar, No Footer) */}
                     {selectedProject && (
                         <div className="relative z-40 min-h-screen bg-[#050811]">
-                            <Suspense fallback={null}>
+                            <Suspense
+                                fallback={
+                                    <div className="min-h-screen bg-[#050811]" />
+                                }
+                            >
                                 <ProjectDetailView
                                     project={selectedProject}
                                     techStack={portfolioData.tech_stack}

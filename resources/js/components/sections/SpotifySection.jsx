@@ -49,71 +49,164 @@ const SpotifySection = memo(function SpotifySection({
     const embedUrl = getEmbedUrl(playlistUrl);
     const spotifyUri = toSpotifyUri(playlistUrl);
 
-    // Prevent unintended auto-scroll jumps ONLY when #Spotify is off-screen during a track switch,
-    // without touching normal vertical scrolling or toggling `inert` mid-swipe.
+    // Prevent Spotify embed from stealing focus or auto-scrolling the page when #Spotify is off-screen
+    // (especially during preview transitions/track changes), with zero interference during normal swipes.
     useEffect(() => {
         const wrapperEl = embedWrapperRef.current;
-        if (!wrapperEl) return;
+        const containerEl = containerRef.current;
+        if (!wrapperEl || !containerEl) return;
 
-        let safeOffscreenY = window.scrollY;
-        let guardUntil = 0;
-        let guardRestoreY = window.scrollY;
-        let allowSmoothNavUntil = -Infinity;
-        let restoreRaf = 0;
+        let wasFarOffscreen = false;
+        let lastSafeScrollY = window.scrollY;
+        let lastGestureAt = -Infinity;
+        let lastScrollEventAt = -Infinity;
+        let momentumActiveUntil = -Infinity;
+        let allowNavUntil = -Infinity;
+        let navSyncRaf = 0;
 
-        const isOffscreen = () => {
+        const isVisibleInDom = () => {
             const rect = wrapperEl.getBoundingClientRect();
-            const vh = window.innerHeight || 800;
-            return rect.bottom < -30 || rect.top > vh + 30;
+            return rect.width > 0 || rect.height > 0;
         };
 
-        const isVisiblyInViewport = () => {
-            const rect = wrapperEl.getBoundingClientRect();
-            const vh = window.innerHeight || 800;
-            return rect.bottom > 40 && rect.top < vh - 40;
-        };
-
-        const restoreOnceIfJumped = () => {
+        const applyNearViewportState = (nearViewport) => {
+            if ('inert' in containerEl) {
+                containerEl.inert = !nearViewport;
+            }
             if (
-                performance.now() >= guardUntil ||
-                performance.now() < allowSmoothNavUntil
+                !nearViewport &&
+                document.activeElement instanceof HTMLElement &&
+                wrapperEl.contains(document.activeElement)
             ) {
+                document.activeElement.blur();
+            }
+        };
+
+        const syncInertByMargin = (marginPx = 240) => {
+            if (!isVisibleInDom()) return;
+            const rect = wrapperEl.getBoundingClientRect();
+            const vh = window.innerHeight || 800;
+            applyNearViewportState(
+                rect.bottom >= -marginPx && rect.top <= vh + marginPx,
+            );
+        };
+
+        const syncBaseline = () => {
+            if (!isVisibleInDom()) return;
+            const rect = wrapperEl.getBoundingClientRect();
+            const vh = window.innerHeight || 800;
+            wasFarOffscreen = rect.bottom < -120 || rect.top > vh + 120;
+            lastSafeScrollY = window.scrollY;
+            syncInertByMargin(240);
+        };
+
+        syncBaseline();
+
+        let viewportObserver = null;
+        if ('IntersectionObserver' in window) {
+            viewportObserver = new IntersectionObserver(
+                (entries) => {
+                    if (!isVisibleInDom() || !entries[0]) return;
+                    applyNearViewportState(entries[0].isIntersecting);
+                },
+                { rootMargin: '240px 0px', threshold: 0 },
+            );
+            viewportObserver.observe(wrapperEl);
+        }
+
+        const markGesture = (momentumMs = 260) => {
+            const now = performance.now();
+            lastGestureAt = now;
+            momentumActiveUntil = Math.max(
+                momentumActiveUntil,
+                now + momentumMs,
+            );
+        };
+
+        const handlePointerDown = (e) => {
+            // Track outer gestures & desktop scrollbar dragging; never mark taps inside wrapperEl as offscreen
+            if (e.target instanceof Node && wrapperEl.contains(e.target)) {
                 return;
             }
-            const jumpedDist = Math.abs(window.scrollY - guardRestoreY);
-            if (jumpedDist > 120 && isVisiblyInViewport()) {
-                window.scrollTo({ top: guardRestoreY, behavior: 'instant' });
-                guardUntil = 0;
+            markGesture(300);
+        };
+
+        const handlePointerMove = (e) => {
+            if ((e.buttons & 1) === 1 && e.pointerType === 'mouse') {
+                markGesture(260);
+            }
+        };
+
+        const handleKeyDown = (e) => {
+            if (
+                [
+                    'ArrowUp',
+                    'ArrowDown',
+                    'PageUp',
+                    'PageDown',
+                    'Home',
+                    'End',
+                    ' ',
+                    'Spacebar',
+                ].includes(e.key)
+            ) {
+                markGesture(450);
             }
         };
 
         const handleScroll = () => {
-            const now = performance.now();
-            if (now < guardUntil) {
-                restoreOnceIfJumped();
-                return;
-            }
-            if (isOffscreen()) {
-                safeOffscreenY = window.scrollY;
-            }
-        };
+            if (!isVisibleInDom()) return;
 
-        const armOffscreenGuard = () => {
             const now = performance.now();
-            if (now < allowSmoothNavUntil || !isOffscreen()) {
+            const currentY = window.scrollY;
+            const rect = wrapperEl.getBoundingClientRect();
+            const vh = window.innerHeight || 800;
+            const currentlyFarOffscreen =
+                rect.bottom < -120 || rect.top > vh + 120;
+            const currentlyInView = rect.bottom > 40 && rect.top < vh - 40;
+
+            const dtSinceScroll = now - lastScrollEventAt;
+            const inUserGesture =
+                now - lastGestureAt < 260 ||
+                (now <= momentumActiveUntil &&
+                    dtSinceScroll < 110 &&
+                    now - lastGestureAt < 2500) ||
+                now < allowNavUntil;
+
+            lastScrollEventAt = now;
+            if (now <= momentumActiveUntil && dtSinceScroll < 110) {
+                momentumActiveUntil = Math.min(lastGestureAt + 2500, now + 220);
+            }
+
+            if (
+                wasFarOffscreen &&
+                currentlyInView &&
+                !inUserGesture &&
+                Math.abs(currentY - lastSafeScrollY) > 150
+            ) {
+                window.scrollTo({ top: lastSafeScrollY, behavior: 'instant' });
+                if (
+                    document.activeElement instanceof HTMLElement &&
+                    wrapperEl.contains(document.activeElement)
+                ) {
+                    document.activeElement.blur();
+                }
+                syncInertByMargin(240);
                 return;
             }
-            guardRestoreY = isOffscreen() ? window.scrollY : safeOffscreenY;
-            guardUntil = now + 320;
-            if (restoreRaf) cancelAnimationFrame(restoreRaf);
-            restoreRaf = requestAnimationFrame(() => {
-                restoreOnceIfJumped();
-            });
+
+            wasFarOffscreen = currentlyFarOffscreen;
+            lastSafeScrollY = currentY;
+            syncInertByMargin(240);
         };
 
         const handleNavAllow = () => {
-            allowSmoothNavUntil = performance.now() + 1400;
-            guardUntil = 0;
+            allowNavUntil = performance.now() + 1500;
+            wasFarOffscreen = false;
+            if (navSyncRaf) cancelAnimationFrame(navSyncRaf);
+            navSyncRaf = requestAnimationFrame(() => {
+                syncBaseline();
+            });
         };
 
         const handleDocClick = (e) => {
@@ -125,37 +218,40 @@ const SpotifySection = memo(function SpotifySection({
             }
         };
 
-        const clearGuardOnWheelOrKey = () => {
-            guardUntil = 0;
-        };
+        const onTouchGesture = () => markGesture(240);
+        const onWheelGesture = () => markGesture(280);
 
         window.addEventListener('scroll', handleScroll, { passive: true });
-        window.addEventListener('wheel', clearGuardOnWheelOrKey, {
+        window.addEventListener('wheel', onWheelGesture, { passive: true });
+        window.addEventListener('touchstart', onTouchGesture, {
             passive: true,
         });
-        window.addEventListener('touchmove', clearGuardOnWheelOrKey, {
+        window.addEventListener('touchmove', onTouchGesture, { passive: true });
+        window.addEventListener('pointerdown', handlePointerDown, {
             passive: true,
         });
-        window.addEventListener('keydown', clearGuardOnWheelOrKey, {
+        window.addEventListener('pointermove', handlePointerMove, {
             passive: true,
         });
-        window.addEventListener('spotify:scroll-guard', armOffscreenGuard);
+        window.addEventListener('keydown', handleKeyDown, { passive: true });
         window.addEventListener('portfolio:nav-scroll', handleNavAllow);
         window.addEventListener('popstate', handleNavAllow);
+        window.addEventListener('hashchange', handleNavAllow);
         document.addEventListener('click', handleDocClick, { capture: true });
 
         return () => {
-            if (restoreRaf) cancelAnimationFrame(restoreRaf);
+            if (navSyncRaf) cancelAnimationFrame(navSyncRaf);
+            viewportObserver?.disconnect();
             window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('wheel', clearGuardOnWheelOrKey);
-            window.removeEventListener('touchmove', clearGuardOnWheelOrKey);
-            window.removeEventListener('keydown', clearGuardOnWheelOrKey);
-            window.removeEventListener(
-                'spotify:scroll-guard',
-                armOffscreenGuard,
-            );
+            window.removeEventListener('wheel', onWheelGesture);
+            window.removeEventListener('touchstart', onTouchGesture);
+            window.removeEventListener('touchmove', onTouchGesture);
+            window.removeEventListener('pointerdown', handlePointerDown);
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('portfolio:nav-scroll', handleNavAllow);
             window.removeEventListener('popstate', handleNavAllow);
+            window.removeEventListener('hashchange', handleNavAllow);
             document.removeEventListener('click', handleDocClick, {
                 capture: true,
             });

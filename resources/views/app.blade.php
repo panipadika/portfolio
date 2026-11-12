@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         {{-- Primary SEO Meta Tags --}}
-        <meta name="title" content="Pani Padika — Full-Stack Developer">
+        <meta name="title" content="Pani Padika — Portfolio">
         <meta name="description" content="Portofolio resmi Pani Padika, Full-Stack Web Developer. Menampilkan interaksi 3D ID Card, showcase projek Laravel + React, sertifikat, dan formulir kontak langsung.">
         <meta name="keywords" content="Pani Padika, Web Developer, Full-Stack Developer, Software Engineer, Laravel, React, Inertia.js, Three.js, Portfolio, Indonesia">
         <meta name="author" content="Pani Padika">
@@ -15,7 +15,7 @@
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ url()->current() }}">
         <meta property="og:site_name" content="Pani Padika Portfolio">
-        <meta property="og:title" content="Pani Padika — Full-Stack Developer">
+        <meta property="og:title" content="Pani Padika — Portfolio">
         <meta property="og:description" content="Portofolio resmi Pani Padika, Full-Stack Web Developer. Menampilkan interaksi 3D ID Card, showcase projek Laravel + React, sertifikat, dan formulir kontak langsung.">
         <meta property="og:image" content="{{ asset('card-front.png') }}">
         <meta property="og:image:secure_url" content="{{ asset('card-front.png') }}">
@@ -83,7 +83,7 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>Pani Padika — Full-Stack Developer</title>
+            <title>Pani Padika — Portfolio</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased bg-[#0B0F17] text-slate-50 selection:bg-indigo-500/30 selection:text-indigo-200 overflow-x-clip min-h-screen">

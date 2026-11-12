@@ -165,6 +165,9 @@ export default function PortfolioSection({
                                     projects.map((project) => (
                                         <motion.div
                                             key={project.id || project.slug}
+                                            data-project-card={
+                                                project.slug || project.id
+                                            }
                                             variants={itemCardVariants}
                                         >
                                             <StarBorder

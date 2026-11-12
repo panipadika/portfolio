@@ -29,7 +29,6 @@ export function AudioProvider({ children }) {
     const [autoplayBlocked, setAutoplayBlocked] = useState(false);
     const spotifyControllerRef = useRef(null);
     const pendingActionRef = useRef(null);
-    const lastPlayingUriRef = useRef(null);
     const playVerifyTimerRef = useRef(null);
     const hintTimerRef = useRef(null);
     const isPlayingRef = useRef(false);
@@ -73,32 +72,16 @@ export function AudioProvider({ children }) {
 
             try {
                 controller.addListener('playback_update', (e) => {
-                    if (e && e.data) {
-                        if (
-                            e.data.playingURI &&
-                            e.data.playingURI !== lastPlayingUriRef.current
-                        ) {
-                            if (lastPlayingUriRef.current !== null) {
-                                window.dispatchEvent(
-                                    new CustomEvent('spotify:scroll-guard', {
-                                        detail: { reason: 'track-change' },
-                                    }),
-                                );
-                            }
-                            lastPlayingUriRef.current = e.data.playingURI;
+                    if (e && e.data && typeof e.data.isPaused === 'boolean') {
+                        const nextPlaying = !e.data.isPaused;
+                        if (nextPlaying) {
+                            clearVerificationTimers();
+                            setIsAudioPending(false);
+                            setAutoplayBlocked(false);
                         }
-
-                        if (typeof e.data.isPaused === 'boolean') {
-                            const nextPlaying = !e.data.isPaused;
-                            if (nextPlaying) {
-                                clearVerificationTimers();
-                                setIsAudioPending(false);
-                                setAutoplayBlocked(false);
-                            }
-                            setIsPlaying((prev) =>
-                                prev === nextPlaying ? prev : nextPlaying,
-                            );
-                        }
+                        setIsPlaying((prev) =>
+                            prev === nextPlaying ? prev : nextPlaying,
+                        );
                     }
                 });
             } catch (err) {
@@ -108,11 +91,6 @@ export function AudioProvider({ children }) {
             // If user already clicked play before controller was ready
             if (pendingActionRef.current === 'play') {
                 pendingActionRef.current = null;
-                window.dispatchEvent(
-                    new CustomEvent('spotify:scroll-guard', {
-                        detail: { reason: 'playback-toggle' },
-                    }),
-                );
                 try {
                     controller.togglePlay();
                     startPlayVerification();
@@ -128,7 +106,6 @@ export function AudioProvider({ children }) {
     const unregisterSpotifyController = useCallback(() => {
         clearVerificationTimers();
         spotifyControllerRef.current = null;
-        lastPlayingUriRef.current = null;
         pendingActionRef.current = null;
         setIsAudioPending(false);
         setIsPlaying(false);
@@ -141,11 +118,6 @@ export function AudioProvider({ children }) {
         setAutoplayBlocked(false);
 
         if (spotifyControllerRef.current) {
-            window.dispatchEvent(
-                new CustomEvent('spotify:scroll-guard', {
-                    detail: { reason: 'playback-toggle' },
-                }),
-            );
             try {
                 const intendingPlay = !isPlayingRef.current;
                 spotifyControllerRef.current.togglePlay();
