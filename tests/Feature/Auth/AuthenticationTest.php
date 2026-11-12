@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
@@ -68,14 +69,37 @@ test('users can not authenticate with invalid password', function () {
     $this->assertGuest();
 });
 
-test('users can logout', function () {
+test('users can logout and are redirected back to admin login page', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->post(route('logout'));
 
-    $response->assertRedirect(route('home'));
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHas('status', 'Anda berhasil keluar dari panel admin.');
 
     $this->assertGuest();
+});
+
+test('users logging out via inertia are redirected to admin login via hard location', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('logout'), [], [
+        'X-Inertia' => 'true',
+    ]);
+
+    $this->assertGuest();
+    $response->assertStatus(409);
+    $response->assertHeader('X-Inertia-Location', route('login'));
+});
+
+test('users logging out are redirected to custom admin login slug when configured', function () {
+    SiteSetting::set('admin_login_slug', 'portal-rahasia', 'admin');
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('logout'));
+
+    $this->assertGuest();
+    $response->assertRedirect(url('/portal-rahasia'));
 });
 
 test('users are rate limited', function () {

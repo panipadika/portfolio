@@ -45,29 +45,33 @@ export default function PasskeyVerify({
                 <Button
                     type="button"
                     variant="outline"
-                    className="w-full"
+                    className="h-11 w-full cursor-pointer rounded-xl border-white/10 bg-white/[0.04] text-slate-100 transition-all hover:border-indigo-400/40 hover:bg-white/[0.08] hover:text-white"
                     onClick={verify}
                     disabled={isLoading}
                 >
-                    {isLoading ? <Spinner /> : <KeyRound className="h-4 w-4" />}
+                    {isLoading ? (
+                        <Spinner className="size-4" />
+                    ) : (
+                        <KeyRound className="size-4 text-cyan-400" />
+                    )}
                     {isLoading
                         ? (loadingLabel ?? 'Authenticating...')
                         : (label ?? 'Sign in with a passkey')}
                 </Button>
                 {error && (
-                    <InputError message={error} className="text-center" />
+                    <InputError
+                        message={error}
+                        className="text-center text-xs text-rose-400"
+                    />
                 )}
             </div>
 
-            <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                    <Separator className="w-full" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                        {separator ?? 'Or continue with email'}
-                    </span>
-                </div>
+            <div className="my-5 flex items-center gap-3">
+                <Separator className="flex-1 bg-white/10" />
+                <span className="font-mono text-[10px] tracking-wider text-slate-400 uppercase">
+                    {separator ?? 'Or continue with email'}
+                </span>
+                <Separator className="flex-1 bg-white/10" />
             </div>
         </>
     );

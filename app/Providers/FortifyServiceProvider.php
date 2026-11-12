@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\SiteSetting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -53,9 +54,21 @@ class FortifyServiceProvider extends ServiceProvider
             {
                 public function toResponse($request)
                 {
+                    try {
+                        $customSlug = SiteSetting::get('admin_login_slug', 'admin');
+                    } catch (\Throwable) {
+                        $customSlug = 'admin';
+                    }
+
+                    $loginUrl = is_string($customSlug) && $customSlug !== '' && $customSlug !== 'admin'
+                        ? url('/'.ltrim($customSlug, '/'))
+                        : route('login');
+
+                    session()->flash('status', 'Anda berhasil keluar dari panel admin.');
+
                     return $request->header('X-Inertia')
-                        ? Inertia::location('/')
-                        : redirect('/');
+                        ? Inertia::location($loginUrl)
+                        : redirect($loginUrl);
                 }
             };
         });
