@@ -433,7 +433,16 @@ const loadImage = (
             image.crossOrigin = 'anonymous';
         }
         image.decoding = 'async';
-        image.onload = () => resolve(image);
+        image.onload = () => {
+            if (typeof image.decode === 'function') {
+                void image
+                    .decode()
+                    .catch(() => {})
+                    .then(() => resolve(image));
+            } else {
+                resolve(image);
+            }
+        };
         image.onerror = () => resolve(null);
         image.src = url;
     });
@@ -1517,10 +1526,11 @@ const Lanyard = ({
             const framingKey = `${layoutKey}|${s.size}|${s.anchor}|${s.strapLength}|${view.width}|${view.height}`;
             if (framingKey !== applied.framingKey) {
                 frameView();
+                const shouldRunIntro =
+                    s.intro && (s.anchor === 'right' || !reducedMotion);
                 if (!placed) {
                     if (
-                        s.intro &&
-                        !reducedMotion &&
+                        shouldRunIntro &&
                         s.anchor === 'right' &&
                         s.frontImage &&
                         !images.front
@@ -1537,7 +1547,7 @@ const Lanyard = ({
                             }, 1200);
                         }
                     } else {
-                        triggerDrop(s.intro && !reducedMotion);
+                        triggerDrop(shouldRunIntro);
                     }
                 } else if (layoutKey !== applied.layoutKey) {
                     placeHanging(sim, layout, false, s.anchor, viewWidthWorld);
@@ -1568,19 +1578,7 @@ const Lanyard = ({
             }
             const faceKey = `${layoutKey}|${s.cardColor}|${s.imageFit}`;
             if (faceKey !== applied.faceKey) {
-                if (images.front || !s.frontImage) {
-                    paintFaces();
-                } else {
-                    frontCanvas.width = 2;
-                    frontCanvas.height = 2;
-                    backCanvas.width = 2;
-                    backCanvas.height = 2;
-                    const cardRgb = parseColor(s.cardColor, [1, 1, 1]);
-                    paintFace(frontCanvas, null, cardRgb, s.imageFit);
-                    paintFace(backCanvas, null, cardRgb, s.imageFit);
-                    frontTexture.needsUpdate = true;
-                    backTexture.needsUpdate = true;
-                }
+                paintFaces();
             }
             if (
                 s.strapColor !== applied.strapColor &&
@@ -1800,7 +1798,10 @@ const Lanyard = ({
                 twistDamping: 7.5,
                 grip: 24,
                 gripDamping: 7.5,
-                breeze: reducedMotion ? 0 : clamp(s.breeze, 0, 1),
+                breeze:
+                    s.anchor === 'right' || !reducedMotion
+                        ? clamp(s.breeze, 0, 1)
+                        : 0,
             };
         };
 
