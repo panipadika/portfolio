@@ -46,3 +46,14 @@ test('inertia requests to admin routes are forced to hard location to avoid moda
     'messages' => '/dashboard/messages',
     'settings' => '/dashboard/settings',
 ]);
+
+test('admin navbar renders global live search for menus and settings', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->get('/dashboard');
+    $response->assertOk();
+    $response->assertSee('adminGlobalSearchInput', false);
+    $response->assertSee('Kustomisasi URL Login Admin', false);
+    $response->assertSee('Daftar Projek', false);
+});

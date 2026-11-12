@@ -155,3 +155,34 @@ test('admin can manage sort order of projects and view it in table', function ()
         'sort_order' => 0,
     ]);
 });
+
+test('admin can filter projects by title, slug, tech tags, and featured status', function () {
+    Project::factory()->create([
+        'title' => 'Sistem Kasir POS',
+        'slug' => 'sistem-kasir-pos',
+        'tech_tags' => ['Laravel', 'React'],
+        'is_featured' => true,
+    ]);
+
+    Project::factory()->create([
+        'title' => 'Landing Page Toko',
+        'slug' => 'landing-page-toko',
+        'tech_tags' => ['Vue', 'Tailwind'],
+        'is_featured' => false,
+    ]);
+
+    $byTech = $this->get(route('admin.projects.index', ['search' => 'React']));
+    $byTech->assertOk();
+    $byTech->assertSee('Sistem Kasir POS');
+    $byTech->assertDontSee('Landing Page Toko');
+
+    $bySlug = $this->get(route('admin.projects.index', ['search' => 'landing-page-toko']));
+    $bySlug->assertOk();
+    $bySlug->assertSee('Landing Page Toko');
+    $bySlug->assertDontSee('Sistem Kasir POS');
+
+    $byFeatured = $this->get(route('admin.projects.index', ['featured' => '1']));
+    $byFeatured->assertOk();
+    $byFeatured->assertSee('Sistem Kasir POS');
+    $byFeatured->assertDontSee('Landing Page Toko');
+});

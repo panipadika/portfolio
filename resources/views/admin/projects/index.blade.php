@@ -5,25 +5,34 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Header Bar with Search & Add Button -->
+    <!-- Header Bar with Live Search, Filter & Add Button -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <form method="GET" action="{{ route('admin.projects.index') }}" class="flex flex-wrap items-center gap-3">
-            <div class="relative">
+        <form id="projectFilterForm" method="GET" action="{{ route('admin.projects.index') }}" class="flex flex-wrap items-center gap-3">
+            <div class="relative w-full sm:w-72">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
                 <input
                     type="text"
+                    id="projectLiveSearch"
                     name="search"
                     value="{{ request('search') }}"
-                    placeholder="Cari judul projek..."
-                    class="h-10 w-64 rounded-xl border border-white/10 bg-[#0d1322] px-3.5 pr-9 text-xs text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    placeholder="Cari judul, slug, atau teknologi..."
+                    autocomplete="off"
+                    class="h-10 w-full rounded-xl border border-white/10 bg-[#0d1322] pl-9 pr-14 text-xs text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-all shadow-inner"
                 >
-                @if(request('search'))
-                    <a href="{{ route('admin.projects.index') }}" class="absolute right-3 top-2.5 text-slate-500 hover:text-white text-xs">✕</a>
-                @endif
+                <span id="projectSearchLoading" class="pointer-events-none absolute right-7 top-2.5 hidden h-4 w-4 animate-spin rounded-full border-2 border-indigo-400/30 border-t-indigo-400"></span>
+                <button
+                    type="button"
+                    id="projectClearSearch"
+                    class="absolute right-2.5 top-2.5 text-slate-500 hover:text-white text-xs cursor-pointer {{ empty(request('search')) ? 'hidden' : '' }}"
+                    title="Hapus pencarian"
+                >✕</button>
             </div>
 
             <select
+                id="projectFeaturedFilter"
                 name="featured"
-                onchange="this.form.submit()"
                 class="h-10 rounded-xl border border-white/10 bg-[#0d1322] px-3 text-xs text-slate-200 focus:border-indigo-500 focus:outline-none"
             >
                 <option value="">Semua Status</option>
@@ -32,14 +41,14 @@
             </select>
         </form>
 
-        <a href="{{ route('admin.projects.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#7185e8] px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+        <a href="{{ route('admin.projects.create') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-[#262f6b] via-indigo-600 to-[#7185e8] px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Tambah Projek Baru
         </a>
     </div>
 
     <!-- Projects Table Card -->
-    <div class="overflow-hidden rounded-3xl border border-white/10 bg-[#0d1322]/80 shadow-2xl backdrop-blur-xl">
+    <div id="projectsResultsContainer" class="overflow-hidden rounded-3xl border border-white/10 bg-[#0d1322]/80 shadow-2xl backdrop-blur-xl">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-slate-300">
                 <thead class="border-b border-white/10 bg-white/[0.02] font-mono text-[11px] uppercase tracking-wider text-slate-400">
@@ -55,7 +64,15 @@
                 </thead>
                 <tbody class="divide-y divide-white/5 font-sans">
                     @forelse($projects as $project)
-                        <tr class="transition-colors hover:bg-white/[0.02]">
+                        @php
+                            $projectTags = is_array($project->tech_tags) ? implode(' ', $project->tech_tags) : '';
+                            $projectStatusLabel = $project->is_featured ? 'featured unggulan' : 'standard non-featured';
+                        @endphp
+                        <tr
+                            class="transition-colors hover:bg-white/[0.02] project-item-row"
+                            data-featured="{{ $project->is_featured ? '1' : '0' }}"
+                            data-search="{{ strtolower(trim($project->title . ' ' . $project->slug . ' ' . ($project->description ?? '') . ' ' . $projectTags . ' ' . $projectStatusLabel)) }}"
+                        >
                             <td class="px-6 py-4">
                                 <div class="h-12 w-20 rounded-xl border border-white/10 bg-slate-900/80 overflow-hidden">
                                     @if($project->image_url)
@@ -118,12 +135,20 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                        <tr id="projectServerEmptyRow">
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-400">
                                 Tidak ada data projek yang ditemukan.
                             </td>
                         </tr>
                     @endforelse
+                    <tr id="projectNoResultsRow" style="display: none;">
+                        <td colspan="7" class="px-6 py-12 text-center text-slate-400">
+                            <span class="inline-flex items-center gap-2 text-slate-400">
+                                <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                Tidak ada projek yang cocok dengan pencarian Anda.
+                            </span>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -136,4 +161,150 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('projectFilterForm');
+        const searchInput = document.getElementById('projectLiveSearch');
+        const featuredSelect = document.getElementById('projectFeaturedFilter');
+        const clearBtn = document.getElementById('projectClearSearch');
+        const loadingSpinner = document.getElementById('projectSearchLoading');
+        const resultsContainer = document.getElementById('projectsResultsContainer');
+
+        if (!searchInput || !resultsContainer) return;
+
+        const baseUrl = @json(route('admin.projects.index', [], false));
+        const requiresServerSync = {{ ($projects->total() > $projects->perPage() || request()->filled('search') || request()->filled('featured')) ? 'true' : 'false' }};
+        let debounceTimer = null;
+        let activeController = null;
+        let lastSyncedQuery = new URLSearchParams(window.location.search).toString();
+
+        const buildQueryParams = () => {
+            const params = new URLSearchParams();
+            const q = searchInput.value.trim();
+            const featured = featuredSelect ? featuredSelect.value : '';
+            if (q !== '') params.set('search', q);
+            if (featured !== '') params.set('featured', featured);
+            return params;
+        };
+
+        const applyClientFilter = () => {
+            const term = searchInput.value.toLowerCase().trim();
+            const featured = featuredSelect ? featuredSelect.value : '';
+            const rows = resultsContainer.querySelectorAll('.project-item-row');
+            const noResultsRow = document.getElementById('projectNoResultsRow');
+            const serverEmptyRow = document.getElementById('projectServerEmptyRow');
+            let matches = 0;
+
+            rows.forEach((row) => {
+                const searchData = row.getAttribute('data-search') || '';
+                const rowFeatured = row.getAttribute('data-featured') || '';
+                const matchText = term === '' || searchData.includes(term);
+                const matchStatus = featured === '' || rowFeatured === featured;
+                const visible = matchText && matchStatus;
+                row.style.display = visible ? '' : 'none';
+                if (visible) matches++;
+            });
+
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', searchInput.value.trim().length === 0);
+            }
+
+            if (noResultsRow) {
+                noResultsRow.style.display = (matches === 0 && rows.length > 0 && !requiresServerSync) ? '' : 'none';
+            }
+
+            if (serverEmptyRow) {
+                serverEmptyRow.style.display = (rows.length === 0) ? '' : 'none';
+            }
+        };
+
+        const syncFromServer = async () => {
+            const params = buildQueryParams();
+            const queryString = params.toString();
+            const targetUrl = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+
+            history.replaceState(null, '', targetUrl);
+
+            if (!requiresServerSync) {
+                applyClientFilter();
+                return;
+            }
+
+            if (queryString === lastSyncedQuery) {
+                return;
+            }
+
+            if (activeController) {
+                activeController.abort();
+            }
+            activeController = new AbortController();
+            if (loadingSpinner) loadingSpinner.classList.remove('hidden');
+
+            try {
+                const response = await fetch(targetUrl, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    signal: activeController.signal,
+                });
+                if (!response.ok) return;
+
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const nextResults = doc.getElementById('projectsResultsContainer');
+
+                if (nextResults) {
+                    resultsContainer.innerHTML = nextResults.innerHTML;
+                    lastSyncedQuery = queryString;
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Project live search error:', err);
+                }
+            } finally {
+                if (loadingSpinner) loadingSpinner.classList.add('hidden');
+            }
+        };
+
+        const scheduleSync = (immediate = false) => {
+            applyClientFilter();
+            clearTimeout(debounceTimer);
+
+            if (!requiresServerSync) {
+                const params = buildQueryParams();
+                const qs = params.toString();
+                history.replaceState(null, '', qs ? `${baseUrl}?${qs}` : baseUrl);
+                return;
+            }
+
+            if (immediate) {
+                syncFromServer();
+            } else {
+                debounceTimer = setTimeout(syncFromServer, 220);
+            }
+        };
+
+        searchInput.addEventListener('input', () => scheduleSync(false));
+
+        if (featuredSelect) {
+            featuredSelect.addEventListener('change', () => scheduleSync(true));
+        }
+
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                scheduleSync(true);
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                scheduleSync(true);
+                searchInput.focus();
+            });
+        }
+    });
+</script>
+@endpush
 

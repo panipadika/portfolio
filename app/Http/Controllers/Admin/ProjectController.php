@@ -22,10 +22,12 @@ class ProjectController extends Controller
         $query = Project::query();
 
         if ($request->filled('search')) {
-            $search = $request->input('search');
+            $search = $request->string('search')->trim()->value();
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('tech_tags', 'like', "%{$search}%");
             });
         }
 
