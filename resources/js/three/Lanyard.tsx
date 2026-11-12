@@ -184,9 +184,9 @@ const THICKNESS = 0.018;
 const BEVEL = 0.007;
 const JOINTS = 4;
 const NODE_WEIGHT = 1 / 0.05;
-const MAX_STEP = 1 / 200;
+const MAX_STEP = 1 / 140;
 const ITERATIONS = 2;
-const SAMPLES = 28;
+const SAMPLES = 22;
 const FOV = 24;
 const STRAP_WIDTH = 0.36;
 const RING_RADIUS = 0.095;
@@ -960,8 +960,9 @@ const stepSimulation = (
     dt: number,
     physics: Physics,
     time: number,
+    isIntroDropping = false,
 ) => {
-    const steps = Math.min(6, Math.max(1, Math.ceil(dt / MAX_STEP - 1e-6)));
+    const steps = Math.min(4, Math.max(1, Math.ceil(dt / MAX_STEP - 1e-6)));
     const h = dt / steps;
     const { nodes, previous, velocities, body } = sim;
     const windX =
@@ -971,7 +972,7 @@ const stepSimulation = (
     const windZ = physics.breeze * Math.sin(time * 0.37 + 0.6) * 0.5;
     const grab = sim.grab;
     if (grab) {
-        const smoothAlpha = 1 - Math.exp(-85 * dt);
+        const smoothAlpha = 1 - Math.exp(-160 * dt);
         grab.target.lerp(grab.rawTarget, smoothAlpha);
         const hangPos = scratch.c
             .copy(body.hang)
@@ -983,7 +984,7 @@ const stepSimulation = (
         const targetRest = sim.rest;
         const prevRest = sim.currentRest ?? targetRest;
         if (Math.abs(prevRest - targetRest) > 1e-4) {
-            const easeSpeed = prevRest > targetRest * 1.15 ? 4.5 : 9;
+            const easeSpeed = isIntroDropping ? 4.5 : 24;
             sim.currentRest =
                 prevRest +
                 (targetRest - prevRest) * Math.min(1, easeSpeed * dt);
@@ -1050,7 +1051,8 @@ const stepSimulation = (
                     h,
             );
         }
-        body.velocity.y -= physics.gravity * h;
+        body.velocity.y -=
+            (grab ? physics.gravity * 0.45 : physics.gravity) * h;
         body.velocity.x += windX * 0.35 * h;
         body.velocity.z += windZ * 0.35 * h;
         body.position.addScaledVector(body.velocity, h);
@@ -1370,7 +1372,7 @@ const Lanyard = ({
             false,
             'centripetal',
         );
-        curve.arcLengthDivisions = 48;
+        curve.arcLengthDivisions = 32;
         const view = { width: 1, height: 1 };
         let layout = cardLayout('portrait', 0.3);
         let applied: Applied = {};
@@ -1785,19 +1787,19 @@ const Lanyard = ({
                 gravity,
                 hold: weight * mix(3.0, 7.0, springy),
                 stiffness: weight * 12 * JOINTS,
-                spring: weight * mix(0.12, 0.45, springy) * JOINTS,
-                bandDamping: weight * mix(0.35, 0.12, springy) * JOINTS,
-                linearDrag: 0.35 * Math.pow(12, settle) * dragScale,
-                angularDrag: 0.7 * Math.pow(10, settle) * dragScale,
-                air: 0.2,
-                broadside: 0.8,
-                spinAir: 0.04,
-                nodeDrag: 2.2,
-                nodeAir: 0.22,
-                twist: 22,
-                twistDamping: 7.5,
-                grip: 24,
-                gripDamping: 7.5,
+                spring: weight * mix(0.24, 0.72, springy) * JOINTS,
+                bandDamping: weight * mix(0.24, 0.08, springy) * JOINTS,
+                linearDrag: 0.22 * Math.pow(8, settle) * dragScale,
+                angularDrag: 0.48 * Math.pow(7.5, settle) * dragScale,
+                air: 0.12,
+                broadside: 0.34,
+                spinAir: 0.03,
+                nodeDrag: 1.6,
+                nodeAir: 0.16,
+                twist: 26,
+                twistDamping: 6.2,
+                grip: 9,
+                gripDamping: 4.2,
                 breeze:
                     s.anchor === 'right' || !reducedMotion
                         ? clamp(s.breeze, 0, 1)
@@ -1812,7 +1814,10 @@ const Lanyard = ({
             last = now;
             time += dt;
             const current = physics();
-            stepSimulation(sim, dt, current, time);
+            const isIntroDropping =
+                introDropStartedAt > 0 &&
+                performance.now() - introDropStartedAt < 950;
+            stepSimulation(sim, dt, current, time, isIntroDropping);
             const body = sim.body;
             if (
                 !Number.isFinite(
@@ -1981,16 +1986,16 @@ const Lanyard = ({
                 raycaster.ray.at(sim.grab.reach, sim.grab.rawTarget);
                 const now = performance.now();
                 const rawDt = (now - lastMoveTime) / 1000;
-                if (rawDt >= 0.008) {
-                    const dtMove = Math.max(0.012, rawDt);
+                if (rawDt >= 0.005) {
+                    const dtMove = Math.max(0.01, rawDt);
                     const instantV = scratch.a
                         .copy(sim.grab.rawTarget)
                         .sub(lastMoveTarget)
                         .divideScalar(dtMove);
                     if (Number.isFinite(instantV.x + instantV.y + instantV.z)) {
-                        dragVelocity.lerp(instantV, 0.38);
-                        if (dragVelocity.lengthSq() > 324)
-                            dragVelocity.setLength(18);
+                        dragVelocity.lerp(instantV, 0.55);
+                        if (dragVelocity.lengthSq() > 400)
+                            dragVelocity.setLength(20);
                     }
                     lastMoveTarget.copy(sim.grab.rawTarget);
                     lastMoveTime = now;
@@ -2024,18 +2029,18 @@ const Lanyard = ({
                 dragVelocity.lengthSq() > 0.04
             ) {
                 const clampedThrow = scratch.a.copy(dragVelocity);
-                if (clampedThrow.lengthSq() > 324) clampedThrow.setLength(18);
-                clampedThrow.multiplyScalar(0.55);
-                sim.body.velocity.lerp(clampedThrow, 0.55);
+                if (clampedThrow.lengthSq() > 400) clampedThrow.setLength(20);
+                clampedThrow.multiplyScalar(0.92);
+                sim.body.velocity.lerp(clampedThrow, 0.85);
                 sim.body.angular.x = clamp(
-                    sim.body.angular.x + clampedThrow.y * 0.18,
-                    -10,
-                    10,
+                    sim.body.angular.x + clampedThrow.y * 0.24,
+                    -12,
+                    12,
                 );
                 sim.body.angular.y = clamp(
-                    sim.body.angular.y - clampedThrow.x * 0.24,
-                    -10,
-                    10,
+                    sim.body.angular.y - clampedThrow.x * 0.3,
+                    -12,
+                    12,
                 );
             }
 
@@ -2087,7 +2092,7 @@ const Lanyard = ({
             view.width = Math.max(1, container.clientWidth);
             view.height = Math.max(1, container.clientHeight);
             const maxDpr =
-                Math.min(view.width, window.innerWidth) < 768 ? 1.35 : 2;
+                Math.min(view.width, window.innerWidth) < 768 ? 1.25 : 1.5;
             renderer.setPixelRatio(
                 Math.min(window.devicePixelRatio || 1, maxDpr),
             );

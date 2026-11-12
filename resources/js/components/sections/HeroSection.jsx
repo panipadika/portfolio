@@ -216,9 +216,9 @@ export default function HeroSection() {
                                 strapColor="#111111"
                                 strapWidth={0.6}
                                 metal="silver"
-                                gravity={1.1}
-                                damping={0.52}
-                                elasticity={0.44}
+                                gravity={1.15}
+                                damping={0.36}
+                                elasticity={0.58}
                                 breeze={0}
                                 interactive={true}
                                 intro={true}
@@ -249,9 +249,9 @@ export default function HeroSection() {
                                 strapColor="#111111"
                                 strapWidth={0.6}
                                 metal="silver"
-                                gravity={1}
-                                damping={0.44}
-                                elasticity={0.46}
+                                gravity={1.08}
+                                damping={0.32}
+                                elasticity={0.62}
                                 breeze={0.22}
                                 interactive={true}
                                 intro={true}
