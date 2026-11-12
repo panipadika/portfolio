@@ -49,531 +49,121 @@ const SpotifySection = memo(function SpotifySection({
     const embedUrl = getEmbedUrl(playlistUrl);
     const spotifyUri = toSpotifyUri(playlistUrl);
 
-    // Prevent Spotify embed track changes, focus steals, or cross-frame scrollIntoView
-    // from hijacking page scroll—even while user is scrolling, holding, or clicking elsewhere
+    // Prevent unintended auto-scroll jumps ONLY when #Spotify is off-screen during a track switch,
+    // without touching normal vertical scrolling or toggling `inert` mid-swipe.
     useEffect(() => {
-        const containerEl = containerRef.current;
-        const wrapperEl = embedWrapperRef.current || containerEl;
-        if (!containerEl || !wrapperEl) return;
+        const wrapperEl = embedWrapperRef.current;
+        if (!wrapperEl) return;
 
-        let isSectionVisible = false;
-        let isOutsideHolding = false;
-        let outsideHoldReleaseTimer = 0;
-
-        let safeScrollY = window.scrollY;
-        let guardTargetY = window.scrollY;
+        let safeOffscreenY = window.scrollY;
         let guardUntil = 0;
-
-        let restoreRaf1 = 0;
-        let restoreRaf2 = 0;
-        let restoreTimeout1 = 0;
-        let restoreTimeout2 = 0;
-
-        const scrollHistory = [{ t: performance.now(), y: window.scrollY }];
-        const activeOutsideTouches = new Map();
-        let outsidePointerDown = false;
-
-        let lastWheelAt = -Infinity;
-        let lastWheelDir = 0;
-        let lastWheelStep = 0;
-
-        let lastTouchSwipeAt = -Infinity;
-        let lastTouchSwipeDir = 0;
-        let lastTouchStep = 0;
-        let touchFlingUntil = -Infinity;
-
-        let lastKeyNavAt = -Infinity;
-        let lastScrollbarDragAt = -Infinity;
+        let guardRestoreY = window.scrollY;
         let allowSmoothNavUntil = -Infinity;
-        let lastDirectSpotifyInteractAt = -Infinity;
+        let restoreRaf = 0;
 
-        const recordHistory = (t, y) => {
-            scrollHistory.push({ t, y });
-            while (
-                scrollHistory.length > 30 ||
-                (scrollHistory.length > 2 && t - scrollHistory[0].t > 650)
-            ) {
-                scrollHistory.shift();
-            }
-        };
-
-        const syncInert = () => {
-            if ('inert' in containerEl) {
-                containerEl.inert = !isSectionVisible || isOutsideHolding;
-            }
-        };
-
-        const checkInitialVisibility = () => {
-            const rect = wrapperEl.getBoundingClientRect();
-            isSectionVisible = rect.bottom > 0 && rect.top < window.innerHeight;
-            syncInert();
-        };
-        checkInitialVisibility();
-
-        const isInsideWrapper = (target) =>
-            target instanceof Node && wrapperEl.contains(target);
-
-        const isOnScrollbar = (clientX) =>
-            typeof clientX === 'number' &&
-            clientX >= document.documentElement.clientWidth - 4;
-
-        const isStationaryOutsideHold = () => {
-            if (outsidePointerDown) return true;
-            if (activeOutsideTouches.size === 0) return false;
-            let maxMove = 0;
-            activeOutsideTouches.forEach((touch) => {
-                if (touch.maxMove > maxMove) maxMove = touch.maxMove;
-            });
-            return maxMove < 10;
-        };
-
-        const isEmbedJumpingIntoView = (fromY, toY) => {
+        const isOffscreen = () => {
             const rect = wrapperEl.getBoundingClientRect();
             const vh = window.innerHeight || 800;
-            const centerNow = rect.top + rect.height / 2;
-            const centerBefore = centerNow + (toY - fromY);
-            const distBefore = Math.abs(centerBefore - vh / 2);
-            const distNow = Math.abs(centerNow - vh / 2);
-            const visibleNow = rect.bottom > 0 && rect.top < vh;
-            return visibleNow && distNow < distBefore - 36;
+            return rect.bottom < -30 || rect.top > vh + 30;
         };
 
-        const getPreJumpScrollY = () => {
-            const now = performance.now();
-            if (scrollHistory.length >= 2) {
-                for (let i = scrollHistory.length - 1; i >= 1; i--) {
-                    const curr = scrollHistory[i];
-                    if (now - curr.t > 320) break;
-                    const prev = scrollHistory[i - 1];
-                    const delta = curr.y - prev.y;
-                    if (
-                        Math.abs(delta) > 90 &&
-                        curr.t > allowSmoothNavUntil &&
-                        isEmbedJumpingIntoView(prev.y, curr.y)
-                    ) {
-                        return prev.y;
-                    }
-                }
-            }
-            return safeScrollY;
+        const isVisiblyInViewport = () => {
+            const rect = wrapperEl.getBoundingClientRect();
+            const vh = window.innerHeight || 800;
+            return rect.bottom > 40 && rect.top < vh - 40;
         };
 
-        const clearScheduledRestores = () => {
-            if (restoreRaf1) cancelAnimationFrame(restoreRaf1);
-            if (restoreRaf2) cancelAnimationFrame(restoreRaf2);
-            if (restoreTimeout1) clearTimeout(restoreTimeout1);
-            if (restoreTimeout2) clearTimeout(restoreTimeout2);
-            restoreRaf1 = 0;
-            restoreRaf2 = 0;
-            restoreTimeout1 = 0;
-            restoreTimeout2 = 0;
-        };
-
-        const enforceTargetY = (targetY) => {
-            const clamped = Math.max(0, targetY);
-            if (Math.abs(window.scrollY - clamped) > 2) {
-                window.scrollTo({ top: clamped, behavior: 'instant' });
-            }
-        };
-
-        const lockAndRestore = (targetY, durationMs = 1100) => {
-            const now = performance.now();
-            if (now < allowSmoothNavUntil) return;
-
-            guardTargetY = Math.max(0, targetY);
-            safeScrollY = guardTargetY;
-            guardUntil = Math.max(guardUntil, now + durationMs);
-
-            enforceTargetY(guardTargetY);
-            clearScheduledRestores();
-
-            const checkAndRestore = () => {
-                if (
-                    performance.now() < guardUntil &&
-                    performance.now() >= allowSmoothNavUntil
-                ) {
-                    enforceTargetY(guardTargetY);
-                }
-            };
-
-            restoreRaf1 = requestAnimationFrame(() => {
-                checkAndRestore();
-                restoreRaf2 = requestAnimationFrame(checkAndRestore);
-            });
-            restoreTimeout1 = setTimeout(checkAndRestore, 55);
-            restoreTimeout2 = setTimeout(checkAndRestore, 140);
-        };
-
-        const blurIframeIfStolen = () => {
-            const now = performance.now();
-            const active = document.activeElement;
-            if (!active || !containerEl.contains(active)) return false;
-
-            const userFocusedElsewhere =
-                !isSectionVisible ||
-                isOutsideHolding ||
-                now - lastTouchSwipeAt < 500 ||
-                now - lastWheelAt < 500;
-
+        const restoreOnceIfJumped = () => {
             if (
-                userFocusedElsewhere &&
-                now - lastDirectSpotifyInteractAt > 800
+                performance.now() >= guardUntil ||
+                performance.now() < allowSmoothNavUntil
             ) {
-                active.blur?.();
-                window.focus();
-                return true;
-            }
-            return false;
-        };
-
-        const isPlausibleUserStep = (step, now, strictGuard) => {
-            const absStep = Math.abs(step);
-            if (absStep === 0) return true;
-
-            if (now < allowSmoothNavUntil) return true;
-            if (now - lastKeyNavAt < 260) return true;
-            if (now - lastScrollbarDragAt < 320) return true;
-
-            if (isStationaryOutsideHold()) {
-                return absStep <= 12;
-            }
-
-            const recentWheel = now - lastWheelAt < 180;
-            const recentTouch =
-                now - lastTouchSwipeAt < 180 || now < touchFlingUntil;
-
-            if (!recentWheel && !recentTouch) {
-                return strictGuard ? absStep <= 16 : absStep <= 45;
-            }
-
-            if (recentWheel) {
-                const dirOk =
-                    lastWheelDir === 0 || Math.sign(step) === lastWheelDir;
-                const maxWheel = strictGuard
-                    ? Math.max(135, lastWheelStep * 2.2)
-                    : Math.max(240, lastWheelStep * 2.5);
-                if (dirOk && absStep <= maxWheel) return true;
-            }
-
-            if (recentTouch) {
-                const dirOk =
-                    lastTouchSwipeDir === 0 ||
-                    Math.sign(step) === lastTouchSwipeDir;
-                const maxTouch = strictGuard
-                    ? Math.max(115, lastTouchStep * 2.4 + 40)
-                    : Math.max(220, lastTouchStep * 2.8 + 80);
-                if (dirOk && absStep <= maxTouch) return true;
-            }
-
-            return false;
-        };
-
-        const handleWindowScroll = () => {
-            const now = performance.now();
-            const y = window.scrollY;
-
-            if (now < allowSmoothNavUntil) {
-                safeScrollY = y;
-                guardTargetY = y;
-                guardUntil = 0;
-                recordHistory(now, y);
                 return;
             }
+            const jumpedDist = Math.abs(window.scrollY - guardRestoreY);
+            if (jumpedDist > 120 && isVisiblyInViewport()) {
+                window.scrollTo({ top: guardRestoreY, behavior: 'instant' });
+                guardUntil = 0;
+            }
+        };
 
+        const handleScroll = () => {
+            const now = performance.now();
             if (now < guardUntil) {
-                const step = y - guardTargetY;
-                if (isPlausibleUserStep(step, now, true)) {
-                    guardTargetY = y;
-                    safeScrollY = y;
-                    recordHistory(now, y);
-                } else {
-                    enforceTargetY(guardTargetY);
-                }
+                restoreOnceIfJumped();
                 return;
             }
-
-            const delta = y - safeScrollY;
-            if (
-                Math.abs(delta) > 12 &&
-                !isPlausibleUserStep(delta, now, false) &&
-                (isStationaryOutsideHold() ||
-                    isEmbedJumpingIntoView(safeScrollY, y) ||
-                    Math.abs(delta) > 220)
-            ) {
-                blurIframeIfStolen();
-                lockAndRestore(safeScrollY, 1000);
-                return;
+            if (isOffscreen()) {
+                safeOffscreenY = window.scrollY;
             }
-
-            safeScrollY = y;
-            recordHistory(now, y);
         };
 
-        const handleSpotifyGuardEvent = () => {
+        const armOffscreenGuard = () => {
             const now = performance.now();
-            if (now < allowSmoothNavUntil) return;
-            const restoreY = getPreJumpScrollY();
-            blurIframeIfStolen();
-            lockAndRestore(restoreY, 1100);
-        };
-
-        const handleWindowBlur = () => {
-            setTimeout(() => {
-                if (blurIframeIfStolen()) {
-                    const restoreY = getPreJumpScrollY();
-                    lockAndRestore(restoreY, 1100);
-                }
-            }, 0);
-        };
-
-        const setOutsideHold = (holding) => {
-            if (outsideHoldReleaseTimer) {
-                clearTimeout(outsideHoldReleaseTimer);
-                outsideHoldReleaseTimer = 0;
-            }
-            if (holding) {
-                isOutsideHolding = true;
-                syncInert();
-            } else {
-                outsideHoldReleaseTimer = setTimeout(() => {
-                    isOutsideHolding = false;
-                    syncInert();
-                }, 160);
-            }
-        };
-
-        const onDocTouchStart = (e) => {
-            if (isInsideWrapper(e.target)) {
-                lastDirectSpotifyInteractAt = performance.now();
+            if (now < allowSmoothNavUntil || !isOffscreen()) {
                 return;
             }
-            for (const touch of e.changedTouches) {
-                activeOutsideTouches.set(touch.identifier, {
-                    startY: touch.clientY,
-                    lastY: touch.clientY,
-                    maxMove: 0,
-                });
-            }
-            setOutsideHold(true);
+            guardRestoreY = isOffscreen() ? window.scrollY : safeOffscreenY;
+            guardUntil = now + 320;
+            if (restoreRaf) cancelAnimationFrame(restoreRaf);
+            restoreRaf = requestAnimationFrame(() => {
+                restoreOnceIfJumped();
+            });
         };
 
-        const onDocTouchMove = (e) => {
-            const now = performance.now();
-            for (const touch of e.changedTouches) {
-                const prev = activeOutsideTouches.get(touch.identifier);
-                if (!prev) continue;
-                const dy = touch.clientY - prev.lastY;
-                prev.lastY = touch.clientY;
-                prev.maxMove = Math.max(
-                    prev.maxMove,
-                    Math.abs(touch.clientY - prev.startY),
-                );
-                if (prev.maxMove >= 8 && Math.abs(dy) >= 1) {
-                    lastTouchSwipeAt = now;
-                    lastTouchSwipeDir = Math.sign(-dy);
-                    lastTouchStep = Math.abs(dy);
-                }
-            }
-        };
-
-        const onDocTouchEnd = (e) => {
-            const now = performance.now();
-            let hadSwipe = false;
-            for (const touch of e.changedTouches) {
-                const prev = activeOutsideTouches.get(touch.identifier);
-                if (prev && prev.maxMove >= 10) {
-                    hadSwipe = true;
-                }
-                activeOutsideTouches.delete(touch.identifier);
-            }
-            if (hadSwipe && lastTouchSwipeDir !== 0) {
-                touchFlingUntil = now + 950;
-            }
-            if (activeOutsideTouches.size === 0 && !outsidePointerDown) {
-                setOutsideHold(false);
-            }
-        };
-
-        const onDocPointerDown = (e) => {
-            if (e.pointerType === 'touch') return;
-            if (isInsideWrapper(e.target)) {
-                lastDirectSpotifyInteractAt = performance.now();
-                return;
-            }
-            if (isOnScrollbar(e.clientX)) {
-                lastScrollbarDragAt = performance.now();
-                return;
-            }
-            outsidePointerDown = true;
-            setOutsideHold(true);
-        };
-
-        const onDocPointerUp = (e) => {
-            if (e.pointerType === 'touch') return;
-            outsidePointerDown = false;
-            if (activeOutsideTouches.size === 0) {
-                setOutsideHold(false);
-            }
-        };
-
-        const onDocWheel = (e) => {
-            const now = performance.now();
-            lastWheelAt = now;
-            if (e.deltaY !== 0) {
-                lastWheelDir = Math.sign(e.deltaY);
-                lastWheelStep = Math.min(360, Math.abs(e.deltaY));
-            }
-        };
-
-        const onDocKeyDown = (e) => {
-            if (
-                e.key === 'ArrowUp' ||
-                e.key === 'ArrowDown' ||
-                e.key === 'PageUp' ||
-                e.key === 'PageDown' ||
-                e.key === 'Home' ||
-                e.key === 'End' ||
-                e.key === ' '
-            ) {
-                lastKeyNavAt = performance.now();
-            }
-        };
-
-        const onDocClick = (e) => {
-            const target = e.target;
-            if (!(target instanceof Element)) return;
-            const navTrigger = target.closest(
-                'a[href^="#"], [data-scroll-nav]',
-            );
-            if (navTrigger && !isInsideWrapper(navTrigger)) {
-                allowSmoothNavUntil = performance.now() + 1400;
-                guardUntil = 0;
-                clearScheduledRestores();
-            }
-        };
-
-        const onNavScrollEvent = () => {
+        const handleNavAllow = () => {
             allowSmoothNavUntil = performance.now() + 1400;
             guardUntil = 0;
-            clearScheduledRestores();
         };
 
-        let observer = null;
-        if ('IntersectionObserver' in window) {
-            observer = new IntersectionObserver(
-                (entries) => {
-                    isSectionVisible = entries.some(
-                        (entry) => entry.isIntersecting,
-                    );
-                    syncInert();
-                },
-                { threshold: 0 },
-            );
-            observer.observe(wrapperEl);
-        }
+        const handleDocClick = (e) => {
+            if (
+                e.target instanceof Element &&
+                e.target.closest('a[href^="#"], [data-scroll-nav]')
+            ) {
+                handleNavAllow();
+            }
+        };
 
-        document.addEventListener('touchstart', onDocTouchStart, {
-            capture: true,
-            passive: true,
-        });
-        document.addEventListener('touchmove', onDocTouchMove, {
-            capture: true,
-            passive: true,
-        });
-        document.addEventListener('touchend', onDocTouchEnd, {
-            capture: true,
-            passive: true,
-        });
-        document.addEventListener('touchcancel', onDocTouchEnd, {
-            capture: true,
-            passive: true,
-        });
-        document.addEventListener('pointerdown', onDocPointerDown, {
-            capture: true,
-            passive: true,
-        });
-        document.addEventListener('pointerup', onDocPointerUp, {
-            capture: true,
-            passive: true,
-        });
-        document.addEventListener('pointercancel', onDocPointerUp, {
-            capture: true,
-            passive: true,
-        });
-        document.addEventListener('wheel', onDocWheel, {
-            capture: true,
-            passive: true,
-        });
-        document.addEventListener('keydown', onDocKeyDown, {
-            capture: true,
-            passive: true,
-        });
-        document.addEventListener('click', onDocClick, { capture: true });
+        const clearGuardOnWheelOrKey = () => {
+            guardUntil = 0;
+        };
 
-        window.addEventListener('scroll', handleWindowScroll, {
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('wheel', clearGuardOnWheelOrKey, {
             passive: true,
         });
-        window.addEventListener('blur', handleWindowBlur);
-        window.addEventListener(
-            'spotify:scroll-guard',
-            handleSpotifyGuardEvent,
-        );
-        window.addEventListener('portfolio:nav-scroll', onNavScrollEvent);
-        window.addEventListener('popstate', onNavScrollEvent);
+        window.addEventListener('touchmove', clearGuardOnWheelOrKey, {
+            passive: true,
+        });
+        window.addEventListener('keydown', clearGuardOnWheelOrKey, {
+            passive: true,
+        });
+        window.addEventListener('spotify:scroll-guard', armOffscreenGuard);
+        window.addEventListener('portfolio:nav-scroll', handleNavAllow);
+        window.addEventListener('popstate', handleNavAllow);
+        document.addEventListener('click', handleDocClick, { capture: true });
 
         return () => {
-            clearScheduledRestores();
-            if (outsideHoldReleaseTimer) clearTimeout(outsideHoldReleaseTimer);
-            observer?.disconnect();
-            if ('inert' in containerEl) {
-                containerEl.inert = false;
-            }
-            document.removeEventListener('touchstart', onDocTouchStart, {
-                capture: true,
-            });
-            document.removeEventListener('touchmove', onDocTouchMove, {
-                capture: true,
-            });
-            document.removeEventListener('touchend', onDocTouchEnd, {
-                capture: true,
-            });
-            document.removeEventListener('touchcancel', onDocTouchEnd, {
-                capture: true,
-            });
-            document.removeEventListener('pointerdown', onDocPointerDown, {
-                capture: true,
-            });
-            document.removeEventListener('pointerup', onDocPointerUp, {
-                capture: true,
-            });
-            document.removeEventListener('pointercancel', onDocPointerUp, {
-                capture: true,
-            });
-            document.removeEventListener('wheel', onDocWheel, {
-                capture: true,
-            });
-            document.removeEventListener('keydown', onDocKeyDown, {
-                capture: true,
-            });
-            document.removeEventListener('click', onDocClick, {
-                capture: true,
-            });
-
-            window.removeEventListener('scroll', handleWindowScroll);
-            window.removeEventListener('blur', handleWindowBlur);
+            if (restoreRaf) cancelAnimationFrame(restoreRaf);
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('wheel', clearGuardOnWheelOrKey);
+            window.removeEventListener('touchmove', clearGuardOnWheelOrKey);
+            window.removeEventListener('keydown', clearGuardOnWheelOrKey);
             window.removeEventListener(
                 'spotify:scroll-guard',
-                handleSpotifyGuardEvent,
+                armOffscreenGuard,
             );
-            window.removeEventListener(
-                'portfolio:nav-scroll',
-                onNavScrollEvent,
-            );
-            window.removeEventListener('popstate', onNavScrollEvent);
+            window.removeEventListener('portfolio:nav-scroll', handleNavAllow);
+            window.removeEventListener('popstate', handleNavAllow);
+            document.removeEventListener('click', handleDocClick, {
+                capture: true,
+            });
         };
     }, []);
 
-    // Defer loading Spotify's heavy third-party embed script until near viewport or explicit play toggle
+    // Defer Spotify third-party embed on passive initial load (keeps Lighthouse fast),
+    // but warm up immediately upon first user interaction or approaching #Spotify.
     useEffect(() => {
         if (shouldLoadEmbed) return;
 
@@ -589,30 +179,53 @@ const SpotifySection = memo(function SpotifySection({
                         observer?.disconnect();
                     }
                 },
-                { rootMargin: '650px 0px' },
+                { rootMargin: '800px 0px' },
             );
             observer.observe(target);
         }
 
+        const warmOnUserActivity = () => {
+            triggerLoad();
+        };
+
         window.addEventListener('spotify:request-load', triggerLoad);
+        window.addEventListener('pointerdown', warmOnUserActivity, {
+            once: true,
+            passive: true,
+        });
+        window.addEventListener('touchstart', warmOnUserActivity, {
+            once: true,
+            passive: true,
+        });
+        window.addEventListener('wheel', warmOnUserActivity, {
+            once: true,
+            passive: true,
+        });
+        window.addEventListener('keydown', warmOnUserActivity, {
+            once: true,
+            passive: true,
+        });
+
         return () => {
             observer?.disconnect();
             window.removeEventListener('spotify:request-load', triggerLoad);
+            window.removeEventListener('pointerdown', warmOnUserActivity);
+            window.removeEventListener('touchstart', warmOnUserActivity);
+            window.removeEventListener('wheel', warmOnUserActivity);
+            window.removeEventListener('keydown', warmOnUserActivity);
         };
     }, [shouldLoadEmbed]);
 
-    // Initialize Spotify IFrame API Controller
+    // Initialize Spotify IFrame API Controller cleanly once without reloading on track changes
     useEffect(() => {
-        if (!shouldLoadEmbed) {
+        if (!shouldLoadEmbed || initializedRef.current) {
             return;
         }
 
         let isMounted = true;
         let createdController = null;
-
-        if (initializedRef.current) {
-            return;
-        }
+        let fallbackTimer = 0;
+        let readyTimer = 0;
 
         // Ensure Spotify IFrame API script is injected once
         let scriptTag = document.querySelector(
@@ -630,9 +243,46 @@ const SpotifySection = memo(function SpotifySection({
             const iframes = containerRef.current.querySelectorAll('iframe');
             iframes.forEach((frame) => {
                 frame.tabIndex = -1;
-                // Disable programmatic scrollIntoView triggers from Spotify iframe
                 frame.scrollIntoView = () => {};
             });
+        };
+
+        const clearTimers = () => {
+            if (fallbackTimer) {
+                clearTimeout(fallbackTimer);
+                fallbackTimer = 0;
+            }
+            if (readyTimer) {
+                clearTimeout(readyTimer);
+                readyTimer = 0;
+            }
+        };
+
+        const mountFallback = () => {
+            if (
+                !isMounted ||
+                !containerRef.current ||
+                initializedRef.current ||
+                containerRef.current.children.length > 0
+            ) {
+                return;
+            }
+            initializedRef.current = true;
+            const fallbackIframe = document.createElement('iframe');
+            fallbackIframe.title = 'Spotify Daily Coding Playlist';
+            fallbackIframe.style.borderRadius = '16px';
+            fallbackIframe.src = embedUrl;
+            fallbackIframe.width = '100%';
+            fallbackIframe.height = '352px';
+            fallbackIframe.frameBorder = '0';
+            fallbackIframe.allowFullscreen = true;
+            fallbackIframe.allow =
+                'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+            fallbackIframe.loading = 'lazy';
+            fallbackIframe.className = 'block w-full max-w-full';
+            fallbackIframe.tabIndex = -1;
+            fallbackIframe.scrollIntoView = () => {};
+            containerRef.current.appendChild(fallbackIframe);
         };
 
         const initController = (IFrameAPI) => {
@@ -643,6 +293,11 @@ const SpotifySection = memo(function SpotifySection({
                 initializedRef.current
             ) {
                 return;
+            }
+
+            if (fallbackTimer) {
+                clearTimeout(fallbackTimer);
+                fallbackTimer = 0;
             }
 
             initializedRef.current = true;
@@ -668,45 +323,36 @@ const SpotifySection = memo(function SpotifySection({
                         return;
                     }
                     createdController = controller;
-                    registerSpotifyController(controller);
                     secureIframe();
+
+                    let registered = false;
+                    const markReady = () => {
+                        if (!isMounted || registered) return;
+                        registered = true;
+                        if (readyTimer) {
+                            clearTimeout(readyTimer);
+                            readyTimer = 0;
+                        }
+                        registerSpotifyController(controller);
+                    };
+
+                    controller.addListener?.('ready', markReady);
+                    // Safety fallback if the embed omits a 'ready' event on cached init
+                    readyTimer = setTimeout(markReady, 1200);
                 });
             } catch (err) {
                 console.warn('Spotify IFrame createController error:', err);
+                initializedRef.current = false;
                 mountFallback();
             }
         };
 
-        const mountFallback = () => {
-            if (
-                !containerRef.current ||
-                containerRef.current.children.length > 0
-            ) {
-                return;
-            }
-            const fallbackIframe = document.createElement('iframe');
-            fallbackIframe.title = 'Spotify Daily Coding Playlist';
-            fallbackIframe.style.borderRadius = '16px';
-            fallbackIframe.src = embedUrl;
-            fallbackIframe.width = '100%';
-            fallbackIframe.height = '352px';
-            fallbackIframe.frameBorder = '0';
-            fallbackIframe.allowFullscreen = true;
-            fallbackIframe.allow =
-                'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-            fallbackIframe.loading = 'lazy';
-            fallbackIframe.className = 'block w-full max-w-full';
-            fallbackIframe.tabIndex = -1;
-            fallbackIframe.scrollIntoView = () => {};
-            containerRef.current.appendChild(fallbackIframe);
-        };
-
-        // Fallback timer: if Spotify IFrame script fails or is blocked after 2.5s
-        const fallbackTimer = setTimeout(() => {
+        // Fallback timer only triggers if API script fails to initialize within 5s
+        fallbackTimer = setTimeout(() => {
             if (!initializedRef.current && isMounted) {
                 mountFallback();
             }
-        }, 2500);
+        }, 5000);
 
         // Check if Spotify API is already initialized
         if (window.SpotifyIframeApi) {
@@ -728,7 +374,7 @@ const SpotifySection = memo(function SpotifySection({
 
         return () => {
             isMounted = false;
-            clearTimeout(fallbackTimer);
+            clearTimers();
             unregisterSpotifyController();
             if (createdController) {
                 try {
@@ -752,14 +398,8 @@ const SpotifySection = memo(function SpotifySection({
             aria-label="Daily Rotation Spotify"
         >
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                {/* Main Glassmorphic Card Container matching reference */}
-                <motion.div
-                    initial={{ opacity: 0, y: 35, scale: 0.98 }}
-                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d1322]/60 p-8 shadow-2xl backdrop-blur-xl sm:p-10 lg:p-12"
-                >
+                {/* Main Card Container (avoid backdrop-blur / scale transforms around OOPIF iframe to prevent mobile scroll glitches) */}
+                <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0b1120]/95 p-8 shadow-2xl sm:p-10 lg:p-12">
                     {/* Background Cosmic Orbital Rings Decoration */}
                     <div
                         className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full border border-white/[0.04]"
@@ -796,7 +436,7 @@ const SpotifySection = memo(function SpotifySection({
                             viewport={{ once: true, amount: 0.2 }}
                             transition={{
                                 duration: 0.6,
-                                delay: 0.15,
+                                delay: 0.1,
                                 ease: [0.16, 1, 0.3, 1],
                             }}
                             className="flex flex-col items-start justify-center lg:col-span-6"
@@ -821,7 +461,7 @@ const SpotifySection = memo(function SpotifySection({
                                     href={playlistUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="group inline-flex items-center gap-2.5 rounded-full border border-indigo-500/30 bg-indigo-950/40 px-6 py-3 font-sans text-sm font-semibold text-indigo-300 shadow-lg backdrop-blur-md transition-all duration-300 hover:border-indigo-400 hover:bg-indigo-900/50 hover:text-white hover:shadow-[0_0_20px_rgba(92,124,250,0.35)] active:scale-95"
+                                    className="group inline-flex items-center gap-2.5 rounded-full border border-indigo-500/30 bg-indigo-950/40 px-6 py-3 font-sans text-sm font-semibold text-indigo-300 shadow-lg transition-all duration-300 hover:border-indigo-400 hover:bg-indigo-900/50 hover:text-white hover:shadow-[0_0_20px_rgba(92,124,250,0.35)] active:scale-95"
                                 >
                                     <Music className="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
                                     <span>Masuk ke Playlist Saya</span>
@@ -830,21 +470,11 @@ const SpotifySection = memo(function SpotifySection({
                             </div>
                         </motion.div>
 
-                        {/* Right Column: Spotify Embed Player (Isolated layout-contained container) */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 25 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true, amount: 0.2 }}
-                            transition={{
-                                duration: 0.6,
-                                delay: 0.25,
-                                ease: [0.16, 1, 0.3, 1],
-                            }}
-                            className="w-full lg:col-span-6"
-                        >
+                        {/* Right Column: Spotify Embed Player (clean fixed height without contain:strict/translate3d tearing) */}
+                        <div className="w-full lg:col-span-6">
                             <div
                                 ref={embedWrapperRef}
-                                className="relative min-h-[352px] w-full max-w-full overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-2xl [contain:paint_layout] [overflow-anchor:none]"
+                                className="relative h-[352px] w-full max-w-full overflow-hidden rounded-2xl border border-white/10 bg-[#090e1a] shadow-2xl [overflow-anchor:none]"
                             >
                                 {!shouldLoadEmbed && (
                                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#090e1a] text-slate-400">
@@ -856,12 +486,12 @@ const SpotifySection = memo(function SpotifySection({
                                 )}
                                 <div
                                     ref={containerRef}
-                                    className="h-full min-h-[352px] w-full [transform:translate3d(0,0,0)] [contain:strict] [overflow-anchor:none]"
+                                    className="h-[352px] w-full [overflow-anchor:none]"
                                 />
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
-                </motion.div>
+                </div>
             </div>
         </section>
     );

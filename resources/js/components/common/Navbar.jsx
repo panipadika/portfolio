@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, VolumeX, Menu, X } from 'lucide-react';
+import { Volume2, VolumeX, Menu, X, Loader2 } from 'lucide-react';
 import { useBackgroundAudio } from '../../hooks/useBackgroundAudio';
 import { optimizeImageSrc } from '../../lib/media';
 
@@ -13,7 +13,29 @@ const NAV_LINKS = [
 export default function Navbar({ isVisible = true }) {
     const [activeSection, setActiveSection] = useState('Home');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const { isPlaying, toggleAudio } = useBackgroundAudio();
+    const {
+        isPlaying,
+        isAudioPending,
+        autoplayBlocked,
+        toggleAudio,
+        dismissAutoplayHint,
+    } = useBackgroundAudio();
+
+    const audioButtonLabel = isPlaying
+        ? 'Jeda musik Spotify'
+        : isAudioPending
+          ? 'Menghubungkan ke Spotify...'
+          : 'Putar playlist Spotify';
+
+    const renderAudioIcon = (idleColorClass) => {
+        if (isPlaying) {
+            return <Volume2 className="h-4 w-4 animate-pulse text-[#7185e8]" />;
+        }
+        if (isAudioPending) {
+            return <Loader2 className="h-4 w-4 animate-spin text-amber-300" />;
+        }
+        return <VolumeX className={`h-4 w-4 ${idleColorClass}`} />;
+    };
     const navContainerRef = useRef(null);
 
     useEffect(() => {
@@ -129,23 +151,15 @@ export default function Navbar({ isVisible = true }) {
                     <button
                         type="button"
                         onClick={toggleAudio}
-                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-white/[0.05] text-slate-300 shadow-sm transition-all duration-200 hover:bg-white/15 hover:text-white active:scale-95"
-                        aria-label={
+                        className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border text-slate-300 shadow-sm transition-all duration-200 hover:bg-white/15 hover:text-white active:scale-95 ${
                             isPlaying
-                                ? 'Matikan musik Spotify'
-                                : 'Putar playlist Spotify'
-                        }
-                        title={
-                            isPlaying
-                                ? 'Jeda musik Spotify'
-                                : 'Putar playlist Spotify'
-                        }
+                                ? 'border-[#7185e8]/50 bg-[#7185e8]/15'
+                                : 'border-white/15 bg-white/[0.05]'
+                        }`}
+                        aria-label={audioButtonLabel}
+                        title={audioButtonLabel}
                     >
-                        {isPlaying ? (
-                            <Volume2 className="h-4 w-4 animate-pulse text-[#7185e8]" />
-                        ) : (
-                            <VolumeX className="h-4 w-4 text-slate-300" />
-                        )}
+                        {renderAudioIcon('text-slate-300')}
                     </button>
                 </nav>
 
@@ -191,16 +205,15 @@ export default function Navbar({ isVisible = true }) {
                         <button
                             type="button"
                             onClick={toggleAudio}
-                            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-white/[0.05] text-slate-300 shadow-sm transition-all duration-200 hover:bg-white/15 hover:text-white active:scale-95"
-                            aria-label={
-                                isPlaying ? 'Matikan musik' : 'Putar musik'
-                            }
+                            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border text-slate-300 shadow-sm transition-all duration-200 hover:bg-white/15 hover:text-white active:scale-95 ${
+                                isPlaying
+                                    ? 'border-[#7185e8]/50 bg-[#7185e8]/15'
+                                    : 'border-white/15 bg-white/[0.05]'
+                            }`}
+                            aria-label={audioButtonLabel}
+                            title={audioButtonLabel}
                         >
-                            {isPlaying ? (
-                                <Volume2 className="h-4 w-4 animate-pulse text-[#7185e8]" />
-                            ) : (
-                                <VolumeX className="h-4 w-4 text-slate-400" />
-                            )}
+                            {renderAudioIcon('text-slate-400')}
                         </button>
 
                         {/* Hamburger Toggle Button */}
@@ -261,6 +274,38 @@ export default function Navbar({ isVisible = true }) {
 
                         {/* Mobile Menu Footer Info */}
                     </nav>
+                )}
+
+                {autoplayBlocked && !isPlaying && (
+                    <div className="mt-2 flex items-center justify-center">
+                        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-amber-400/30 bg-[#0c1222]/95 px-3 py-1.5 text-xs text-slate-200 shadow-lg ring-1 ring-white/10">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    dismissAutoplayHint();
+                                    const targetEl =
+                                        document.getElementById('Spotify');
+                                    if (targetEl) {
+                                        targetEl.scrollIntoView({
+                                            behavior: 'smooth',
+                                            block: 'center',
+                                        });
+                                    }
+                                }}
+                                className="cursor-pointer text-left font-medium text-amber-300 transition-colors hover:text-amber-200"
+                            >
+                                Ketuk Play di kartu Spotify di bawah
+                            </button>
+                            <button
+                                type="button"
+                                onClick={dismissAutoplayHint}
+                                aria-label="Tutup notifikasi"
+                                className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        </div>
+                    </div>
                 )}
             </div>
         </header>
