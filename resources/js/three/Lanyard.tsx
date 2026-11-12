@@ -429,7 +429,9 @@ const loadImage = (
     if (cached) return cached;
     const promise = new Promise<HTMLImageElement | null>((resolve) => {
         const image = new Image();
-        image.crossOrigin = 'anonymous';
+        if (/^https?:\/\//i.test(url)) {
+            image.crossOrigin = 'anonymous';
+        }
         image.decoding = 'async';
         image.onload = () => resolve(image);
         image.onerror = () => resolve(null);
@@ -858,33 +860,65 @@ const solvePin = (body: Body, grab: Grab, target: THREE.Vector3) => {
     pushBody(body, r, scratch.c);
 };
 
-const placeHanging = (sim: Simulation, layout: CardLayout, intro: boolean) => {
+const placeHanging = (
+    sim: Simulation,
+    layout: CardLayout,
+    intro: boolean,
+    anchorName: Anchor = 'center',
+    viewWidth = 6,
+) => {
     const { nodes, previous, velocities, body, anchor } = sim;
     nodes[0].copy(anchor);
-    for (let i = 1; i <= JOINTS; i++) {
-        nodes[i].copy(nodes[i - 1]);
-        if (intro) nodes[i].x += sim.rest;
-        else nodes[i].y -= sim.rest;
+    if (intro && anchorName === 'right') {
+        const dropRight = Math.max(sim.rest * JOINTS * 1.1, viewWidth * 0.23);
+        const dropUp = 0.72;
+        const dropZ = 0.42;
+        for (let i = 1; i <= JOINTS; i++) {
+            const t = i / JOINTS;
+            nodes[i].set(
+                anchor.x + dropRight * t,
+                anchor.y + dropUp * t + Math.sin(t * Math.PI) * 0.2,
+                dropZ * t,
+            );
+        }
+        body.quaternion.setFromEuler(new THREE.Euler(-0.18, 0.42, -0.78));
+    } else {
+        for (let i = 1; i <= JOINTS; i++) {
+            nodes[i].copy(nodes[i - 1]);
+            if (intro) nodes[i].x += sim.rest;
+            else nodes[i].y -= sim.rest;
+        }
+        body.quaternion.identity();
+        if (intro) {
+            body.quaternion.setFromAxisAngle(
+                new THREE.Vector3(0, 0, 1),
+                Math.PI / 2,
+            );
+        }
     }
-    body.quaternion.identity();
-    if (intro)
-        body.quaternion.setFromAxisAngle(
-            new THREE.Vector3(0, 0, 1),
-            Math.PI / 2,
-        );
     body.hang.set(0, layout.hangY, 0);
     const offset = scratch.a.copy(body.hang).applyQuaternion(body.quaternion);
     body.position.copy(nodes[JOINTS]).sub(offset);
     body.previous.copy(body.position);
     body.previousQuaternion.copy(body.quaternion);
-    body.velocity.set(0, 0, 0);
-    body.angular.set(0, 0, 0);
+    if (intro && anchorName === 'right') {
+        body.velocity.set(-1.15, -1.9, -0.35);
+        body.angular.set(0.28, -1.35, 1.45);
+    } else {
+        body.velocity.set(0, 0, 0);
+        body.angular.set(0, 0, 0);
+    }
     for (let i = 0; i <= JOINTS; i++) {
         previous[i].copy(nodes[i]);
         velocities[i].set(0, 0, 0);
     }
     sim.lengths.fill(sim.rest);
-    sim.currentRest = sim.rest;
+    if (intro && anchorName === 'right') {
+        const totalDropDist = anchor.distanceTo(nodes[JOINTS]);
+        sim.currentRest = Math.max(sim.rest, totalDropDist / JOINTS);
+    } else {
+        sim.currentRest = sim.rest;
+    }
     sim.turn = 0;
     sim.twist = 0;
     sim.twistRaw = 0;
@@ -941,7 +975,7 @@ const stepSimulation = (
         const prevRest = sim.currentRest ?? targetRest;
         if (Math.abs(prevRest - targetRest) > 1e-4) {
             sim.currentRest =
-                prevRest + (targetRest - prevRest) * Math.min(1, 16 * dt);
+                prevRest + (targetRest - prevRest) * Math.min(1, 9 * dt);
         } else {
             sim.currentRest = targetRest;
         }
@@ -1337,6 +1371,9 @@ const Lanyard = ({
         let visible = true;
         let alive = true;
         let placed = false;
+        let waitingForFrontDrop = false;
+        let dropTimer = 0;
+        let viewWidthWorld = 6;
         let hovering = false;
         let press: Press | null = null;
         let lastMoveTime = performance.now();
@@ -1402,6 +1439,7 @@ const Lanyard = ({
             if (viewHeight * aspect < minimumWidth)
                 viewHeight = minimumWidth / aspect;
             const viewWidth = viewHeight * aspect;
+            viewWidthWorld = viewWidth;
             camera.aspect = aspect;
             camera.position.set(
                 0,
@@ -1435,6 +1473,23 @@ const Lanyard = ({
             sim.previous[0].copy(sim.anchor);
         };
 
+        const triggerDrop = (introFlag: boolean) => {
+            if (!alive) return;
+            if (dropTimer) {
+                clearTimeout(dropTimer);
+                dropTimer = 0;
+            }
+            waitingForFrontDrop = false;
+            const s = settingsRef.current!;
+            cardGroup.visible = true;
+            band.visible = true;
+            clampGroup.visible = true;
+            placeHanging(sim, layout, introFlag, s.anchor, viewWidthWorld);
+            placed = true;
+            last = performance.now();
+            start();
+        };
+
         const apply = () => {
             const s = settingsRef.current!;
             const layoutKey = `${s.orientation}|${s.cornerRadius}`;
@@ -1457,26 +1512,51 @@ const Lanyard = ({
             if (framingKey !== applied.framingKey) {
                 frameView();
                 if (!placed) {
-                    placeHanging(sim, layout, s.intro && !reducedMotion);
-                    placed = true;
+                    if (
+                        s.intro &&
+                        !reducedMotion &&
+                        s.anchor === 'right' &&
+                        s.frontImage &&
+                        !images.front
+                    ) {
+                        if (!waitingForFrontDrop) {
+                            waitingForFrontDrop = true;
+                            cardGroup.visible = false;
+                            band.visible = false;
+                            clampGroup.visible = false;
+                            dropTimer = window.setTimeout(() => {
+                                if (alive && !placed) {
+                                    triggerDrop(true);
+                                }
+                            }, 350);
+                        }
+                    } else {
+                        triggerDrop(s.intro && !reducedMotion);
+                    }
                 } else if (layoutKey !== applied.layoutKey) {
-                    placeHanging(sim, layout, false);
+                    placeHanging(sim, layout, false, s.anchor, viewWidthWorld);
                 }
             }
 
             const imageKey = `${s.frontImage}|${s.backImage}|${s.strapImage}`;
             if (imageKey !== applied.imageKey) {
                 const token = ++imageToken;
-                void Promise.all([
-                    loadImage(imageCache, s.frontImage),
-                    loadImage(imageCache, s.backImage),
-                    loadImage(imageCache, s.strapImage),
-                ]).then(([front, back, strap]) => {
+                void loadImage(imageCache, s.frontImage).then((front) => {
                     if (!alive || token !== imageToken) return;
                     images.front = front;
-                    images.back = back;
-                    images.strap = strap;
                     paintFaces();
+                    if (!placed && waitingForFrontDrop) {
+                        triggerDrop(true);
+                    }
+                });
+                void loadImage(imageCache, s.backImage).then((back) => {
+                    if (!alive || token !== imageToken) return;
+                    images.back = back;
+                    paintFaces();
+                });
+                void loadImage(imageCache, s.strapImage).then((strap) => {
+                    if (!alive || token !== imageToken) return;
+                    images.strap = strap;
                     repaintStrap();
                 });
             }
@@ -1726,7 +1806,13 @@ const Lanyard = ({
                 )
             ) {
                 sim.grab = null;
-                placeHanging(sim, layout, false);
+                placeHanging(
+                    sim,
+                    layout,
+                    false,
+                    settingsRef.current?.anchor ?? 'center',
+                    viewWidthWorld,
+                );
             }
             render();
             const resting =
@@ -1735,7 +1821,7 @@ const Lanyard = ({
         };
 
         const start = () => {
-            if (raf || !visible || !alive) return;
+            if (raf || !visible || !alive || waitingForFrontDrop) return;
             sim.calm = 0;
             last = performance.now();
             raf = requestAnimationFrame(tick);
@@ -2010,6 +2096,7 @@ const Lanyard = ({
 
         return () => {
             alive = false;
+            if (dropTimer) clearTimeout(dropTimer);
             cancelAnimationFrame(raf);
             applyRef.current = null;
             resizeObserver.disconnect();
