@@ -72,6 +72,7 @@ export default function PortfolioApp() {
     );
     const previousProjectRef = useRef(null);
     const savedReturnRef = useRef(null);
+    const detailOverlayRef = useRef(null);
 
     useEffect(() => {
         const checkIsMobile = () => {
@@ -82,7 +83,7 @@ export default function PortfolioApp() {
         return () => window.removeEventListener('resize', checkIsMobile);
     }, []);
 
-    // Synchronously restore exact project-card scroll BEFORE browser paints Hero section
+    // Keep background window.scrollY & Spotify/Contact/Portfolio DOM untouched when detail overlay opens/closes
     useLayoutEffect(() => {
         const prevProject = previousProjectRef.current;
         previousProjectRef.current = selectedProject;
@@ -110,18 +111,12 @@ export default function PortfolioApp() {
         };
 
         const resolveTargetY = () => {
-            const cardEl = findCardElement();
-            if (cardEl && saved && typeof saved.cardViewportTop === 'number') {
-                return Math.max(
-                    0,
-                    cardEl.getBoundingClientRect().top +
-                        window.scrollY -
-                        saved.cardViewportTop,
-                );
-            }
+            // Normal navigation from list keeps underlying window at saved.scrollY
             if (saved && typeof saved.scrollY === 'number') {
                 return Math.max(0, saved.scrollY);
             }
+            // Direct-URL entry (?project=slug): locate card or section immediately
+            const cardEl = findCardElement();
             if (cardEl) {
                 return Math.max(
                     0,
@@ -143,7 +138,7 @@ export default function PortfolioApp() {
         };
 
         const resolvedY = resolveTargetY();
-        if (resolvedY > 0) {
+        if (resolvedY > 0 && Math.abs(window.scrollY - resolvedY) > 4) {
             window.scrollTo({ top: resolvedY, behavior: 'instant' });
             document.documentElement.scrollTop = resolvedY;
         }
@@ -194,18 +189,9 @@ export default function PortfolioApp() {
 
     const handleSelectProject = useCallback((project) => {
         const slug = String(project.slug || project.id);
-        let cardViewportTop = null;
-        const cards = document.querySelectorAll('[data-project-card]');
-        for (const card of cards) {
-            if (card.getAttribute('data-project-card') === slug) {
-                cardViewportTop = card.getBoundingClientRect().top;
-                break;
-            }
-        }
         savedReturnRef.current = {
             scrollY: window.scrollY,
             slug,
-            cardViewportTop,
         };
         if ('scrollRestoration' in window.history) {
             window.history.scrollRestoration = 'manual';
@@ -219,7 +205,6 @@ export default function PortfolioApp() {
             '',
             url.toString(),
         );
-        window.scrollTo({ top: 0, behavior: 'instant' });
     }, []);
 
     const handleBackToHome = useCallback(() => {
@@ -235,6 +220,29 @@ export default function PortfolioApp() {
         window.history.replaceState({}, '', nextUrl);
     }, []);
 
+    // Lock body scroll and reset overlay scrollTop while viewing a project detail
+    useEffect(() => {
+        if (!selectedProject) return;
+
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        if (detailOverlayRef.current) {
+            detailOverlayRef.current.scrollTop = 0;
+        }
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                handleBackToHome();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = prevOverflow;
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedProject, handleBackToHome]);
+
     return (
         <GlobalErrorBoundary>
             <AudioProvider>
@@ -242,9 +250,15 @@ export default function PortfolioApp() {
                     className="relative min-h-screen bg-[#0B0F17] text-slate-50 selection:bg-indigo-500/30 selection:text-indigo-200"
                     style={{ backgroundColor: '#0B0F17' }}
                 >
-                    {/* Dedicated Project Detail View (No Galaxy 3D Background, No Navbar, No Footer) */}
+                    {/* Dedicated Fullscreen Overlay Project Detail View (preserves underlying Spotify playback & scroll) */}
                     {selectedProject && (
-                        <div className="relative z-40 min-h-screen bg-[#050811]">
+                        <div
+                            ref={detailOverlayRef}
+                            className="fixed inset-0 z-50 overflow-y-auto overscroll-y-contain bg-[#050811]"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label={`Project Detail: ${selectedProject.title}`}
+                        >
                             <Suspense
                                 fallback={
                                     <div className="min-h-screen bg-[#050811]" />
@@ -259,9 +273,13 @@ export default function PortfolioApp() {
                         </div>
                     )}
 
-                    {/* Main Portfolio SPA View (Kept mounted to preserve Three.js state and instant scroll) */}
+                    {/* Main Portfolio SPA View (always mounted & visible underneath so audio & sections never reload) */}
                     <div
-                        className={selectedProject ? 'hidden' : 'block'}
+                        className={
+                            selectedProject
+                                ? 'pointer-events-none select-none'
+                                : 'block'
+                        }
                         aria-hidden={selectedProject ? 'true' : 'false'}
                     >
                         {/* Global Interactive Galaxy WebGL Background */}

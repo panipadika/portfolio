@@ -35,7 +35,13 @@ const LinkedInBrandIcon = ({ className = 'h-6 w-6' }) => (
 const InstagramBrandIcon = ({ className = 'h-6 w-6' }) => (
     <svg viewBox="0 0 24 24" className={className}>
         <defs>
-            <linearGradient id="ig-contact-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+            <linearGradient
+                id="ig-contact-grad"
+                x1="0%"
+                y1="100%"
+                x2="100%"
+                y2="0%"
+            >
                 <stop offset="0%" stopColor="#fdf497" />
                 <stop offset="5%" stopColor="#fdf497" />
                 <stop offset="45%" stopColor="#fd5949" />
@@ -79,9 +85,13 @@ const WhatsAppBrandIcon = ({ className = 'h-4 w-4' }) => (
 
 export default function ContactSection({ settings = {} }) {
     const contactEmail = settings?.contact_email || 'panipadika123@gmail.com';
-    const contactPhone = settings?.contact_phone || APP_SOCIAL_LINKS.whatsapp.number;
-    const contactWhatsApp = settings?.contact_whatsapp || APP_SOCIAL_LINKS.whatsapp.url;
-    const headline = settings?.bio_headline || 'Punya ide menarik, peluang proyek, atau ingin berdiskusi? Tinggalkan pesan di sini, saya akan senang mendengarnya.';
+    const contactPhone =
+        settings?.contact_phone || APP_SOCIAL_LINKS.whatsapp.number;
+    const contactWhatsApp =
+        settings?.contact_whatsapp || APP_SOCIAL_LINKS.whatsapp.url;
+    const headline =
+        settings?.bio_headline ||
+        'Punya ide menarik, peluang proyek, atau ingin berdiskusi? Tinggalkan pesan di sini, saya akan senang mendengarnya.';
 
     const socialItems = [
         {
@@ -150,7 +160,7 @@ export default function ContactSection({ settings = {} }) {
             const res = await submitContact(formData);
             setSuccessMessage(
                 res.message ||
-                'Pesan Anda berhasil dikirim! Terima kasih telah menghubungi saya.',
+                    'Pesan Anda berhasil dikirim! Terima kasih telah menghubungi saya.',
             );
             setFormData({ name: '', email: '', message: '' });
         } catch (err) {
@@ -166,7 +176,7 @@ export default function ContactSection({ settings = {} }) {
             } else {
                 setErrorMessage(
                     err.response?.data?.message ||
-                    'Terjadi kesalahan sistem saat mengirim pesan. Silakan coba lagi.',
+                        'Terjadi kesalahan sistem saat mengirim pesan. Silakan coba lagi.',
                 );
             }
         } finally {
@@ -177,7 +187,7 @@ export default function ContactSection({ settings = {} }) {
     return (
         <section
             id="Contact"
-            className="relative border-t border-white/5 bg-[#0B0F17]/30 backdrop-blur-[2px] py-20 lg:py-28"
+            className="relative overflow-hidden border-t border-white/5 bg-[#0B0F17]/55 py-20 lg:py-28"
         >
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Section Heading */}
@@ -241,8 +251,7 @@ export default function ContactSection({ settings = {} }) {
                                     htmlFor="contact-name"
                                     className="mb-1.5 block font-mono text-xs text-slate-300"
                                 >
-                                    Nama{' '}
-                                    <span className="text-rose-400"></span>
+                                    Nama <span className="text-rose-400"></span>
                                 </label>
                                 <input
                                     id="contact-name"
@@ -252,10 +261,11 @@ export default function ContactSection({ settings = {} }) {
                                     onChange={handleChange}
                                     required
                                     placeholder="Masukkan Nama Anda"
-                                    className={`w-full rounded-xl border bg-white/5 px-4 py-3 ${fieldErrors.name
+                                    className={`w-full rounded-xl border bg-white/5 px-4 py-3 ${
+                                        fieldErrors.name
                                             ? 'border-rose-500'
                                             : 'border-white/10'
-                                        } text-sm text-white placeholder-slate-500 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 focus:outline-none`}
+                                    } text-sm text-white placeholder-slate-500 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 focus:outline-none`}
                                 />
                                 {fieldErrors.name && (
                                     <span className="mt-1 block text-xs text-rose-400">
@@ -281,10 +291,11 @@ export default function ContactSection({ settings = {} }) {
                                     onChange={handleChange}
                                     required
                                     placeholder="Masukkan Email Anda"
-                                    className={`w-full rounded-xl border bg-white/5 px-4 py-3 ${fieldErrors.email
+                                    className={`w-full rounded-xl border bg-white/5 px-4 py-3 ${
+                                        fieldErrors.email
                                             ? 'border-rose-500'
                                             : 'border-white/10'
-                                        } text-sm text-white placeholder-slate-500 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 focus:outline-none`}
+                                    } text-sm text-white placeholder-slate-500 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 focus:outline-none`}
                                 />
                                 {fieldErrors.email && (
                                     <span className="mt-1 block text-xs text-rose-400">
@@ -311,10 +322,11 @@ export default function ContactSection({ settings = {} }) {
                                     required
                                     minLength={10}
                                     placeholder="Tuliskan Detail Proyek, Pertanyaan, atau Tawaran Kerjasama..."
-                                    className={`w-full rounded-xl border bg-white/5 px-4 py-3 ${fieldErrors.message
+                                    className={`w-full rounded-xl border bg-white/5 px-4 py-3 ${
+                                        fieldErrors.message
                                             ? 'border-rose-500'
                                             : 'border-white/10'
-                                        } resize-none text-sm text-white placeholder-slate-500 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 focus:outline-none`}
+                                    } resize-none text-sm text-white placeholder-slate-500 transition-all focus:border-transparent focus:ring-2 focus:ring-indigo-500 focus:outline-none`}
                                 />
                                 {fieldErrors.message && (
                                     <span className="mt-1 block text-xs text-rose-400">
@@ -351,7 +363,11 @@ export default function ContactSection({ settings = {} }) {
                         initial={{ opacity: 0, x: 30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true, amount: 0.2 }}
-                        transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{
+                            duration: 0.7,
+                            delay: 0.1,
+                            ease: [0.16, 1, 0.3, 1],
+                        }}
                         className="flex flex-col gap-4 lg:col-span-5"
                     >
                         {/* Quick Contact Info Card */}
@@ -366,11 +382,11 @@ export default function ContactSection({ settings = {} }) {
                                     className="group flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-3 transition-all duration-200 hover:border-indigo-500/40 hover:bg-white/[0.07]"
                                 >
                                     <div className="flex items-center gap-3 text-xs text-slate-300 sm:text-sm">
-                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 transition-transform group-hover:scale-105">
+                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-500/30 bg-indigo-500/15 text-indigo-400 transition-transform group-hover:scale-105">
                                             <Mail className="h-4 w-4" />
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="font-medium text-white group-hover:text-indigo-300 transition-colors">
+                                            <span className="font-medium text-white transition-colors group-hover:text-indigo-300">
                                                 Email
                                             </span>
                                             <span className="text-[11px] text-slate-400">
@@ -389,14 +405,14 @@ export default function ContactSection({ settings = {} }) {
                                     className="group flex items-center justify-between rounded-2xl border border-[#25D366]/20 bg-[#25D366]/[0.04] p-3 transition-all duration-200 hover:border-[#25D366]/50 hover:bg-[#25D366]/[0.08]"
                                 >
                                     <div className="flex items-center gap-3 text-xs text-slate-300 sm:text-sm">
-                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/40 transition-transform group-hover:scale-105 shadow-[0_0_15px_rgba(37,211,102,0.25)]">
+                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#25D366]/40 bg-[#25D366]/20 text-[#25D366] shadow-[0_0_15px_rgba(37,211,102,0.25)] transition-transform group-hover:scale-105">
                                             <WhatsAppBrandIcon className="h-4 w-4" />
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="font-medium text-white group-hover:text-[#25D366] transition-colors">
+                                            <span className="font-medium text-white transition-colors group-hover:text-[#25D366]">
                                                 WhatsApp
                                             </span>
-                                            <span className="text-[11px] text-[#25D366]/80 font-mono">
+                                            <span className="font-mono text-[11px] text-[#25D366]/80">
                                                 {contactPhone}
                                             </span>
                                         </div>

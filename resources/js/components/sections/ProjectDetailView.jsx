@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import {
     ArrowLeft,
@@ -12,10 +12,6 @@ import TechBadge from '../ui/TechBadge';
 import { optimizeImageSrc } from '../../lib/media';
 
 export default function ProjectDetailView({ project, techStack = [], onBack }) {
-    useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'instant' });
-    }, [project]);
-
     if (!project) return null;
 
     return (
@@ -25,7 +21,7 @@ export default function ProjectDetailView({ project, techStack = [], onBack }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="relative flex min-h-screen flex-col justify-start overflow-hidden bg-[#050811] px-4 pt-8 pb-20 text-white sm:px-6 sm:pt-10 sm:pb-24 lg:px-12"
+            className="relative flex min-h-full flex-col justify-start overflow-x-clip bg-[#050811] px-4 pt-8 pb-20 text-white sm:px-6 sm:pt-10 sm:pb-24 lg:px-12"
             aria-label={`Project Detail: ${project.title}`}
         >
             {/* Ambient Background Glow (Sleek dark gradient, no Galaxy 3D particles) */}
