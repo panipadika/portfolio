@@ -49,14 +49,16 @@ const SpotifySection = memo(function SpotifySection({
     const embedUrl = getEmbedUrl(playlistUrl);
     const spotifyUri = toSpotifyUri(playlistUrl);
 
-    // Prevent Spotify embed from stealing focus or auto-scrolling the page when #Spotify is off-screen
-    // (especially during preview transitions/track changes), with zero interference during normal swipes.
+    // Park the iframe container inside the off-screen invisible viewport rect (0px/0px) whenever #Spotify
+    // is far off-screen. Because its box already sits inside the viewport rect, Chromium/Blink satisfies
+    // Spotify's internal cross-origin scrollIntoView() during track changes with 0 window scroll pixels.
     useEffect(() => {
         const wrapperEl = embedWrapperRef.current;
         const containerEl = containerRef.current;
         if (!wrapperEl || !containerEl) return;
 
         let wasFarOffscreen = false;
+        let isParked = false;
         let lastSafeScrollY = window.scrollY;
         let lastGestureAt = -Infinity;
         let lastScrollEventAt = -Infinity;
@@ -70,6 +72,40 @@ const SpotifySection = memo(function SpotifySection({
         };
 
         const applyNearViewportState = (nearViewport) => {
+            if (!isVisibleInDom()) return;
+
+            if (nearViewport) {
+                if (isParked) {
+                    isParked = false;
+                    containerEl.style.position = '';
+                    containerEl.style.top = '';
+                    containerEl.style.left = '';
+                    containerEl.style.width = '';
+                    containerEl.style.height = '';
+                    containerEl.style.opacity = '';
+                    containerEl.style.pointerEvents = '';
+                    containerEl.style.zIndex = '';
+                    containerEl.removeAttribute('aria-hidden');
+                }
+            } else {
+                const wrapperWidth = Math.max(
+                    260,
+                    Math.round(wrapperEl.getBoundingClientRect().width),
+                );
+                if (!isParked) {
+                    isParked = true;
+                    containerEl.style.position = 'fixed';
+                    containerEl.style.top = '0px';
+                    containerEl.style.left = '0px';
+                    containerEl.style.height = '352px';
+                    containerEl.style.opacity = '0';
+                    containerEl.style.pointerEvents = 'none';
+                    containerEl.style.zIndex = '-1';
+                    containerEl.setAttribute('aria-hidden', 'true');
+                }
+                containerEl.style.width = `${wrapperWidth}px`;
+            }
+
             if ('inert' in containerEl) {
                 containerEl.inert = !nearViewport;
             }
@@ -82,7 +118,7 @@ const SpotifySection = memo(function SpotifySection({
             }
         };
 
-        const syncInertByMargin = (marginPx = 240) => {
+        const syncInertByMargin = (marginPx = 320) => {
             if (!isVisibleInDom()) return;
             const rect = wrapperEl.getBoundingClientRect();
             const vh = window.innerHeight || 800;
@@ -97,7 +133,7 @@ const SpotifySection = memo(function SpotifySection({
             const vh = window.innerHeight || 800;
             wasFarOffscreen = rect.bottom < -120 || rect.top > vh + 120;
             lastSafeScrollY = window.scrollY;
-            syncInertByMargin(240);
+            syncInertByMargin(320);
         };
 
         syncBaseline();
@@ -109,7 +145,7 @@ const SpotifySection = memo(function SpotifySection({
                     if (!isVisibleInDom() || !entries[0]) return;
                     applyNearViewportState(entries[0].isIntersecting);
                 },
-                { rootMargin: '240px 0px', threshold: 0 },
+                { rootMargin: '320px 0px', threshold: 0 },
             );
             viewportObserver.observe(wrapperEl);
         }
@@ -124,7 +160,6 @@ const SpotifySection = memo(function SpotifySection({
         };
 
         const handlePointerDown = (e) => {
-            // Track outer gestures & desktop scrollbar dragging; never mark taps inside wrapperEl as offscreen
             if (e.target instanceof Node && wrapperEl.contains(e.target)) {
                 return;
             }
@@ -191,13 +226,13 @@ const SpotifySection = memo(function SpotifySection({
                 ) {
                     document.activeElement.blur();
                 }
-                syncInertByMargin(240);
+                syncInertByMargin(320);
                 return;
             }
 
             wasFarOffscreen = currentlyFarOffscreen;
             lastSafeScrollY = currentY;
-            syncInertByMargin(240);
+            syncInertByMargin(320);
         };
 
         const handleNavAllow = () => {
@@ -209,6 +244,12 @@ const SpotifySection = memo(function SpotifySection({
             });
         };
 
+        const handlePrepareVisible = () => {
+            allowNavUntil = performance.now() + 1500;
+            wasFarOffscreen = false;
+            applyNearViewportState(true);
+        };
+
         const handleDocClick = (e) => {
             if (
                 e.target instanceof Element &&
@@ -218,10 +259,17 @@ const SpotifySection = memo(function SpotifySection({
             }
         };
 
+        const handleResize = () => {
+            if (isParked) {
+                syncInertByMargin(320);
+            }
+        };
+
         const onTouchGesture = () => markGesture(240);
         const onWheelGesture = () => markGesture(280);
 
         window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', handleResize, { passive: true });
         window.addEventListener('wheel', onWheelGesture, { passive: true });
         window.addEventListener('touchstart', onTouchGesture, {
             passive: true,
@@ -235,6 +283,10 @@ const SpotifySection = memo(function SpotifySection({
         });
         window.addEventListener('keydown', handleKeyDown, { passive: true });
         window.addEventListener('portfolio:nav-scroll', handleNavAllow);
+        window.addEventListener(
+            'spotify:prepare-visible',
+            handlePrepareVisible,
+        );
         window.addEventListener('popstate', handleNavAllow);
         window.addEventListener('hashchange', handleNavAllow);
         document.addEventListener('click', handleDocClick, { capture: true });
@@ -242,7 +294,11 @@ const SpotifySection = memo(function SpotifySection({
         return () => {
             if (navSyncRaf) cancelAnimationFrame(navSyncRaf);
             viewportObserver?.disconnect();
+            if (isParked) {
+                applyNearViewportState(true);
+            }
             window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleResize);
             window.removeEventListener('wheel', onWheelGesture);
             window.removeEventListener('touchstart', onTouchGesture);
             window.removeEventListener('touchmove', onTouchGesture);
@@ -250,6 +306,10 @@ const SpotifySection = memo(function SpotifySection({
             window.removeEventListener('pointermove', handlePointerMove);
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('portfolio:nav-scroll', handleNavAllow);
+            window.removeEventListener(
+                'spotify:prepare-visible',
+                handlePrepareVisible,
+            );
             window.removeEventListener('popstate', handleNavAllow);
             window.removeEventListener('hashchange', handleNavAllow);
             document.removeEventListener('click', handleDocClick, {

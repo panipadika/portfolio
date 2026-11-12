@@ -870,18 +870,18 @@ const placeHanging = (
     const { nodes, previous, velocities, body, anchor } = sim;
     nodes[0].copy(anchor);
     if (intro && anchorName === 'right') {
-        const dropRight = Math.max(sim.rest * JOINTS * 1.1, viewWidth * 0.23);
-        const dropUp = 0.72;
-        const dropZ = 0.42;
+        const dropRight = Math.max(sim.rest * JOINTS * 1.45, viewWidth * 0.34);
+        const dropUp = 1.15;
+        const dropZ = 0.65;
         for (let i = 1; i <= JOINTS; i++) {
             const t = i / JOINTS;
             nodes[i].set(
                 anchor.x + dropRight * t,
-                anchor.y + dropUp * t + Math.sin(t * Math.PI) * 0.2,
+                anchor.y + dropUp * t + Math.sin(t * Math.PI) * 0.28,
                 dropZ * t,
             );
         }
-        body.quaternion.setFromEuler(new THREE.Euler(-0.18, 0.42, -0.78));
+        body.quaternion.setFromEuler(new THREE.Euler(-0.28, 0.65, -1.05));
     } else {
         for (let i = 1; i <= JOINTS; i++) {
             nodes[i].copy(nodes[i - 1]);
@@ -902,8 +902,8 @@ const placeHanging = (
     body.previous.copy(body.position);
     body.previousQuaternion.copy(body.quaternion);
     if (intro && anchorName === 'right') {
-        body.velocity.set(-1.15, -1.9, -0.35);
-        body.angular.set(0.28, -1.35, 1.45);
+        body.velocity.set(-1.95, -2.1, -0.45);
+        body.angular.set(0.25, -1.3, 1.15);
     } else {
         body.velocity.set(0, 0, 0);
         body.angular.set(0, 0, 0);
@@ -974,8 +974,10 @@ const stepSimulation = (
         const targetRest = sim.rest;
         const prevRest = sim.currentRest ?? targetRest;
         if (Math.abs(prevRest - targetRest) > 1e-4) {
+            const easeSpeed = prevRest > targetRest * 1.15 ? 4.5 : 9;
             sim.currentRest =
-                prevRest + (targetRest - prevRest) * Math.min(1, 9 * dt);
+                prevRest +
+                (targetRest - prevRest) * Math.min(1, easeSpeed * dt);
         } else {
             sim.currentRest = targetRest;
         }
@@ -1373,6 +1375,7 @@ const Lanyard = ({
         let placed = false;
         let waitingForFrontDrop = false;
         let dropTimer = 0;
+        let introDropStartedAt = -Infinity;
         let viewWidthWorld = 6;
         let hovering = false;
         let press: Press | null = null;
@@ -1487,6 +1490,9 @@ const Lanyard = ({
             placeHanging(sim, layout, introFlag, s.anchor, viewWidthWorld);
             placed = true;
             last = performance.now();
+            introDropStartedAt =
+                introFlag && s.anchor === 'right' ? last : -Infinity;
+            render();
             start();
         };
 
@@ -1528,7 +1534,7 @@ const Lanyard = ({
                                 if (alive && !placed) {
                                     triggerDrop(true);
                                 }
-                            }, 350);
+                            }, 1200);
                         }
                     } else {
                         triggerDrop(s.intro && !reducedMotion);
@@ -1763,7 +1769,17 @@ const Lanyard = ({
 
         const physics = (): Physics => {
             const s = settingsRef.current!;
-            const gravity = 26 * clamp(s.gravity, 0, 3);
+            const introProgress =
+                introDropStartedAt > 0
+                    ? clamp(
+                          (performance.now() - introDropStartedAt) / 950,
+                          0,
+                          1,
+                      )
+                    : 1;
+            const gravityScale = mix(0.45, 1, introProgress);
+            const dragScale = mix(0.42, 1, introProgress);
+            const gravity = 26 * clamp(s.gravity, 0, 3) * gravityScale;
             const weight = Math.max(gravity, 20);
             const springy = clamp(s.elasticity, 0, 1);
             const settle = clamp(s.damping, 0, 1);
@@ -1773,8 +1789,8 @@ const Lanyard = ({
                 stiffness: weight * 12 * JOINTS,
                 spring: weight * mix(0.12, 0.45, springy) * JOINTS,
                 bandDamping: weight * mix(0.35, 0.12, springy) * JOINTS,
-                linearDrag: 0.35 * Math.pow(12, settle),
-                angularDrag: 0.7 * Math.pow(10, settle),
+                linearDrag: 0.35 * Math.pow(12, settle) * dragScale,
+                angularDrag: 0.7 * Math.pow(10, settle) * dragScale,
                 air: 0.2,
                 broadside: 0.8,
                 spinAir: 0.04,

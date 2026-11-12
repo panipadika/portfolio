@@ -67,6 +67,7 @@
         <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
         <link rel="icon" href="/favicon.png?v=2" type="image/png">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+        <link rel="preload" as="image" href="/card-front.webp" media="(min-width: 1024px)" fetchpriority="high">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

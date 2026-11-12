@@ -299,6 +299,11 @@ export default function Navbar({ isVisible = true }) {
                                 type="button"
                                 onClick={() => {
                                     dismissAutoplayHint();
+                                    window.dispatchEvent(
+                                        new CustomEvent(
+                                            'spotify:prepare-visible',
+                                        ),
+                                    );
                                     const targetEl =
                                         document.getElementById('Spotify');
                                     if (targetEl) {
