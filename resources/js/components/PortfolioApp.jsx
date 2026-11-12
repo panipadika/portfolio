@@ -149,13 +149,19 @@ export default function PortfolioApp() {
                 window.scrollTo({ top: postLayoutY, behavior: 'instant' });
             }
             savedReturnRef.current = null;
-            if ('scrollRestoration' in window.history) {
-                window.history.scrollRestoration = 'auto';
-            }
         });
 
         return () => cancelAnimationFrame(rafId);
     }, [selectedProject]);
+
+    // Mark portfolio SPA active so app.tsx prevents Inertia from remounting the page on modal popstate
+    useEffect(() => {
+        window.__portfolioActive = true;
+        window.__portfolioPathname = window.location.pathname;
+        return () => {
+            window.__portfolioActive = false;
+        };
+    }, []);
 
     // Sync state with URL query parameter (?project=slug)
     useEffect(() => {
@@ -183,8 +189,12 @@ export default function PortfolioApp() {
         };
 
         syncFromUrl();
+        window.addEventListener('portfolio:popstate', syncFromUrl);
         window.addEventListener('popstate', syncFromUrl);
-        return () => window.removeEventListener('popstate', syncFromUrl);
+        return () => {
+            window.removeEventListener('portfolio:popstate', syncFromUrl);
+            window.removeEventListener('popstate', syncFromUrl);
+        };
     }, [portfolioData.projects]);
 
     const handleSelectProject = useCallback((project) => {
@@ -198,10 +208,24 @@ export default function PortfolioApp() {
         }
         window.dispatchEvent(new CustomEvent('portfolio:nav-scroll'));
         setSelectedProject(project);
+        const currentState =
+            window.history.state && typeof window.history.state === 'object'
+                ? window.history.state
+                : {};
+        window.history.replaceState(
+            { ...currentState, __portfolioModal: 'list' },
+            '',
+            window.location.href,
+        );
         const url = new URL(window.location.href);
         url.searchParams.set('project', slug);
         window.history.pushState(
-            { fromPortfolioList: true, projectSlug: project.slug },
+            {
+                ...currentState,
+                __portfolioModal: 'detail',
+                fromPortfolioList: true,
+                projectSlug: project.slug,
+            },
             '',
             url.toString(),
         );
@@ -214,10 +238,18 @@ export default function PortfolioApp() {
             return;
         }
         setSelectedProject(null);
+        const currentState =
+            window.history.state && typeof window.history.state === 'object'
+                ? window.history.state
+                : {};
         const url = new URL(window.location.href);
         url.searchParams.delete('project');
         const nextUrl = `${url.pathname}${url.search}${url.hash}`;
-        window.history.replaceState({}, '', nextUrl);
+        window.history.replaceState(
+            { ...currentState, __portfolioModal: 'list' },
+            '',
+            nextUrl,
+        );
     }, []);
 
     // Lock body scroll and reset overlay scrollTop while viewing a project detail

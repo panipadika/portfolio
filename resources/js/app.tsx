@@ -6,7 +6,36 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
+declare global {
+    interface Window {
+        __portfolioActive?: boolean;
+        __portfolioPathname?: string;
+    }
+}
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+// Intercept in-page project detail modal popstate BEFORE Inertia's EventHandler
+// so pressing Back does not trigger preserveState: false (which remounts the SPA and stops Spotify).
+if (typeof window !== 'undefined') {
+    window.addEventListener(
+        'popstate',
+        (event: PopStateEvent) => {
+            const state = event.state as Record<string, unknown> | null;
+            if (
+                window.__portfolioActive &&
+                window.location.pathname === window.__portfolioPathname &&
+                state &&
+                typeof state === 'object' &&
+                '__portfolioModal' in state
+            ) {
+                event.stopImmediatePropagation();
+                window.dispatchEvent(new CustomEvent('portfolio:popstate'));
+            }
+        },
+        true,
+    );
+}
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
