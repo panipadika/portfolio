@@ -9,7 +9,7 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-[#0B0F17] px-4 py-10 text-slate-50 sm:px-6">
+        <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-[#0B0F17] px-4 py-6 text-slate-50 sm:px-6">
             {/* Ambient Deep-Space Backdrop */}
             <div
                 className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -22,7 +22,7 @@ export default function AuthSimpleLayout({
             </div>
 
             {/* Top Action & Portal Status Bar */}
-            <div className="relative z-10 mb-5 flex w-full max-w-[440px] items-center justify-between gap-3">
+            <div className="relative z-10 mb-4 flex w-full max-w-[440px] items-center justify-between gap-3">
                 <Link
                     href={home()}
                     className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs font-medium text-slate-300 backdrop-blur-md transition-all hover:border-indigo-400/40 hover:bg-white/[0.08] hover:text-white"
@@ -47,7 +47,7 @@ export default function AuthSimpleLayout({
                     aria-hidden="true"
                 />
 
-                <div className="relative overflow-hidden rounded-[25px] border border-white/10 bg-[#0d1322]/90 p-7 shadow-[0_24px_80px_rgba(0,0,0,0.7)] backdrop-blur-2xl sm:p-9">
+                <div className="relative overflow-hidden rounded-[25px] border border-white/10 bg-[#0d1322]/90 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)] backdrop-blur-2xl sm:p-8">
                     {/* Prismatic Top Hairline & Soft Corner Sheen */}
                     <div
                         className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[#7185e8]/80 via-cyan-400/60 to-transparent"
@@ -94,7 +94,7 @@ export default function AuthSimpleLayout({
             </div>
 
             {/* Subtle Footer Security Line */}
-            <div className="relative z-10 mt-6 flex items-center justify-center gap-2 font-mono text-[11px] text-slate-500">
+            <div className="relative z-10 mt-4 flex items-center justify-center gap-2 font-mono text-[11px] text-slate-500">
                 <Lock className="size-3 text-slate-500" />
                 <span>Protected Session • Pani Padika Portfolio</span>
             </div>

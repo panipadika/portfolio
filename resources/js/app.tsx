@@ -13,7 +13,7 @@ declare global {
     }
 }
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'Pani Padika Portfolio';
 
 // Intercept in-page project detail modal popstate BEFORE Inertia's EventHandler
 // so pressing Back does not trigger preserveState: false (which remounts the SPA and stops Spotify).
@@ -38,7 +38,10 @@ if (typeof window !== 'undefined') {
 }
 
 void createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
+    title: (title) => {
+        if (!title) return appName;
+        return title.includes('Pani Padika') ? title : `${title} — ${appName}`;
+    },
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
